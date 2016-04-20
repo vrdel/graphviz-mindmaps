@@ -90,7 +90,10 @@ class Tree:
                 else:
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["verbatim"].replace(vrbtcolors['def'], vrbtcolors[self._ntype]), "".join(self._label))
             elif self._draw:
-                return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["draw"], "".join(self._label))
+                if self._ntype == "def":
+                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["draw"], "".join(self._label))
+                else:
+                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["draw"].replace(vrbtcolors['cwhite'], vrbtcolors[self._ntype]), "".join(self._label))
             else:
                 return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype[self._ntype], "".join(self._label))
 
@@ -754,7 +757,7 @@ def GenDot(lines, argholder, parser):
                 JoinSepKeyValue("symb", nextline)
 
                 for k in nextline:
-                    if k in nodetype and k not in set(["verbatim", "verbat"]):
+                    if k in nodetype and k not in set(["verbatim", "verbat", "draw"]):
                         ntype = k
                     else:
                         ParseAttributeLine(k, tonode, \
