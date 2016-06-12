@@ -20,8 +20,8 @@ def Montage(argholder):
 def TitleImg(argholder):
 	InImg = ""
 	OutImg = ""
-	SpliceFrac = {'s' : 50, 'm' : 70, 'b' : 100}
-	TitleFrac = {'s' : 80, 'm' : 148, 'b' : 232}
+	SpliceFrac = {'xs': 30, 's' : 50, 'm' : 70, 'b' : 100}
+	TitleFrac = {'xs': 35, 's' : 80, 'm' : 148, 'b' : 232}
 
 	if not argholder.MontageTile:
 		if len(argholder.files) == 2:
@@ -62,7 +62,7 @@ def main():
 
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-t', dest = 'ImgTitle', nargs = '?', default = "NoSpec")
-	parser.add_argument('-s', dest = 'TitleSize', choices = ['s', 'm', 'b'], default = 's')
+	parser.add_argument('-s', dest = 'TitleSize', choices = ['xs', 's', 'm', 'b'], default = 's')
 	parser.add_argument('-e', dest = 'EmptyImg', nargs = '?', default = "NoSpec")
 	parser.add_argument('-m', dest = 'MontageTile', type = int)
 	parser.add_argument('files', nargs = argparse.REMAINDER)
