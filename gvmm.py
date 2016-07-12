@@ -370,12 +370,13 @@ def WriteImg(argholder):
     global tmpdir
     global notitle
 
-    argholder.jpgname = argholder.jpgname.replace("gv/", "")
     if argholder.jpgname.startswith("~") or argholder.jpgname.startswith("/"):
         gvroot = ""
+        argholder.jpgname = argholder.jpgname.replace("~", os.environ['HOME'])
     elif "/" not in argholder.jpgname and "~" not in argholder.jpgname:
-        gvroot = ""
         gvroot = os.environ['PWD'] + "/"
+    else:
+        argholder.jpgname = argholder.jpgname.replace("gv/", "")
     proc = subprocess.Popen(['dot', '-Tjpg', '-o', gvroot + argholder.jpgname], stdin = subprocess.PIPE)
     proc.communicate(dotbuf)
 
@@ -559,7 +560,7 @@ def ParseFnameLine(keyword, line):
 
     m = re.search("(%s[ ]*=[ ]*)(\".*\")[ ]*(notitle)?" % (keyword), line)
     if m is None:
-        m = re.search("(%s[ ]*=[ ]*)([\w/.-]*)[ ]*(notitle)?" % (keyword), line)
+        m = re.search("(%s[ ]*=[ ]*)([\w/.-~]*)[ ]*(notitle)?" % (keyword), line)
         if m.group(3):
             notitle = True
     else:
