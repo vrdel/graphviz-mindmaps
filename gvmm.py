@@ -555,12 +555,19 @@ def ParseAttributeLine(k, tonode, *args):
         if m.group(6): edglabel.append("label=%s" % m.group(6).strip())
 
 
+def ParseOtlname(keyword, line):
+    m = re.search("(%s[ ]*=[ ]*)(\".*\")[ ]*" % (keyword), line)
+    if m is None:
+        m = re.search("(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*" % (keyword), line)
+
+    return m.group(2)
+
 def ParseFnameLine(keyword, line):
     global notitle
 
     m = re.search("(%s[ ]*=[ ]*)(\".*\")[ ]*(notitle)?" % (keyword), line)
     if m is None:
-        m = re.search("(%s[ ]*=[ ]*)([\w/.-~]*)[ ]*(notitle)?" % (keyword), line)
+        m = re.search("(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*(notitle)?" % (keyword), line)
         if m.group(3):
             notitle = True
     else:
@@ -622,6 +629,9 @@ def GenDot(lines, argholder, parser):
         if re.search("\t(:|\|)\s*fname", line):
             jpgname = ParseFnameLine("fname", line)
             jpgname = jpgname.strip()
+
+            if re.search("otlname", line):
+                title = ParseOtlname("otlname", line) + '  -  ' + title
 
         if lines.index(line) < len(lines) - 1:
             nextline = lines[lines.index(line) + 1]
