@@ -1053,7 +1053,7 @@ def main():
                             "draw" in linesall[i + 1]:
                             j = i + 2
                             v = []
-                            while "# " not in linesall[j]:
+                            while j < len(linesall) and '# ' not in linesall[j]:
                                 if "\t:" in linesall[j]:
                                     v.append(linesall[j].lstrip("\t:").rstrip())
                                 elif "\t|" in linesall[j]:
