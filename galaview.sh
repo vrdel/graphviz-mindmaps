@@ -1,0 +1,17 @@
+#!/bin/sh
+
+GEOM=1600x900
+
+geom=$(grep -m1 '^\s*geometry' ~/.galapix/galapix.cfg | awk '{print $3}')
+
+echo $geom | grep -q "[0-9]\+x[0-9]\+" || geom=$GEOM
+
+IFS=""
+for a in $*
+do 
+	args="$args $(echo file://\"$a\")"
+done
+
+rm -f ~/.galapix/other/cache3.sqlite3
+ulimit -c 0
+echo $args | xargs galapix.sdl view -g $geom -d ~/.galapix/other/ --title "galapix: $args" &>/dev/null
