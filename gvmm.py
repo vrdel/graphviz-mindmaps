@@ -592,6 +592,14 @@ def JoinSepKeyValue(key, line):
             line[i] = line[i] + line[i + 1]
             del(line[i + 1])
 
+def GenImgPath(imgpath):
+    if imgpath.startswith('/'):
+        imgpath = imgpath
+    elif imgpath.startswith('~'):
+        imgpath = imgpath.replace('~', os.environ['HOME'])
+    else:
+        imgpath = os.environ['PWD'] + '/' + imgpath
+    return imgpath
 
 def GenDot(lines, argholder, parser):
     tree = Tree()
@@ -659,7 +667,7 @@ def GenDot(lines, argholder, parser):
                 if m:
                     splittedstr = [m.group(1), m.group(2)]
                     if splittedstr[0] == "img":
-                        labelhtml = ["<TABLE BORDER=\"0\" CELLBORDER=\"0\"><TR><TD CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" + os.environ['PWD'] + "/" +  splittedstr[1].strip() + "\"/></TD></TR></TABLE>"]
+                        labelhtml = ["<TABLE BORDER=\"0\" CELLBORDER=\"0\"><TR><TD CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" + GenImgPath(splittedstr[1].strip()) + "\"/></TD></TR></TABLE>"]
                         ntype = "img"
             else:
                 labelhtml = label.split()
@@ -783,7 +791,7 @@ def GenDot(lines, argholder, parser):
                         m = re.match("([\W\w]*)(?:=)(.*)", k)
                         tokval = [m.group(1), m.group(2)]
                         if tokval[0] == "img":
-                            labelhtml.insert(len(labelhtml) - 1, "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" +  os.environ['PWD'] + "/" + tokval[1].strip() + "\"/>")
+                            labelhtml.insert(len(labelhtml) - 1, "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" + GenImgPath(tokval[1].strip) + "\"/>")
                             ntype = "imgil"
                         elif tokval[0] == "symb" and ntype != "imgil":
                             symblist = tokval[1].split(':')
@@ -803,7 +811,7 @@ def GenDot(lines, argholder, parser):
                             else:
                                 labelhtml.insert(len(labelhtml) - 1, \
                                         "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"10\"\
-                                        BORDER=\"0\"><IMG SRC=\"" +  os.environ['PWD'] + "/" + tokval[1] + "\"/>")
+                                        BORDER=\"0\"><IMG SRC=\"" +  GenImgPath(tokval[1]) + "\"/>")
                             numdood += 1
                             ntype = "dood"
 
