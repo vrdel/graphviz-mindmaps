@@ -38,9 +38,13 @@ def inotifymon(commexe):
 			self._restartinst(event, "deleteself")
 		def process_IN_CREATE(self, event):
 			self._restartinst(event, "create")
+		def process_IN_MODIFY(self, event):
+			self._restartinst(event, "modify")
+		def process_IN_CLOSE_WRITE(self, event):
+			self._restartinst(event, "in_close_write")
 
 	wm = pyinotify.WatchManager()
-	mask = pyinotify.IN_DELETE_SELF | pyinotify.IN_DELETE | pyinotify.IN_CREATE
+	mask = pyinotify.IN_DELETE_SELF | pyinotify.IN_DELETE | pyinotify.IN_CREATE | pyinotify.IN_CLOSE_WRITE
 
 	handler = EventHandler()
 
