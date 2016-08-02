@@ -791,7 +791,7 @@ def GenDot(lines, argholder, parser):
                         m = re.match("([\W\w]*)(?:=)(.*)", k)
                         tokval = [m.group(1), m.group(2)]
                         if tokval[0] == "img":
-                            labelhtml.insert(len(labelhtml) - 1, "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" + GenImgPath(tokval[1].strip) + "\"/>")
+                            labelhtml.insert(len(labelhtml) - 1, "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" + GenImgPath(tokval[1].strip()) + "\"/>")
                             ntype = "imgil"
                         elif tokval[0] == "symb" and ntype != "imgil":
                             symblist = tokval[1].split(':')
