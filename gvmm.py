@@ -5,7 +5,7 @@ import socket, ConfigParser, math
 
 
 MAXDEPTH = 32
-gvroot = "/home/daniel/my_notes/graphviz/"
+gvroot = "/home/daniel/my_notes/"
 dotbuf = ""
 tmpdir = []
 title = ""
@@ -375,8 +375,6 @@ def WriteImg(argholder):
         argholder.jpgname = argholder.jpgname.replace("~", os.environ['HOME'])
     elif "/" not in argholder.jpgname and "~" not in argholder.jpgname:
         gvroot = os.environ['PWD'] + "/"
-    else:
-        argholder.jpgname = argholder.jpgname.replace("gv/", "")
     proc = subprocess.Popen(['dot', '-Tjpg', '-o', gvroot + argholder.jpgname], stdin = subprocess.PIPE)
     proc.communicate(dotbuf)
 
@@ -387,7 +385,7 @@ def WriteImg(argholder):
 
     if argholder.preview:
         # subprocess.Popen(['feh','-g', '1600x900', gvroot + argholder.jpgname])
-        subprocess.call("FvwmCommand 'All (*%s*) Close'" % \
+        subprocess.call("FvwmCommand 'All (galapix:*%s*) Close'" % \
                 argholder.jpgname.split("/")[1] if "/" in argholder.jpgname else argholder.jpgname, shell=True)
         subprocess.Popen(['galaview.sh', gvroot + argholder.jpgname])
 
@@ -428,15 +426,20 @@ def WriteMontage(argholder):
     global montagetitle
 
     imgarg = argholder.jpgname.split("/")
-    os.chdir(gvroot + imgarg[0])
+    if argholder.jpgname.startswith("gv/"):
+        os.chdir(gvroot + '/'.join(imgarg[0:2]))
+        cmfile = CheckCM(imgarg[2])
+    else:
+        print "montage building should be in %s/gv/" % (gvroot[0:-1])
+        raise SystemExit(1)
 
-    cmfile = CheckCM(imgarg[1])
 
     if cmfile:
         subprocess.call(["montage.py", cmfile])
         SendRestartMSG("rsync call", "inotsock")
     else:
-        print "%s not found in any %s/*.cm" % (imgarg[1], gvroot + imgarg[0])
+        print "%s not found in any %s/*.cm" % (imgarg[2], gvroot + '/'.join(imgarg[0:2]))
+        raise SystemExit(1)
 
 
 def Skip(maplist, s=None, lsinw=None):
