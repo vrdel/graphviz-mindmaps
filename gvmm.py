@@ -1064,7 +1064,8 @@ def main():
                             "draw" in linesall[i + 1]:
                             j = i + 2
                             v = []
-                            while j < len(linesall) and '# ' not in linesall[j]:
+                            while j < len(linesall) and '# ' not in linesall[j] \
+                                    and not re.search("\t\s*[a-zA-Z0-9]\s*", linesall[j]):
                                 if "\t:" in linesall[j]:
                                     v.append(linesall[j].lstrip("\t:").rstrip())
                                 elif "\t|" in linesall[j]:
