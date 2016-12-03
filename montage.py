@@ -43,7 +43,7 @@ def SingleMontage(l, nummini = None):
 	global curdir
 
 	limg = []
-	m = re.search("(\s*\+?\s*(?:(?:auto)|(?:[\w_\-\+\d]*\.(?:jpg|png))))\s*\{(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(title\s*=\s*(?:(?:auto)|(?:\".*?\")))?(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(size\s*=\s*(?:\"?[smb]\"?))?\s*(.*[\w_\-\+\d]*.(jpg|png)\s*\+?.*){1,}\}", l)
+	m = re.search("(\s*\+?\s*(?:(?:auto)|(?:[\w_\-\+\d]*\.(?:jpg|png))))\s*\{(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(title\s*=\s*(?:(?:auto)|(?:[\"\'].*?[\"\'])))?(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(size\s*=\s*(?:[\"\']?[smb][\"\']?))?\s*(.*[\w_\-\+\d]*.(jpg|png)\s*\+?.*){1,}\}", l)
 	orgfilename = filename = m.group(1).strip()
 	if "+" in filename:
 		filename = re.findall("(?:\s*\+?\s*((?:auto)|(?:[\w_\-\+\d]*\.(?:jpg|png))))", filename)
@@ -60,7 +60,7 @@ def SingleMontage(l, nummini = None):
 	if m.group(2):
 		title = m.group(2)
 		tl = title.split("=")
-		title = re.findall("\"(.*)\"", tl[1])
+		title = re.findall("[\"\'](.*)[\"\']", tl[1])
 		if title:
 			title = title[0]
 		else:
@@ -74,7 +74,7 @@ def SingleMontage(l, nummini = None):
 	if m.group(3):
 		size = m.group(3)
 		tl = size.split("=")
-		size = re.findall("\"?([smb])\"?", tl[1])[0]
+		size = re.findall("[\"\']?([smb])[\"\']?", tl[1])[0]
 	else:
 		if mini:
 			size = 's'

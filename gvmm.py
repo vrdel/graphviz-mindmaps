@@ -364,6 +364,10 @@ def SendRestartMSG(sockwildcard, sockcfg=None):
         sock.close()
 
 
+def ScaleImg(argholder):
+    subprocess.call("convert -scale %s %s %s" % (argholder.scale, gvroot + argholder.jpgname, gvroot + argholder.jpgname), shell=True)
+
+
 def WriteImg(argholder):
     global gvroot
     global dotbuf
@@ -382,6 +386,9 @@ def WriteImg(argholder):
 
     if not notitle:
         subprocess.call("montit.py -s s -t '%s' %s" % (title, gvroot + argholder.jpgname), shell=True)
+
+    if argholder.scale:
+        ScaleImg(argholder)
 
     if argholder.preview:
         # subprocess.Popen(['feh','-g', '1600x900', gvroot + argholder.jpgname])
@@ -1029,6 +1036,7 @@ def main():
     parser.add_argument('-f', dest='files', nargs='+')
     parser.add_argument('-m', '--mtg', action='store_true')
     parser.add_argument('-p', dest='preview', action='store_true')
+    parser.add_argument('-s', dest='scale', nargs='?', const="specified")
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-d', dest='dotname', nargs='?', const="specified")
     group.add_argument('-i', dest='jpgname', nargs='?', const="specified")
