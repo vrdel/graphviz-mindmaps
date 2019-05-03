@@ -365,7 +365,8 @@ def SendRestartMSG(sockwildcard, sockcfg=None):
 
 
 def ScaleImg(argholder):
-    subprocess.call("convert -scale %s %s %s" % (argholder.scale, gvroot + argholder.jpgname, gvroot + argholder.jpgname), shell=True)
+    cmd = "convert -scale %s%% %s %s" % (argholder.scale, gvroot + argholder.jpgname, gvroot + argholder.jpgname)
+    subprocess.call(cmd, shell=True)
 
 
 def WriteImg(argholder):
@@ -395,7 +396,6 @@ def WriteImg(argholder):
         subprocess.call("FvwmCommand 'All (galapix:*%s*) Close'" % \
                 argholder.jpgname.split("/")[1] if "/" in argholder.jpgname else argholder.jpgname, shell=True)
         subprocess.Popen(['galaview.sh', gvroot + argholder.jpgname])
-
 
     if len(tmpdir) > 0:
         for t in tmpdir:
