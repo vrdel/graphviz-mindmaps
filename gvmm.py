@@ -33,6 +33,7 @@ nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial colo
         "node" : "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#f4f4f4\" color=\"#6a6a6a\"" % (fontsize['l']),
         "title" : "shape=doubleoctagon fontname=\"%s\" fontsize=\"%s\" style=\"radial\" fillcolor=\"#abffff\" color=\"#8a8a8a\"" % (font['comicb'], fontsize['l']),
         "date" : "shape=component gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15,0.15\" fillcolor=\"#fbfbfb;0.93:#B30E0E\" color=\"#8a8a8a\"",
+        "link" : "shape=component gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15,0.15\" fillcolor=\"#edf1ff;0.93:#3283c9\" color=\"#8a8a8a\"",
         "example" : "shape=note fontname=\"%s\" gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15\" fillcolor=\"#18A828;0.15:#fbfbfb\" color=\"#8a8a8a\"" % (font['mono']),
         "draw" : "shape=component fontname=\"%s\" style=\"radial\" margin=\"0.15,0.15\" fillcolor=\"%s\" color=\"#8a8a8a\"" % (font['mono'], vrbtcolors['cwhite']),
         "verbatim" : "shape=component fontname=\"%s\" style=\"radial\" margin=\"0.15,0.15\" fillcolor=\"%s\" color=\"#8a8a8a\"" % (font['mono'], vrbtcolors['def']),
@@ -866,7 +867,7 @@ def GenDot(lines, argholder, parser):
                 Skip(wordcolor, s=len(symblist))
                 Skip(wordfstyle, s=len(symblist))
 
-            if ntype == "term":
+            if ntype == "term" or ntype == "link":
                 Skip(wordfsize, s=2)
                 Skip(wordcolor, s=2)
                 Skip(wordfstyle, s=2)
@@ -883,7 +884,7 @@ def GenDot(lines, argholder, parser):
                 if linefstyle and not linefstyle[0][0] == 0:
                     Skip(linefstyle, s=1)
 
-            if ntype == "term":
+            if ntype == "term" or ntype == "link":
                 if linecolor and not linecolor[0][0] == 0:
                     Skip(linecolor, s=1)
                 if linefsize and not linefsize[0][0] == 0:
@@ -1011,6 +1012,8 @@ def PreAttrProcLabel(label, ntype):
     elif ntype == "term":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"1\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"15\">" % (fontcolor['k'])+ fontawesome.symb["desktop"] + "</FONT>&nbsp;<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"20\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
+    elif ntype == "link":
+        label[1] = "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["link"] + "</FONT></TD></TR><TR><TD>" + label[1]
 
 
 def ParLoc(line):
