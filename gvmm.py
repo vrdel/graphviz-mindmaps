@@ -998,6 +998,10 @@ def PostAttrProcLabel(label, ntype, vrbt, draw):
             if i >= 1 and "</TD>" in label[i]:
                 label[i] = label[i].replace("</TD>", "</FONT></U></B></TD>")
                 break
+    for i, v in enumerate(label):
+        if '---' in label[i]:
+            label[i-1] = label[i-1].replace("<TR><TD>", '<TR><TD></TD></TR>')
+            label[i] = label[i].replace("---</TD></TR>", "<HR/><TR><TD></TD></TR>")
 
 
 def PreAttrProcLabel(label, ntype):
