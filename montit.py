@@ -51,7 +51,7 @@ def TitleImg(argholder):
     exe = "gm convert '%s' -mattecolor black -frame 5x5+0+0 -gravity south \
         -background '#a0a0a0' -extent %dx%d+0-15 -pointsize %d -draw 'rectangle 10,10 %i,%i' \
         -font /usr/share/fonts/dejavu/DejaVuSansCondensed-Bold.ttf -fill white -gravity north \
-        -monitor -draw \"text 0,%d '%s'\" %s" % (InImg, im.size[0] + 30, im.size[1] + SpliceSize, \
+        -monitor -draw \"text 0,%d '%s'\" '%s'" % (InImg, im.size[0] + 30, im.size[1] + SpliceSize, \
                                         PointSize, im.size[0] + 20 - 1, SpliceSize - 15, PointSize + 7, \
                                         argholder.ImgTitle, OutImg)
 

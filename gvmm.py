@@ -387,7 +387,7 @@ def WriteImg(argholder):
     subprocess.call("convert -shave 2x2 %s %s" % (gvroot + argholder.jpgname, gvroot + argholder.jpgname), shell=True)
 
     if not notitle:
-        subprocess.call("montit.py -s s -t '%s' %s" % (title, gvroot + argholder.jpgname), shell=True)
+        subprocess.call("montit.py -s s -t '%s' '%s'" % (title, gvroot + argholder.jpgname), shell=True)
 
     if argholder.scale:
         ScaleImg(argholder)
