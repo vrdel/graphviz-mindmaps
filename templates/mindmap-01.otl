@@ -1,0 +1,113 @@
+# mindmap-01
+	: fname=mindmap-01.jpg notitle
+	# edge ends
+		:
+		# edgra
+			: edgra 
+		# edggo
+			: edggo
+		# edgyt8dm
+			: edgyt8m
+	# nodes
+		:
+		# colors
+		# ---
+		# edgt
+			: edgt 
+			# cgreen
+				: cgreen
+			# cred
+				: cred
+			# cblue
+				: cblue
+			# ccyan
+				: ccyan
+			# corang
+				: corang
+			# cyello
+				: cyello
+			# cpink
+				: cpink
+		# types
+		# ---
+		# edgd
+			: edgd
+			# title
+				: title
+			# comment
+				: commen 
+			# quest
+				: quest
+			# impor
+				: impor
+			# impog
+				: impog
+			# impob
+				: impob
+			# term
+				: term
+			# date
+				: date
+			# link
+				: link
+			# verbatim
+				: verbatim
+				: 
+				: foo bar
+				:
+			# draw
+				: draw
+				:
+				:  +-----------------+
+				:  |   ovo je neki   |
+				:  |    jednostavni  |
+				:  |    drawing      |
+				:  +-----------------+
+				:           |
+				:           |
+				:           |
+				:         -----
+				:
+		# multiline
+		# ---
+		# line1; line2
+		# ---
+		# edgl
+			: edgl
+			# syntax
+				: verbatim
+				:
+				: multiline
+				: --- 
+				: line1; line2
+				: ---
+				: edgl
+				:
+	# subgraphs
+		:
+		# sgr'ovo je title'
+			: sgr'ovo je title'
+			# commen
+				: commen
+			# commen
+				: commen
+		# sgpd'ovo je title'
+			: sgpd'ovo je title'
+			# commen
+				: commen
+			# commen
+				: commen
+			# primijeti kako je border dashed
+				: commen
+		# start subgrapha s title
+		# ---
+		# sggtstart"title"
+			: commen sggtstart"title"
+			# primijeti dotted border
+				:
+		# nesto izmedju
+			: commen
+		# end subgrapha
+		# ---
+		# sggtend"title"
+			: commen sggtend
