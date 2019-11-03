@@ -32,36 +32,46 @@
 		# ---
 		# edgd
 			: edgd
-			# title
-				: title
-			# comment
-				: commen 
-			# quest
-				: quest
-			# impor
-				: impor
-			# impog
-				: impog
-			# impob
-				: impob
-			# term
-				: term
-			# date
-				: date
-			# link
-				: link
-			# verbatim
-				: verbatim
-				: 
-				: foo bar
+			# regular text nodes
 				:
+				# comment
+					: commen 
+				# underl
+					: underl
+				# verbatim
+					: verbatim
+					: 
+					: foo bar
+					:
+			# emphasized
+				:
+				# quest
+					: quest
+				# title
+					: title
+				# example
+					: example
+				# term
+					: term
+				# date
+					: date
+				# link
+					: link
+			# important
+				:
+				# impor
+					: impor
+				# impog
+					: impog
+				# impob
+					: impob
 			# draw
 				: draw
 				:
 				:  +-----------------+
-				:  |   ovo je neki   |
-				:  |    jednostavni  |
-				:  |    drawing      |
+				:  |   this is some  |
+				:  |     simple      |
+				:  |     drawing     |
 				:  +-----------------+
 				:           |
 				:           |
@@ -85,27 +95,27 @@
 				:
 	# subgraphs
 		:
-		# sgr'ovo je title'
-			: sgr'ovo je title'
+		# sgr'this is title'
+			: sgr'this is a title'
 			# commen
 				: commen
 			# commen
 				: commen
-		# sgpd'ovo je title'
-			: sgpd'ovo je title'
+		# sgpd'this is title'
+			: sgpd'this is a title'
 			# commen
 				: commen
 			# commen
 				: commen
-			# primijeti kako je border dashed
-				: commen
+			# notice dashed border
+				: w2r
 		# start subgrapha s title
 		# ---
 		# sggtstart"title"
 			: commen sggtstart"title"
-			# primijeti dotted border
-				:
-		# nesto izmedju
+			# notice dotted border
+				: w2r underl
+		# something in between 
 			: commen
 		# end subgrapha
 		# ---
