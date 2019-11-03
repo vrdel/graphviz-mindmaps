@@ -366,7 +366,7 @@ def SendRestartMSG(sockwildcard, sockcfg=None):
 
 
 def ScaleImg(argholder):
-    cmd = "convert -scale %s%% %s %s" % (argholder.scale, gvroot + argholder.jpgname, gvroot + argholder.jpgname)
+    cmd = "gm convert -scale %s%% %s %s" % (argholder.scale, gvroot + argholder.jpgname, gvroot + argholder.jpgname)
     subprocess.call(cmd, shell=True)
 
 
@@ -384,7 +384,7 @@ def WriteImg(argholder):
     proc = subprocess.Popen(['dot', '-Tjpg', '-o', gvroot + argholder.jpgname], stdin = subprocess.PIPE)
     proc.communicate(dotbuf)
 
-    subprocess.call("convert -shave 2x2 %s %s" % (gvroot + argholder.jpgname, gvroot + argholder.jpgname), shell=True)
+    subprocess.call("gm convert -shave 2x2 %s %s" % (gvroot + argholder.jpgname, gvroot + argholder.jpgname), shell=True)
 
     if not notitle:
         subprocess.call("montit.py -s s -t '%s' '%s'" % (title, gvroot + argholder.jpgname), shell=True)
