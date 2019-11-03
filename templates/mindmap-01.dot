@@ -21,6 +21,74 @@ digraph G {
 		color="#efefef";
 
 		node1[fontsize="24" margin="0.5" shape=cds style=radial color="#000000" fillcolor="#dfdfdf" gradientangle="90" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>mindmap-01</TD></TR></TABLE>>];
+		subgraph cluster104 {
+			style = invis;
+			subgraph cluster10403 {
+				style = invis;
+				subgraph cluster1040301 {
+					style = invis;
+					subgraph cluster104030101 {
+						style = invis;
+						node104030101[shape=component fontname="Dejavu Sans Mono" style="radial" margin="0.15,0.15" fillcolor="#dfeafd" color="#8a8a8a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD ALIGN="left"><B><U><FONT>syntax</FONT></U></B></TD></TR><TR><TD ALIGN="left"> line1</TD></TR><TR><TD ALIGN="left"> line2</TD></TR><TR><TD ALIGN="left"> line3</TD></TR><TR><TD ALIGN="left">  :&nbsp;l1mr&nbsp;l2mg&nbsp;l3my</TD></TR><TR><TD ALIGN="left"></TD></TR><TR><TD ALIGN="left"></TD></TR></TABLE>>];
+					}
+					node1040301[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD BGCOLOR="#FF8080">line1</TD></TR><TR><TD BGCOLOR="#8BFF80">line2</TD></TR><TR><TD BGCOLOR="#FFF180">line3&nbsp;</TD></TR></TABLE>>];
+				}
+				node10403[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>marker</TD></TR><TR><TD>lines&nbsp;</TD></TR></TABLE>>];
+			}
+			subgraph cluster10402 {
+				style = invis;
+				subgraph cluster1040203 {
+					style = invis;
+					subgraph cluster104020301 {
+						style = invis;
+						node104020301[shape=component fontname="Dejavu Sans Mono" style="radial" margin="0.15,0.15" fillcolor="#dfeafd" color="#8a8a8a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD ALIGN="left"><B><U><FONT>syntax</FONT></U></B></TD></TR><TR><TD ALIGN="left"> individual&nbsp;words</TD></TR><TR><TD ALIGN="left"> spreaded&nbsp;across</TD></TR><TR><TD ALIGN="left"> multiple&nbsp;lines</TD></TR><TR><TD ALIGN="left">  :&nbsp;l1w1g&nbsp;l1w2b&nbsp;l3w1c&nbsp;l3w2p</TD></TR><TR><TD ALIGN="left"></TD></TR><TR><TD ALIGN="left"></TD></TR></TABLE>>];
+					}
+					node1040203[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD><B><FONT COLOR="#027b10">individual</FONT></B>&nbsp;<B><FONT COLOR="#151e94">words</FONT></B></TD></TR><TR><TD>spreaded&nbsp;across</TD></TR><TR><TD><B><FONT COLOR="#00948c">multiple</FONT></B>&nbsp;<B><FONT COLOR="#94008b">lines</FONT></B>&nbsp;</TD></TR></TABLE>>];
+				}
+				subgraph cluster1040202 {
+					style = invis;
+					subgraph cluster104020201 {
+						style = invis;
+						node104020201[shape=component fontname="Dejavu Sans Mono" style="radial" margin="0.15,0.15" fillcolor="#dfeafd" color="#8a8a8a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD ALIGN="left"><B><U><FONT>syntax</FONT></U></B></TD></TR><TR><TD ALIGN="left"> individual&nbsp;words</TD></TR><TR><TD ALIGN="left">  :&nbsp;w1g&nbsp;w2b</TD></TR><TR><TD ALIGN="left"></TD></TR><TR><TD ALIGN="left"></TD></TR></TABLE>>];
+					}
+					node1040202[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD><B><FONT COLOR="#027b10">individual</FONT></B>&nbsp;<B><FONT COLOR="#151e94">words</FONT></B>&nbsp;</TD></TR></TABLE>>];
+				}
+				subgraph cluster1040201 {
+					style = invis;
+					subgraph cluster104020101 {
+						style = invis;
+						subgraph cluster10402010101 {
+							style = invis;
+							node10402010101[shape=component fontname="Dejavu Sans Mono" style="radial" margin="0.15,0.15" fillcolor="#dfeafd" color="#8a8a8a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD ALIGN="left"><B><U><FONT>syntax</FONT></U></B></TD></TR><TR><TD ALIGN="left"> line1</TD></TR><TR><TD ALIGN="left"> line2</TD></TR><TR><TD ALIGN="left">  :&nbsp;l1r&nbsp;l2p</TD></TR><TR><TD ALIGN="left"></TD></TR><TR><TD ALIGN="left"></TD></TR></TABLE>>];
+						}
+						node104020101[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD><B><FONT COLOR="#B30000">line1</FONT></B></TD></TR><TR><TD><B><FONT COLOR="#94008b">line2&nbsp;</FONT></B></TD></TR></TABLE>>];
+					}
+					node1040201[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>lines&nbsp;</TD></TR></TABLE>>];
+				}
+				node10402[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>color&nbsp;</TD></TR></TABLE>>];
+			}
+			subgraph cluster10401 {
+				style = invis;
+				subgraph cluster1040102 {
+					style = invis;
+					subgraph cluster104010201 {
+						style = invis;
+						node104010201[shape=component fontname="Dejavu Sans Mono" style="radial" margin="0.15,0.15" fillcolor="#dfeafd" color="#8a8a8a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD ALIGN="left"><B><U><FONT>syntax</FONT></U></B></TD></TR><TR><TD ALIGN="left"> arrow&nbsp;&#9552;&gt;</TD></TR><TR><TD ALIGN="left"></TD></TR><TR><TD ALIGN="left"></TD></TR></TABLE>>];
+					}
+					node1040102[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>arrow&nbsp;<FONT FACE="FontAwesome" POINT-SIZE="13" COLOR="#6E1B31">&#xf061;</FONT>&nbsp;</TD></TR></TABLE>>];
+				}
+				subgraph cluster1040101 {
+					style = invis;
+					subgraph cluster104010101 {
+						style = invis;
+						node104010101[shape=component fontname="Dejavu Sans Mono" style="radial" margin="0.15,0.15" fillcolor="#dfeafd" color="#8a8a8a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD ALIGN="left"><B><U><FONT>syntax</FONT></U></B></TD></TR><TR><TD ALIGN="left"> arrow&nbsp;-&gt;</TD></TR><TR><TD ALIGN="left"></TD></TR><TR><TD ALIGN="left"></TD></TR></TABLE>>];
+					}
+					node1040101[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>arrow&nbsp;<FONT FACE="FontAwesome" POINT-SIZE="13" COLOR="#6E1B31">&#xf04e;</FONT>&nbsp;</TD></TR></TABLE>>];
+				}
+				node10401[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>implication&nbsp;</TD></TR></TABLE>>];
+			}
+			node104[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>node&nbsp;text&nbsp;</TD></TR></TABLE>>];
+		}
 		subgraph cluster103 {
 			style = invis;
 			subgraph clustercolored10305 {
@@ -29,7 +97,7 @@ digraph G {
 				bgcolor = "#00FF0016";
 			subgraph cluster10305 {
 				style = invis;
-				node10305[shape=oval fontname="Comic Sans MS" fontsize="16" margin="0.1" style="radial" fillcolor="#dfeafd" color="#8a8a8a" label=<<I><TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>end&nbsp;subgrapha</TD></TR><TR><TD></TD></TR><HR/><TR><TD></TD></TR><TR><TD>sggtend"title"&nbsp;</TD></TR></TABLE></I>>];
+				node10305[shape=box style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>end&nbsp;subgrapha</TD></TR><TR><TD></TD></TR><HR/><TR><TD></TD></TR><TR><TD>sggtend"title"&nbsp;</TD></TR></TABLE>>];
 			}
 			subgraph cluster10304 {
 				style = invis;
@@ -44,7 +112,7 @@ digraph G {
 					style = invis;
 					node1030301[color="#b8b8b8" fontcolor="#000000" shape=underline  label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>notice&nbsp;<B><FONT COLOR="#B30000">dotted</FONT></B>&nbsp;border&nbsp;</TD></TR></TABLE>>];
 				}
-				node10303[shape=oval fontname="Comic Sans MS" fontsize="16" margin="0.1" style="radial" fillcolor="#dfeafd" color="#8a8a8a" label=<<I><TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>start&nbsp;subgrapha&nbsp;s&nbsp;title</TD></TR><TR><TD></TD></TR><HR/><TR><TD></TD></TR><TR><TD>sggtstart"title"&nbsp;</TD></TR></TABLE></I>>];
+				node10303[shape=box margin="0.2,0.2" style="rounded,radial" fontsize="16" fillcolor="#f4f4f4" color="#6a6a6a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>start&nbsp;subgrapha&nbsp;s&nbsp;title</TD></TR><TR><TD></TD></TR><HR/><TR><TD></TD></TR><TR><TD>sggtstart"title"&nbsp;</TD></TR></TABLE>>];
 			label = <<TABLE CELLBORDER="0" CELLPADDING="3" CELLSPACING="3" BORDER="0"><TR><TD BGCOLOR="#E9ED5F" COLOR="#000000"><U>title</U></TD></TR></TABLE>>
 			}
 			}
@@ -124,6 +192,10 @@ digraph G {
 				}
 				subgraph cluster1020202 {
 					style = invis;
+					subgraph cluster102020207 {
+						style = invis;
+						node102020207[shape=rarrow fontcolor="#000000" margin="0.20" style="filled" fillcolor="#4A90D9" fontcolor="#ffffff" color="#4A90D9" label=<<B><TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD>check&nbsp;this&nbsp;</TD></TR></TABLE></B>>];
+					}
 					subgraph cluster102020206 {
 						style = invis;
 						node102020206[shape=component gradientangle="270" style="filled" margin="0.15,0.15,0.15" fillcolor="#edf1ff;0.93:#3283c9" color="#8a8a8a" label=<<TABLE CELLBORDER="0" CELLSPACING="0" BORDER="0"><TR><TD><FONT FACE="FontAwesome" COLOR="#B32727" POINT-SIZE="25">&#xf0c1;</FONT></TD></TR><TR><TD>link&nbsp;</TD></TR></TABLE>>];
@@ -220,6 +292,23 @@ digraph G {
 		}
 
 
+					node1040301:e -> node104030101:w;
+				node10403:e -> node1040301:w;
+			node104:e -> node10403:w;
+					node1040203:e -> node104020301:w;
+				node10402:e -> node1040203:w;
+					node1040202:e -> node104020201:w;
+				node10402:e -> node1040202:w;
+						node104020101:e -> node10402010101:w;
+					node1040201:e -> node104020101:w;
+				node10402:e -> node1040201:w;
+			node104:e -> node10402:w;
+					node1040102:e -> node104010201:w;
+				node10401:e -> node1040102:w;
+					node1040101:e -> node104010101:w;
+				node10401:e -> node1040101:w;
+			node104:e -> node10401:w;
+		node1:e -> node104:w;
 			node103:e -> node10305:w;
 			node103:e -> node10304:w;
 				node10303:e -> node1030301:w;
@@ -239,6 +328,7 @@ digraph G {
 					node1020203:e -> node102020302:w[style="bold" color="#64AD54"];
 					node1020203:e -> node102020301:w[style="bold" color="#AD5459"];
 				node10202:e -> node1020203:w;
+					node1020202:e -> node102020207:w;
 					node1020202:e -> node102020206:w;
 					node1020202:e -> node102020205:w;
 					node1020202:e -> node102020204:w;

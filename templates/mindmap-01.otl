@@ -57,6 +57,8 @@
 					: date
 				# link
 					: link
+				# check this
+						: check
 			# important
 				:
 				# impor
@@ -112,7 +114,7 @@
 		# start subgrapha s title
 		# ---
 		# sggtstart"title"
-			: commen sggtstart"title"
+			: sggtstart"title"
 			# notice dotted border
 				: w2r underl
 		# something in between 
@@ -120,4 +122,71 @@
 		# end subgrapha
 		# ---
 		# sggtend"title"
-			: commen sggtend
+			: sggtend node
+	# node text
+		:
+		# implication
+			:
+			# arrow ->
+				:
+				# syntax
+					: verbatim
+					: 
+					: arrow -> 
+					:
+			# arrow => 
+				:
+				# syntax
+					: verbatim
+					: 
+					: arrow => 
+					:
+		# color 
+			:
+			# lines
+				:
+				# line1
+				# line2
+					: l1r l2p
+					# syntax
+						: verbatim
+						: 
+						: line1
+						: line2
+						:  : l1r l2p
+						:
+			# individual words
+				: w1g w2b
+				# syntax
+					: verbatim
+					: 
+					: individual words
+					:  : w1g w2b
+					:
+			# individual words
+			# spreaded across
+			# multiple lines
+				: l1w1g l1w2b l3w1c l3w2p
+				# syntax
+					: verbatim
+					: 
+					: individual words 
+					: spreaded across
+					: multiple lines
+					:  : l1w1g l1w2b l3w1c l3w2p 
+					: 
+		# marker
+		# lines
+			:
+			# line1
+			# line2
+			# line3
+				: l1mr l2mg l3my
+				# syntax
+					: verbatim
+					: 
+					: line1
+					: line2
+					: line3
+					:  : l1mr l2mg l3my
+					:
