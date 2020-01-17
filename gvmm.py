@@ -1092,8 +1092,10 @@ def main():
                                     v.append(linesall[j].lstrip("\t|").rstrip())
                                 elif "\t;" in linesall[j]:
                                     v.append(linesall[j].lstrip("\t;").rstrip())
+                                v[-1] = v[-1].replace("<", "&lt;")
+                                v[-1] = v[-1].replace(">", "&gt;")
                                 v[-1] = v[-1].replace(" ", "<WHITESP>")
-                                v[-1] = v[-1].replace("\t", "<TAB>")
+                                v[-1] = v[-1].replace(" ", "<WHITESP>")
                                 v[-1] = v[-1] + "<BR/> "
                                 j += 1
                             else:
