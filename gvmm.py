@@ -37,7 +37,7 @@ nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial colo
         "example" : "shape=note fontname=\"%s\" gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15\" fillcolor=\"#18A828;0.15:#fbfbfb\" color=\"#8a8a8a\"" % (font['mono']),
         "draw" : "shape=component fontname=\"%s\" style=\"radial\" margin=\"0.15,0.15\" fillcolor=\"%s\" color=\"#8a8a8a\"" % (font['mono'], vrbtcolors['cwhite']),
         "verbatim" : "shape=component fontname=\"%s\" style=\"radial\" margin=\"0.15,0.15\" fillcolor=\"%s\" color=\"#8a8a8a\"" % (font['mono'], vrbtcolors['def']),
-        "commen" : "shape=oval fontname=\"%s\" fontsize=\"%s\" margin=\"0.1\" style=\"radial\" fillcolor=\"%s\" color=\"#8a8a8a\"" % (font['comic'], fontsize['l'], vrbtcolors['def']),
+        "commen" : "shape=note fontname=\"%s\" fontsize=\"%s\" margin=\"0.2\" style=\"radial\" fillcolor=\"#FFF09A\" color=\"#8a8a8a\"" % (font['comic'], fontsize['l']),
         "term" : "shape=note fontname=\"%s\" gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15\" fillcolor=\"#fbfbfb\" color=\"#8a8a8a\"" % (font['mono']),
         "check" : "shape=rarrow fontcolor=\"%s\" margin=\"0.20\" style=\"filled\" fillcolor=\"#4A90D9\" fontcolor=\"#ffffff\" color=\"#4A90D9\"" % (fontcolor['def']),
         "todo" : "shape=box fontcolor=\"%s\" margin=\"0.30\" style=\"filled, diagonals\" fillcolor=\"#FFF09A\" fontcolor=\"#404040\" color=\"#404040\"" % (fontcolor['def']),
