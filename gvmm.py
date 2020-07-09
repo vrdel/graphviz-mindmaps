@@ -31,6 +31,7 @@ nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial colo
         "def" : "shape=underline fontcolor=\"%s\" color=\"#b8b8b8\"" % (fontcolor['def']),
         "underl" : "color=\"#b8b8b8\" fontcolor=\"%s\" shape=underline " % (fontcolor['def']),
         "node" : "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#f4f4f4\" color=\"#6a6a6a\"" % (fontsize['l']),
+        "list" : "shape=rect style=\"radial\" fontsize=\"%s\" fillcolor=\"#eaeaea\" color=\"#6a6a6a\"" % (fontsize['l']),
         "title" : "shape=doubleoctagon fontname=\"%s\" fontsize=\"%s\" style=\"radial\" fillcolor=\"#abffff\" color=\"#8a8a8a\"" % (font['comicb'], fontsize['l']),
         "date" : "shape=component gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15,0.15\" fillcolor=\"#fbfbfb;0.93:#B30E0E\" color=\"#8a8a8a\"",
         "link" : "shape=component gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15,0.15\" fillcolor=\"#edf1ff;0.93:#3283c9\" color=\"#8a8a8a\"",
@@ -1008,6 +1009,9 @@ def PostAttrProcLabel(label, ntype, vrbt, draw):
             if '---' in label[i]:
                 label[i-1] = label[i-1].replace("<TR><TD>", '<TR><TD></TD></TR>')
                 label[i] = label[i].replace("---</TD></TR>", "<HR/><TR><TD></TD></TR>")
+    if ntype == "list":
+        for i in range(len(label)):
+            label[i] = label[i].replace("<TD", "<TD ALIGN=\"left\"")
 
 
 def PreAttrProcLabel(label, ntype):
