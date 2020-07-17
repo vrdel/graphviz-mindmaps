@@ -1006,7 +1006,10 @@ def PostAttrProcLabel(label, ntype, vrbt, draw):
                 break
     if not vrbt and not draw:
         for i, v in enumerate(label):
-            if '---' in label[i]:
+            if '----' in label[i]:
+                label[i-1] = label[i-1].replace("<TR><TD>", '<TR><TD></TD></TR>')
+                label[i] = label[i].replace("----</TD></TR>", "<HR/><TR><TD></TD></TR>")
+            elif '---' in label[i]:
                 label[i-1] = label[i-1].replace("<TR><TD>", '<TR><TD></TD></TR>')
                 label[i] = label[i].replace("---</TD></TR>", "<HR/><TR><TD></TD></TR>")
     if ntype == "list":
