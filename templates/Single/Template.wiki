@@ -1,0 +1,202 @@
+= Template =
+%title Montage Mindmaps Template
+
+== mindmap ==
+
+{{mymm:mindmap-01.jpg}}
+
+== otl ==
+
+{{{otl
+# mindmap-01
+	: fname=mindmap-01.jpg notitle
+	# edge ends
+		:
+		# edgra
+			: edgra
+		# edggo
+			: edggo
+		# edgyt8dm
+			: edgyt8m
+	# nodes
+		:
+		# colors
+		# ---
+		# edgt
+			: edgt
+			# cgreen
+				: cgreen
+			# cred
+				: cred
+			# cblue
+				: cblue
+			# ccyan
+				: ccyan
+			# corang
+				: corang
+			# cyello
+				: cyello
+			# cpink
+				: cpink
+		# types
+		# ---
+		# edgd
+			: edgd
+			# regular text nodes
+				:
+				# comment
+					: commen
+				# underl
+					: underl
+				# verbatim
+					: verbatim
+					:
+					: foo bar
+					:
+			# emphasized
+				:
+				# quest
+					: quest
+				# title
+					: title
+				# example
+					: example
+				# term
+					: term
+				# date
+					: date
+				# link
+					: link
+				# check this
+						: check
+			# important
+				:
+				# impor
+					: impor
+				# impog
+					: impog
+				# impob
+					: impob
+			# draw
+				: draw
+				:
+				:  +-----------------+
+				:  |   this is some  |
+				:  |     simple      |
+				:  |     drawing     |
+				:  +-----------------+
+				:           |
+				:           |
+				:           |
+				:         -----
+				:
+		# multiline
+		# ---
+		# line1; line2
+		# ---
+		# edgl
+			: edgl
+			# syntax
+				: verbatim
+				:
+				: multiline
+				: ---
+				: line1; line2
+				: ---
+				: edgl
+				:
+	# subgraphs
+		:
+		# sgr'this is title'
+			: sgr'this is a title'
+			# commen
+				: commen
+			# commen
+				: commen
+		# sgpd'this is title'
+			: sgpd'this is a title'
+			# commen
+				: commen
+			# commen
+				: commen
+			# notice dashed border
+				: w2r
+		# start subgrapha s title
+		# ---
+		# sggtstart"title"
+			: sggtstart"title"
+			# notice dotted border
+				: w2r underl
+		# something in between
+			: commen
+		# end subgrapha
+		# ---
+		# sggtend"title"
+			: sggtend node
+	# node text
+		:
+		# implication
+			:
+			# arrow ->
+				:
+				# syntax
+					: verbatim
+					:
+					: arrow ->
+					:
+			# arrow =>
+				:
+				# syntax
+					: verbatim
+					:
+					: arrow =>
+					:
+		# color
+			:
+			# lines
+				:
+				# line1
+				# line2
+					: l1r l2p
+					# syntax
+						: verbatim
+						:
+						: line1
+						: line2
+						:  : l1r l2p
+						:
+			# individual words
+				: w1g w2b
+				# syntax
+					: verbatim
+					:
+					: individual words
+					:  : w1g w2b
+					:
+			# individual words
+			# spreaded across
+			# multiple lines
+				: l1w1g l1w2b l3w1c l3w2p
+				# syntax
+					: verbatim
+					:
+					: individual words
+					: spreaded across
+					: multiple lines
+					:  : l1w1g l1w2b l3w1c l3w2p
+					:
+		# marker
+		# lines
+			:
+			# line1
+			# line2
+			# line3
+				: l1mr l2mg l3my
+				# syntax
+					: verbatim
+					:
+					: line1
+					: line2
+					: line3
+					:  : l1mr l2mg l3my
+}}}
