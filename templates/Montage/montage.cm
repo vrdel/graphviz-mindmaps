@@ -4,4 +4,8 @@ auto {
 	mindmap-01.jpg
 	[newrow]
 	mindmap-01.jpg + mindmap-01.jpg
+	auto {
+		title = "joint submontage"
+		mindmap-01.jpg + mindmap-01.jpg
+	}
 }
