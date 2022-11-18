@@ -9,7 +9,10 @@ echo $geom | grep -q "[0-9]\+x[0-9]\+" || geom=$GEOM
 IFS=""
 for a in $*
 do
-	if echo $a | grep -q "\""
+  if ! echo $a | egrep -q '^\"?(\~|\/)'
+	then
+		args="$args $(echo file://\"$PWD/$a\")"
+	elif echo $a | grep -q "\""
 	then
 		args="$args $(echo file://$a)"
 	else
