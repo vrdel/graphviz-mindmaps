@@ -32,7 +32,7 @@ function run_new_container()
 	ipanema:5000/galapix:latest $*
 }
 
-if docker ps -f name=${CONTNAME} -q | grep -q '[0-9a-z]*'
+if docker ps -f name=${CONTNAME} -f status=running -q | grep -q '[0-9a-z]*'
 then
 	run_existing_container $*
 else
