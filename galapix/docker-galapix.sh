@@ -10,6 +10,7 @@ function run_existing_container()
 
 function run_new_container()
 {
+	docker rm ${CONTNAME} &>/dev/null; \
 	docker run \
 	--cap-add=SYS_ADMIN \
 	--device /dev/snd \
