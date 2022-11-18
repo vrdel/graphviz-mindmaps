@@ -8,10 +8,15 @@ echo $geom | grep -q "[0-9]\+x[0-9]\+" || geom=$GEOM
 
 IFS=""
 for a in $*
-do 
-	args="$args $(echo file://\"$a\")"
+do
+  if ! echo $a | egrep -q '^(\~|\/)'
+	then
+		args="$args $(echo file://\"$PWD/$a\")"
+	else
+		args="$args $(echo file://\"$a\")"
+	fi
 done
 
 rm -f ~/.galapix/other/cache3.sqlite3
 ulimit -c 0
-echo $args | xargs galapix.sdl view -g $geom -d ~/.galapix/other/ --title "galapix: $args" &>/dev/null
+echo $args | xargs docker-galapix.sh galapix.sdl view -g $geom -d ~/.galapix/other/ --title "galapix: $args" &>/dev/null
