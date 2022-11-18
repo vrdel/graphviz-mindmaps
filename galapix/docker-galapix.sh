@@ -24,7 +24,7 @@ function run_new_container()
 	-v /etc/localtime:/etc/localtime \
 	-v /tmp/.X11-unix:/tmp/.X11-unix \
 	-v $HOME/.zsh_history:/home/user/.zsh_history \
-	-h docker-centos7 \
+	-h docker-galapix \
 	--net host \
 	--name ${CONTNAME} \
 	--rm \
