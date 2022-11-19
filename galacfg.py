@@ -51,7 +51,7 @@ def start(dirp, dbp, geom, title):
 
 		conn.close()
 
-	exestring = "galapix.sdl -g %s -d %s --title %s view" % (geom, dbp, title)
+	exestring = "docker-galapix.sh galapix.sdl -g %s -d %s --title %s view" % (geom, dbp, title)
 	exestring += ' ' + dirp
 
 	return subprocess.Popen(exestring, shell=True)
