@@ -25,8 +25,9 @@ function run_new_container()
 	-v /etc/localtime:/etc/localtime \
 	-v /tmp/.X11-unix:/tmp/.X11-unix \
 	-v $HOME/.zsh_history:/home/user/.zsh_history \
-	-h docker-galapix \
+	-h docker-${CONTNAME} \
 	--net host \
+	-u user \
 	--name ${CONTNAME} \
 	--rm \
 	ipanema:5000/galapix:latest $*
