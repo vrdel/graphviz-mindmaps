@@ -1,7 +1,7 @@
 #!/bin/bash
 
 IFS=""
-CONTNAME="galapix"
+[ -z $CONTNAME ] && CONTNAME="galapix"
 
 docker rm ${CONTNAME} &>/dev/null; \
 docker run \
@@ -17,7 +17,7 @@ docker run \
 -v /etc/localtime:/etc/localtime \
 -v /tmp/.X11-unix:/tmp/.X11-unix \
 -v $HOME/.zsh_history:/home/user/.zsh_history \
--h docker-galapix \
+-h docker-${CONTNAME} \
 --net host \
 -u user \
 --name ${CONTNAME} \

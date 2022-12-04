@@ -1,7 +1,7 @@
 #!/bin/bash
 
 IFS=""
-CONTNAME="galapix"
+[ -z $CONTNAME ] && CONTNAME="galapix"
 
 function run_existing_container()
 {
