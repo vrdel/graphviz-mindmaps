@@ -25,7 +25,7 @@ function run_new_container()
 	-v /etc/localtime:/etc/localtime \
 	-v /tmp/.X11-unix:/tmp/.X11-unix \
 	-v $HOME/.zsh_history:/home/user/.zsh_history \
-	-h docker-${CONTNAME} \
+	-h docker-galapix \
 	--net host \
 	-u user \
 	--name ${CONTNAME} \
@@ -33,7 +33,7 @@ function run_new_container()
 	ipanema:5000/galapix:latest $*
 }
 
-if docker ps -f name=${CONTNAME} -f status=running -q | grep -q '[0-9a-z]*'
+if docker ps -f name="^/${CONTNAME}$" -f status=running -q | grep -q '[0-9a-z]*'
 then
 	run_existing_container $*
 else
