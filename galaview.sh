@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 GEOM=1600x900
 

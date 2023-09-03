@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/daniel/.pyenv/versions/vrdel-apps-py27/bin/python
 
 if __name__ != "__main__":
 	symb = {"smile" : "&#9787;",

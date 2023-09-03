@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/daniel/.pyenv/versions/vrdel-apps-py27/bin/python
 
 import pyinotify, os, sys, signal, socket, select, errno, multiprocessing
 import subprocess, time, re, threading, thread, ConfigParser, fcntl
