@@ -194,3 +194,25 @@
 					: line3
 					:  : l1mr l2mg l3my
 					:
+	# fontawesome icons
+		:
+		# symb=smile:glass:music:search
+			: symb=smile:glass:music:search
+			# symb=envelope:heart:star:star-o
+				: symb=envelope:heart:star:star-o
+				# symb=user:film:th-large:th:th-list
+					: symb=user:film:th-large:th:th-list
+					# symb=check:times:search-plus:search-minus
+						: symb=check:times:search-plus:search-minus
+		# symb=power-off:signal:cog:trash-o
+			: symb=power-off:signal:cog:trash-o
+			# symb=home:file-o:clock-o
+				: symb=home:file-o:clock-o
+				# symb=road:download:arrow-circle-o-down
+				# :arrow-circle-o-up
+					: symb=road:download:arrow-circle-o-down:arrow-circle-o-up
+					# symb=inbox:play-circle-o:repeat:refresh
+						: symb=inbox:play-circle-o:repeat:refresh
+		# check fontawesome-codes.md
+		# for more
+			: check
