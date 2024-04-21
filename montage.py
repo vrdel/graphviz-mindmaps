@@ -61,9 +61,13 @@ def SingleMontage(l, nummini = None):
         if not mini:
             t = curdir.split("/")
             l = t[len(t) - 1]
-            filename = l + "_" + argholder.cmfile[:-3] + ".jpg"
+            cml = len(argholder.cmfile)
+            tind = cml - argholder.cmfile.rfind('.')
+            filename = l + "_" + argholder.cmfile[:-tind] + ".jpg"
         elif mini and nummini:
-            filename = argholder.cmfile[:-3] + "-m%i" % (nummini) + ".jpg"
+            cml = len(argholder.cmfile)
+            tind = cml - argholder.cmfile.rfind('.')
+            filename = argholder.cmfile[:-tind] + "-m%i" % (nummini) + ".jpg"
         orgfilename = orgfilename.split("auto")[0] + filename
     if m.group(2):
         title = m.group(2)
@@ -133,7 +137,9 @@ def MultiMontage(l):
                     left = minifilenames[-1]
                     del(minifilenames[-1])
                 else:
-                    arg = "%s-m%i.jpg { " % (argholder.cmfile[:-3], j)
+                    cml = len(argholder.cmfile)
+                    tind = cml - argholder.cmfile.rfind('.')
+                    arg = "%s-m%i.jpg { " % (argholder.cmfile[:-tind], j)
                     arg += " ".join(minifilenames) + " }"
                     del(minifilenames[:])
                     mini = False
@@ -151,7 +157,9 @@ def MultiMontage(l):
                 if re.match(".*?-m[0-9]+\.", minifilenames[-1]):
                     minifilenames[-1] = minifilenames[-1] + i[2].strip()
                 else:
-                    arg = "%s-m%i.jpg { " % (argholder.cmfile[:-3], j)
+                    cml = len(argholder.cmfile)
+                    tind = cml - argholder.cmfile.rfind('.')
+                    arg = "%s-m%i.jpg { " % (argholder.cmfile[:-tind], j)
                     arg += " ".join(minifilenames) + " }"
                     del(minifilenames[:])
                     mini = False
