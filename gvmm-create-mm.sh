@@ -6,7 +6,7 @@ TEMPLATE_MONTAGE="${HOME}/my_work/gvmm/templates/Montage/"
 TEMPLATE_SINGLE="${HOME}/my_work/gvmm/templates/Single/"
 
 otl_mindmap="mindmap-01.otl"
-montage="montage.cm"
+montage="montage.gmm"
 wiki="Template.wiki"
 makefile="Makefile"
 let scale=0
@@ -20,7 +20,7 @@ usage()
   printf "       [-s]                                  - create single mindmap from templates\n" >&2
   printf "       [-m]                                  - create montage from templates\n" >&2
   printf "       [-p]                                  - filename of otl mindmap (mindmap-01.otl)\n" >&2
-  printf "       [-g]                                  - filename of montage (montage.cm)\n" >&2
+  printf "       [-g]                                  - filename of montage (montage.gmm)\n" >&2
   printf "       [-w]                                  - filename of vimwiki (Template.wiki)\n" >&2
   printf "       [-f]                                  - filename of Makefile (Makefile)\n" >&2
   printf "       [-l]                                  - scale final montage (60%%)\n" >&2
@@ -111,12 +111,12 @@ then
   echo sed -i -r "s/Template.wiki/${wiki}/g" ./"${makefile}"
   sed -i -r "s/Template.wiki/${wiki}/g" ./"${makefile}"
 
-  echo cp "${TEMPLATE_MONTAGE}"montage.cm ./"${montage}"
-  cp "${TEMPLATE_MONTAGE}"montage.cm ./"${montage}"
+  echo cp "${TEMPLATE_MONTAGE}"montage.gmm ./"${montage}"
+  cp "${TEMPLATE_MONTAGE}"montage.gmm ./"${montage}"
   echo sed -i -r "s/mindmap-01/${otl_mindmap%%.*}/g" ./"${montage}"
   sed -i -r "s/mindmap-01/${otl_mindmap%%.*}/g" ./"${montage}"
-  echo sed -i -r "s/montage.cm/${montage}/g" ./"${makefile}"
-  sed -i -r "s/montage.cm/${montage}/g" ./"${makefile}"
+  echo sed -i -r "s/montage.gmm/${montage}/g" ./"${makefile}"
+  sed -i -r "s/montage.gmm/${montage}/g" ./"${makefile}"
 
   if [ "${scale}" -gt 0 ]
   then
