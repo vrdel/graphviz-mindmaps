@@ -566,7 +566,7 @@ def ParseAttributeLine(k, tonode, *args):
                 % (math.sqrt(5/2), 5))
         if m.group(4): edgestyle.append("style=\"%s\"" % (edgestyles[m.group(4)]))
         if m.group(5): edgend.append("arrowhead=\"%s\"" % (edgeends[m.group(5)]))
-        if m.group(6): edglabel.append("label=%s" % m.group(6).strip())
+        if m.group(6): edglabel.append("label=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"")))
 
 
 def ParseOtlname(keyword, line):
