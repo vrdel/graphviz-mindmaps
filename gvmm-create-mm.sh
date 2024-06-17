@@ -66,7 +66,7 @@ do
 done
 
 
-if [ ${creates} -gt 0 ]
+if [ "${creates}" -gt 0 ]
 then
   echo "Creating single otl mindmap..."
 
@@ -76,20 +76,30 @@ then
   echo sed -i -r "s/mindmap-01/${otl_mindmap%%.*}/g" ./"${otl_mindmap}"
   sed -i -r "s/mindmap-01/${otl_mindmap%%.*}/g" ./"${otl_mindmap}"
 
-  echo cp "${TEMPLATE_SINGLE}"Makefile ./"${makefile}"
-  cp "${TEMPLATE_SINGLE}"Makefile ./"${makefile}"
-  sed -i -r "s/mindmap-01/${otl_mindmap%%.*}/g" ./"${makefile}"
+	if [[ "x${makefile}" != "xMakefile" ]]
+	then
+		echo cp "${TEMPLATE_SINGLE}"Makefile ./"${makefile}"
+		cp "${TEMPLATE_SINGLE}"Makefile ./"${makefile}"
+		sed -i -r "s/mindmap-01/${otl_mindmap%%.*}/g" ./"${makefile}"
+	elif [[ "x${makefile}" == "xMakefile" ]]
+	then
+		echo -e "\nAdd target in Makefile\nmm1 = ${otl_mindmap}"
+		echo -e "\$(mm1): step-\$(mm1) step-\$(montage1)"
+		echo -e "step-\$(mm1):\n\tgvmm.py -f \$(mm1) > /dev/null"
+	fi
 
-  echo cp "${TEMPLATE_SINGLE}"Template.wiki ./"${wiki}"
-  cp "${TEMPLATE_SINGLE}"Template.wiki ./"${wiki}"
-  echo sed -i -r "s/mindmap-01/${otl_mindmap%%.*}/g" ./"${wiki}"
-  sed -i -r "s/mindmap-01/${otl_mindmap%%.*}/g" ./"${wiki}"
-  echo sed -i -r "s/Template.wiki/${wiki}/g" ./"${makefile}"
-  sed -i -r "s/Template.wiki/${wiki}/g" ./"${makefile}"
-
+	if [[ "x${wiki}" != "xTemplate.wiki" ]]
+	then
+		echo cp "${TEMPLATE_SINGLE}"Template.wiki ./"${wiki}"
+		cp "${TEMPLATE_SINGLE}"Template.wiki ./"${wiki}"
+		echo sed -i -r "s/mindmap-01/${otl_mindmap%%.*}/g" ./"${wiki}"
+		sed -i -r "s/mindmap-01/${otl_mindmap%%.*}/g" ./"${wiki}"
+		echo sed -i -r "s/Template.wiki/${wiki}/g" ./"${makefile}"
+		sed -i -r "s/Template.wiki/${wiki}/g" ./"${makefile}"
+	fi
 fi
 
-if [ ${createm} -gt 0 ]
+if [ "${createm}" -gt 0 ]
 then
   echo "Creating montage otl mindmaps..."
 
