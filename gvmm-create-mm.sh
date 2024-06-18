@@ -24,6 +24,7 @@ usage()
   printf "       [-w]                                  - filename of vimwiki (Template.wiki)\n" >&2
   printf "       [-f]                                  - filename of Makefile (Makefile)\n" >&2
   printf "       [-l]                                  - scale final montage (60%%)\n" >&2
+  printf "       [-h]                                  - usage\n" >&2
   exit 2
 }
 
@@ -32,7 +33,7 @@ then
     usage
 fi
 
-while getopts 'smp:g:w:f:l:' OPTION
+while getopts 'hsmp:g:w:f:l:' OPTION
 do
     case $OPTION in
         s)
