@@ -569,10 +569,10 @@ def ParseAttributeLine(k, tonode, *args):
         if m.group(7) and m.group(6):
             edgelabeltype = m.group(7)
             if edgelabeltype == 'h':
-                edglabel.append("labelfloat=\"true\" labeldistance=\"6\" headlabel=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"")))
+                edglabel.append("labelfloat=\"true\" labeldistance=\"6\" headlabel=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"").replace(';', '<BR/>')))
             elif edgelabeltype == 'e':
-                edglabel.append("labelfloat=\"true\" labeldistance=\"6\" taillabel=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"")))
-        elif m.group(6): edglabel.append("label=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"")))
+                edglabel.append("labelfloat=\"true\" labeldistance=\"6\" taillabel=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"").replace(';', '<BR/>')))
+        elif m.group(6): edglabel.append("label=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"").replace(';', '<BR/>')))
 
 
 def ParseOtlname(keyword, line):
