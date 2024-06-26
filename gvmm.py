@@ -557,7 +557,7 @@ def ParseAttributeLine(k, tonode, *args):
         elif m.group(5) == "end":
             arrend.update({m.group(2)[3:] : tonode})
 
-    m = re.search('(edg)?([rgbycp])?(t[0-9]+)?([sdtl])?([amovx])?([\'\"].*[\'\"])?', k)
+    m = re.search('(edg)?([rgbycp])?(t[0-9]+)?([sdtl])?([amovx])?([\'\"].*[\'\"])?([he])?', k)
     if m.group(1):
         if m.group(2): edgecolor.append("%s" % (edgecolors[m.group(2)]))
         if m.group(3): edgethick.append("arrowsize=\"%f\" penwidth=\"%i\"" \
@@ -566,7 +566,13 @@ def ParseAttributeLine(k, tonode, *args):
                 % (math.sqrt(5/2), 5))
         if m.group(4): edgestyle.append("style=\"%s\"" % (edgestyles[m.group(4)]))
         if m.group(5): edgend.append("arrowhead=\"%s\"" % (edgeends[m.group(5)]))
-        if m.group(6): edglabel.append("label=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"")))
+        if m.group(7) and m.group(6):
+            edgelabeltype = m.group(7)
+            if edgelabeltype == 'h':
+                edglabel.append("labelfloat=\"true\" labeldistance=\"6\" headlabel=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"")))
+            elif edgelabeltype == 'e':
+                edglabel.append("labelfloat=\"true\" labeldistance=\"6\" taillabel=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"")))
+        elif m.group(6): edglabel.append("label=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"")))
 
 
 def ParseOtlname(keyword, line):
