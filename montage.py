@@ -52,7 +52,10 @@ def SingleMontage(l, nummini = None):
 
     limg = []
     m = re.search("(\s*\+?\s*(?:(?:auto)|(?:[\w_\-\+\d]*\.(?:jpg|png))))\s*\{(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(title\s*=\s*(?:(?:auto)|(?:[\"\'].*?[\"\'])))?(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(size\s*=\s*(?:[\"\']?[smb][\"\']?))?\s*(.*[\w_\-\+\d]*.(jpg|png)\s*\+?.*){1,}\}", l)
-    orgfilename = filename = m.group(1).strip()
+    if argholder.outfile:
+        orgfilename = filename = argholder.outfile
+    else:
+        orgfilename = filename = m.group(1).strip()
     if "+" in filename:
         filename = re.findall("(?:\s*\+?\s*((?:auto)|(?:[\w_\-\+\d]*\.(?:jpg|png))))", filename)
         if filename:
@@ -246,6 +249,7 @@ def main():
     argholder = ArgHolder()
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', dest='scale', nargs='?', const="specified")
+    parser.add_argument('-o', dest='outfile', type=str, required=False, default="")
     parser.add_argument('cmfile')
     parser.parse_args(namespace=argholder)
 
