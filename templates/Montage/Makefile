@@ -3,8 +3,10 @@ montage1 = montage.gmm
 wiki1 = Template.wiki
 
 step-$(montage1):
+	# montage.py -s 60 $(montage1) -o final_montage.jpg > /dev/null
 	montage.py -s 60 $(montage1) > /dev/null
 	vim -c ':Vimwiki2HTML' -c ':wq' '$(wiki1)' > /dev/null
+	# galacomm.py -r vimwiki_mindmaps > /dev/null || galaview.sh final_montage.jpg &
 	galacomm.py -r vimwiki_mindmaps > /dev/null || galaview.sh "`basename \"${PWD}\"`_`basename \"$(montage1)\" .gmm`".* &
 
 step-$(mm1):
