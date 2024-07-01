@@ -29,7 +29,10 @@ def callmontage(imgs, tile, tmpdir, name, row=None):
         if len(imgs) == 1:
             if name == "mimg":
                 imgs[0] = imgs[0].replace("img", "mimg")
-            shutil.copy(imgs[0], "%s/%s" % (os.path.abspath("."), name))
+            try:
+                shutil.copy(imgs[0], "%s/%s" % (os.path.abspath("."), name))
+            except Exception:
+                pass
             skip = True
         else:
             exestring = "gm montage -monitor -background '%s' -geometry +0+0 -tile %dx %s '%s/%s'" % (background, tile, ' '.join(imgs), tmpdir, name)
