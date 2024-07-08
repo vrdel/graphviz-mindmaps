@@ -84,9 +84,18 @@ then
 		sed -i -r "s/mindmap-01/${otl_mindmap%%.*}/g" ./"${makefile}"
 	elif [[ "x${makefile}" == "xMakefile" ]]
 	then
-		echo -e "\nAdd target in Makefile\nmm1 = ${otl_mindmap}"
+		echo -e "\nAdd target in Makefile"
+		echo -e "----"
+		echo -e "mm1 = ${otl_mindmap}"
 		echo -e "\$(mm1): step-\$(mm1) step-\$(montage1)"
 		echo -e "step-\$(mm1):\n\tgvmm.py -f \$(mm1) > /dev/null"
+		echo -e "\nAdd to existing montage (.gmm)"
+		echo -e "----"
+		echo -e "auto {"
+		echo -e "\ttitle = \"Foo bar\""
+		echo -e "\texisting-01.jpg"
+		echo -e "\t${otl_mindmap%%.*}.jpg + existing-02.jpg"
+		echo -e "}"
 	fi
 
 	if [[ "x${wiki}" != "xTemplate.wiki" ]]
