@@ -8,6 +8,20 @@
 			: edggo
 		# edgyt8dm
 			: edgyt8m
+		# titles
+			:
+			# title on the head of edge
+			# ---
+			# edg"title head"h
+				: edg"title head"h
+			# title on the end of edge
+			# ---
+			# edg"title end"e
+				: edg"title end"e
+			# center title of edge
+			# ---
+			# edg"title center"
+				: edg"title center"
 	# nodes
 		:
 		# colors
