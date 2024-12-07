@@ -22,4 +22,4 @@ done
 
 rm -f ~/.galapix/other/cache3.sqlite3
 ulimit -c 0
-echo $args | xargs galapix.sdl view -g $geom -d ~/.galapix/other/ --title "galapix: $args" &>/dev/null
+echo $args | xargs galapix.sdl --threads 6 view -g $geom -d ~/.galapix/other/ --title "galapix: $args" &>/dev/null
