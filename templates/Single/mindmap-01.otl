@@ -21,7 +21,11 @@
 			# center title of edge
 			# ---
 			# edg"title center"
-				: edg"title center"
+				: edg"title center" underl
+				# center title of edge - multiline
+				# ---
+				# edg"title; center"
+					: edg"title; center"
 	# nodes
 		:
 		# colors
