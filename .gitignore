@@ -1,3 +1,4 @@
 .gitignore
 .ropeproject/
 *.pyc
+galapix-docker/galapix-container*
