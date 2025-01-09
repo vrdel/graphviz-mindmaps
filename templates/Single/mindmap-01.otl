@@ -26,6 +26,42 @@
 				# ---
 				# edg"title; center"
 					: edg"title; center"
+	# arrows
+		:
+		# node1
+			: arr1end
+			# arrow end
+				: verbatim
+				:
+				: arr1end
+				:
+		# node2
+			: arr2start"some text"
+			# arrow with text start
+				: verbatim
+				:
+				: arr2start"some text"
+				:
+		# node3
+			: arr1rstart
+			:
+			# arrow start
+				: verbatim
+				:
+				: arr1rstart
+				:
+			# colored arrows
+				: verbatim
+				:
+				: arr[N][r,g,b,y,c,p][start,end]
+				:
+		# node4
+			: arr2end
+			# arrow with text end
+				: verbatim
+				:
+				: arr2end
+				:
 	# nodes
 		:
 		# colors
