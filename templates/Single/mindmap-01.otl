@@ -4,10 +4,22 @@
 		:
 		# edgra
 			: edgra
+			# edgrt9da
+			# ---
+			# thick 9, dashed, arrow end
+				: edgrt9da node
 		# edggo
 			: edggo
+			# edgbt5lx
+			# ---
+			# thick 5, bold line, obox
+				: edgbt5lx node
 		# edgyt8dm
-			: edgyt8m
+			: edgyt8tm
+			# edgyt2tm
+			# ---
+			# thick 2, dotted, odiamond
+				: edgyt2tm
 		# titles
 			:
 			# title on the head of edge
