@@ -55,17 +55,17 @@
 				: arr2start"some text"
 				:
 		# node3
-			: arr1rstart
+			: arr1rt3start
 			:
-			# arrow start
+			# colored arrow start, thickness -> 3
 				: verbatim
 				:
-				: arr1rstart
+				: arr1rt3start
 				:
 			# colored arrows
 				: verbatim
 				:
-				: arr[N][r,g,b,y,c,p][start,end]
+				: arr[N][rgbycp]t[0-9][start|end]'title'
 				:
 		# node4
 			: arr2end
