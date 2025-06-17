@@ -56,7 +56,7 @@ def start(dirp, dbp, geom, title):
     exestring = "galapix.sdl --threads 6 -g %s -d %s --title %s view" % (geom, dbp, title)
     exestring += ' ' + dirp
 
-    return subprocess.Popen(exestring, shell=True)
+    return subprocess.Popen(exestring, shell=True, preexec_fn=os.setpgrp)
 
 def main():
     Settings = {}
@@ -119,6 +119,7 @@ def main():
             Settings["geom"] = config.get(section, "geometry")
             proc = start(Settings["dirp"], Settings["dbp"], Settings["geom"], Settings["title"])
             Settings["pid"] = proc.pid
+            Settings["inst"] = proc
             GalaInstan[Settings["title"]] = Settings
             Settings = {}
             StaticVar.NumInstan = len(GalaInstan)
@@ -137,14 +138,15 @@ def main():
                     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
                     for inst in GalaInstan:
                         if data[0] in inst:
-                            ret = os.kill(GalaInstan[inst]["pid"], signal.SIGTERM)
-                            print(ret)
+                            pgid = os.getpgid(GalaInstan[inst]["pid"])
+                            os.killpg(pgid, signal.SIGTERM)
                             time.sleep(1)
                             proc = start(GalaInstan[inst]["dirp"], GalaInstan[inst]["dbp"], GalaInstan[inst]["geom"], GalaInstan[inst]["title"])
                             GalaInstan[inst]["pid"] = proc.pid
-                            print(GalaInstan[inst]["pid"])
+                            GalaInstan[inst]["inst"] = proc
                         elif data[0] == "all":
-                            os.kill(GalaInstan[inst]["pid"], signal.SIGTERM)
+                            pgid = os.getpgid(GalaInstan[inst]["pid"])
+                            os.killpg(pgid, signal.SIGTERM)
                             time.sleep(1)
                             proc = start(GalaInstan[inst]["dirp"], GalaInstan[inst]["dbp"], GalaInstan[inst]["geom"], GalaInstan[inst]["title"])
                             GalaInstan[inst]["pid"] = proc.pid
