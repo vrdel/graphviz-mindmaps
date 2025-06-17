@@ -4,6 +4,8 @@ import os, sys, sqlite3, math, time, signal
 import socket, select, subprocess, ConfigParser, errno
 from PIL import Image
 
+Image.MAX_IMAGE_PIXELS = None
+
 CFG = os.environ['HOME'] + "/.galapix/galapix.cfg"
 
 def cleanup(server, sock):
@@ -51,7 +53,7 @@ def start(dirp, dbp, geom, title):
 
         conn.close()
 
-    exestring = "CONTNAME=galapix-%s galapix.sdl --threads 6 -g %s -d %s --title %s view" % (title, geom, dbp, title)
+    exestring = "galapix.sdl --threads 6 -g %s -d %s --title %s view" % (geom, dbp, title)
     exestring += ' ' + dirp
 
     return subprocess.Popen(exestring, shell=True)
@@ -135,11 +137,12 @@ def main():
                     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
                     for inst in GalaInstan:
                         if data[0] in inst:
-                            exestring = "docker stop galapix-%s" % (GalaInstan[inst]["title"])
-                            subprocess.Popen(exestring, shell=True)
+                            ret = os.kill(GalaInstan[inst]["pid"], signal.SIGTERM)
+                            print(ret)
                             time.sleep(1)
                             proc = start(GalaInstan[inst]["dirp"], GalaInstan[inst]["dbp"], GalaInstan[inst]["geom"], GalaInstan[inst]["title"])
                             GalaInstan[inst]["pid"] = proc.pid
+                            print(GalaInstan[inst]["pid"])
                         elif data[0] == "all":
                             os.kill(GalaInstan[inst]["pid"], signal.SIGTERM)
                             time.sleep(1)
