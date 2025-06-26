@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=galaview
+Comment=galapix image viewer
+Exec=/home/daniel/.bin/galaview.sh %U
+Icon=galaview
+Type=Application
+Terminal=false
+MimeType=image/jpg;image/png
