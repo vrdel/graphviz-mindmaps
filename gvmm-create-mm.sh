@@ -89,6 +89,7 @@ then
 		echo -e "mm1 = ${otl_mindmap}"
 		echo -e "\$(mm1): step-\$(mm1) step-\$(montage1)"
 		echo -e "step-\$(mm1):\n\tgvmm.py -f \$(mm1) > /dev/null"
+		echo -e ".PHONY: \$(mm1)..."
 		echo -e "\nAdd to existing montage (.gmm)"
 		echo -e "----"
 		echo -e "auto {"
