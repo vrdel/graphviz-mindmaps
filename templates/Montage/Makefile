@@ -7,7 +7,7 @@ step-$(montage1):
 	montage.py -s 60 $(montage1) -o $(montage_output1) > /dev/null
 	# montage.py -s 60 $(montage1) > /dev/null
 	vim -c ':Vimwiki2HTML' -c ':wq' '$(wiki1)' > /dev/null
-	galacomm.py -r vimwiki_mindmaps > /dev/null || galaview.sh $(montage_output1) &
+	galacomm.py -r my_whiteboard > /dev/null || galaview.sh $(montage_output1) &
 	# galacomm.py -r vimwiki_mindmaps > /dev/null || galaview.sh "`basename \"${PWD}\"`_`basename \"$(montage1)\" .gmm`".* &
 
 step-$(mm1):
