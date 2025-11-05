@@ -1,4 +1,4 @@
-#!/home/daniel/.pyenv/versions/vrdel-apps-py27/bin/python
+#!/home/daniel/.pyenv/versions/gvmm/bin/python
 
 import os, sys, sqlite3, math, time, signal
 import socket, select, subprocess, ConfigParser, errno

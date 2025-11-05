@@ -1,4 +1,4 @@
-#!/home/daniel/.pyenv/versions/vrdel-apps-py27/bin/python
+#!/home/daniel/.pyenv/versions/gvmm/bin/python
 
 import sys, re, subprocess, argparse, os, fnmatch, fontawesome, tempfile
 import socket, ConfigParser, math

@@ -1,4 +1,4 @@
-#!/home/daniel/.pyenv/versions/vrdel-apps-py27/bin/python
+#!/home/daniel/.pyenv/versions/gvmm/bin/python
 
 import os, sys, argparse, subprocess, math
 from PIL import Image
