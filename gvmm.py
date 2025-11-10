@@ -19,7 +19,7 @@ vrbtcolors = {"cgreen" : "#dffde6", "cred" : "#fde0df", "cblue" : "#e1dffd", "cc
 fontstyle = {"ul" : "U", "ld" : "B", "st" : "S", "it" : "I"}
 bgcolor = "#efefef"
 font = {"comic" : "Comic Sans MS", "mono" : "Dejavu Sans Mono", "comicb" : "Comic Sans MS Bold", "balsamiq" : "Balsamiq Sans", "balsamiqb" : "Balsamiq Sans Bold"}
-fontsize = {"s" : "12", "m" : 14, "l" : "16", "xl" : "20", "xxl" : "24"}
+fontsize = {"s" : "12", "m" : "14", "l" : "16", "xl" : "20", "xxl" : "24"}
 nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial color=\"#000000\" fillcolor=\"#dfdfdf\" gradientangle=\"90\"" % (fontsize['xxl']),
         "quest" : "shape=oval fontname=\"%s\" fontsize=\"%s\" margin=\"0.1\" style=\"radial\" fillcolor=\"#fffbab\" color=\"#8a8a8a\"" % (font['comic'], fontsize['l']),
         "impor" : "shape=signature fontsize=\"%s\" margin=\"0.25\" style=\"radial\" fillcolor=\"#ffb6c1\" color=\"#8a8a8a\"" % (fontsize['l']),
