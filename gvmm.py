@@ -21,7 +21,7 @@ bgcolor = "#efefef"
 font = {"comic" : "Comic Sans MS", "mono" : "Dejavu Sans Mono", "comicb" : "Comic Sans MS Bold", "balsamiq" : "Balsamiq Sans", "balsamiqb" : "Balsamiq Sans Bold"}
 fontsize = {"s" : "12", "m" : "14", "l" : "16", "xl" : "20", "xxl" : "24"}
 nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial color=\"#000000\" fillcolor=\"#dfdfdf\" gradientangle=\"90\"" % (fontsize['xxl']),
-        "quest" : "shape=oval fontname=\"%s\" fontsize=\"%s\" margin=\"0.1\" style=\"radial\" fillcolor=\"#fffbab\" color=\"#8a8a8a\"" % (font['comic'], fontsize['l']),
+        "quest" : "shape=oval fontname=\"%s\" fontsize=\"%s\" margin=\"0,0\" style=\"radial\" fillcolor=\"#fffbab\" color=\"#8a8a8a\"" % (font['comic'], fontsize['l']),
         "impor" : "shape=signature fontsize=\"%s\" margin=\"0.25\" style=\"radial\" fillcolor=\"#ffb6c1\" color=\"#8a8a8a\"" % (fontsize['l']),
         "impog" : "shape=signature fontsize=\"%s\" margin=\"0.25\" style=\"radial\" fillcolor=\"#b6ffb7\" color=\"#8a8a8a\"" % (fontsize['l']),
         "impob" : "shape=signature fontsize=\"%s\" margin=\"0.25\" style=\"radial\" fillcolor=\"#b6e4ff\" color=\"#8a8a8a\"" % (fontsize['l']),
@@ -41,7 +41,7 @@ nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial colo
         "commen" : "shape=note fontname=\"%s\" fontsize=\"%s\" margin=\"0.2\" style=\"radial\" fillcolor=\"#FFF09A\" color=\"#8a8a8a\"" % (font['comic'], fontsize['l']),
         "term" : "shape=note fontname=\"%s\" gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15\" fillcolor=\"#fbfbfb\" color=\"#8a8a8a\"" % (font['mono']),
         "check" : "shape=rarrow fontcolor=\"%s\" margin=\"0.20\" style=\"filled\" fillcolor=\"#4A90D9\" fontcolor=\"#ffffff\" color=\"#4A90D9\"" % (fontcolor['def']),
-        "todo" : "shape=box fontcolor=\"%s\" margin=\"0.30\" style=\"filled, diagonals\" fillcolor=\"#FFF09A\" fontcolor=\"#404040\" color=\"#404040\"" % (fontcolor['def']),
+        "todo" : "shape=box fontcolor=\"%s\" margin=\"0.20\" style=\"filled, diagonals\" fillcolor=\"#FFF09A\" fontcolor=\"#404040\" color=\"#404040\"" % (fontcolor['def']),
         "cgreen" : "shape=box style=\"rounded,radial\" fillcolor=\"#bcffc2\" color=\"#8a8a8a\"",
         "ccyan" : "shape=box style=\"rounded,radial\" fillcolor=\"#b9ffff\" color=\"#8a8a8a\"",
         "cblue" : "shape=box style=\"rounded,radial\" fillcolor=\"#b2d5fb\" color=\"#8a8a8a\"",
@@ -941,7 +941,7 @@ def GenDot(lines, argholder, parser):
         if p.getype() != "root":
             if p.is_leaf() is not True:
                 if t in set(["cred", "cgreen", "ccyan", "cblue", "cpink",  "cyello", "corang"]):
-                    s = p.element().replace("shape=box", "margin=\"0.2,0.2\" shape=box fontsize=\"%s\"" % (fontsize['l']) + "\n")
+                    s = p.element().replace("shape=box", "margin=\"0.2,0.3\" shape=box fontsize=\"%s\"" % (fontsize['l']) + "\n")
                     dotbuf += s
                 else:
                     s = p.element().replace(nodetype['def'], nodetype['node']) + "\n"
