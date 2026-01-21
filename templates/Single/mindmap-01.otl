@@ -233,6 +233,18 @@
 					: individual words
 					:  : w1g w2b
 					:
+			# first range of words
+			# second range of words
+				: l1w[2,3,4]g l2w[2-4]r
+				# syntax
+					: verbatim
+					:
+					: first range of words
+					:   : l1w[2,3,4]g
+					:
+					: second range of words
+					:   : l2w[2-4]g
+					:
 			# individual words
 			# spreaded across
 			# multiple lines
