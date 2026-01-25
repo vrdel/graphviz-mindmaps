@@ -989,9 +989,9 @@ def GenDot(lines, argholder, parser):
 
 
 def PostAttrProcLabel(label, ntype, vrbt, draw):
-    if ntype == "commen":
-        label.insert(0, "<I>")
-        label.insert(len(label), "</I>")
+    # if ntype == "commen":
+        # label.insert(0, "<I>")
+        # label.insert(len(label), "</I>")
     if ntype == "check" or ntype == "todo":
         label.insert(0, "<B>")
         label.insert(len(label), "</B>")
