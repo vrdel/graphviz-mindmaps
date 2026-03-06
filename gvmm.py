@@ -48,7 +48,8 @@ nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial colo
         "cpink" : "shape=box style=\"rounded,radial\" fillcolor=\"#ffb8fe\" color=\"#8a8a8a\"",
         "cred" : "shape=box style=\"rounded,radial\" fillcolor=\"#fbc1bf\" color=\"#8a8a8a\"",
         "cyello" : "shape=box style=\"rounded,radial\" fillcolor=\"#fefb88\" color=\"#8a8a8a\"",
-        "corang" : "shape=box style=\"rounded,radial\" fillcolor=\"#ffc990\" color=\"#8a8a8a\""}
+        "corang" : "shape=box style=\"rounded,radial\" fillcolor=\"#ffc990\" color=\"#8a8a8a\"",
+        "cblack" : "shape=box style=\"rounded,radial\" fillcolor=\"#2b2b2b\" color=\"#8a8a8a\""}
 edgetype = {"impor" : "style=\"bold\" color=\"#AD5459\"", "impog" : "style=\"bold\" color=\"#64AD54\"",
         "impob" : "style=\"bold\" color=\"#547EAD\"", "cred" : "color=\"#AD3E39\"", "cgreen" : "color=\"#45A135\"",
         "cblue" : "color=\"#395BAD\"", "ccyan" : "color=\"#39ACAD\"", "cyello": "color=\"#A6A037\"",
@@ -73,7 +74,7 @@ def ResolveColorNodeTypeToken(token):
 
     aliases = {"nodes": "node"}
     m = re.match(
-        r"^(c(?:green|cyan|blue|pink|red|yello|orang)|impor|impog|impob|quest|commen|check|todo|title)(-?[0-9]+)$",
+        r"^(c(?:green|cyan|blue|pink|red|yello|orang|black)|impor|impog|impob|quest|commen|check|todo|title|node|nodes)(-?[0-9]+)$",
         token
     )
     if not m:
@@ -1001,7 +1002,7 @@ def GenDot(lines, argholder, parser):
         t = p.getype()
         if p.getype() != "root":
             if p.is_leaf() is not True:
-                if t in set(["cred", "cgreen", "ccyan", "cblue", "cpink",  "cyello", "corang"]):
+                if t in set(["cred", "cgreen", "ccyan", "cblue", "cpink", "cyello", "corang", "cblack"]):
                     s = p.element().replace("shape=box", "margin=\"0.2,0.3\" shape=box fontsize=\"%s\"" % (fontsize['l']) + "\n")
                     dotbuf += s
                 else:
