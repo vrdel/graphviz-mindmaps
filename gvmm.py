@@ -71,11 +71,17 @@ def ResolveColorNodeTypeToken(token):
     if token in nodetype:
         return token
 
-    m = re.match(r"^(c(?:green|cyan|blue|pink|red|yello|orang))([+-][0-9]+)$", token)
+    aliases = {"nodes": "node"}
+    m = re.match(
+        r"^(c(?:green|cyan|blue|pink|red|yello|orang)|impor|impog|impob|quest|commen|check|todo|title)(-?[0-9]+)$",
+        token
+    )
     if not m:
         return None
 
     base = m.group(1)
+    if base in aliases:
+        base = aliases[base]
     if base not in nodetype:
         return None
 
