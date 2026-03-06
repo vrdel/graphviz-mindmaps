@@ -1,4 +1,4 @@
-#!/home/daniel/.pyenv/versions/gvmm/bin/python
+#!/home/daniel/.pyenv/versions/gvmm/bin/python3
 
 import sys, os, subprocess, multiprocessing
 import shutil, tempfile, re, fnmatch

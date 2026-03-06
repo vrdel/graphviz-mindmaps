@@ -1,7 +1,7 @@
-#!/home/daniel/.pyenv/versions/gvmm/bin/python
+#!/home/daniel/.pyenv/versions/gvmm/bin/python3
 
 import sys, re, subprocess, argparse, os, fnmatch, fontawesome, tempfile
-import socket, ConfigParser, math
+import socket, configparser, math
 
 
 MAXDEPTH = 32
@@ -352,7 +352,7 @@ def WriteDot(DotFile):
 
 
 def SendRestartMSG(sockwildcard, sockcfg=None):
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(cfg)
 
     sockp = config.defaults().get(sockcfg)
@@ -361,10 +361,10 @@ def SendRestartMSG(sockwildcard, sockcfg=None):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(sockp)
     except socket.error as m:
-        print sockcfg
-        print m
+        print(sockcfg)
+        print(m)
     else:
-        sock.send("%s restart" % (sockwildcard[0]), 64)
+        sock.send(("%s restart" % (sockwildcard[0])).encode(), 64)
         sock.close()
 
 
@@ -385,7 +385,7 @@ def WriteImg(argholder):
     elif "/" not in argholder.jpgname and "~" not in argholder.jpgname:
         gvroot = os.environ['PWD'] + "/"
     proc = subprocess.Popen(['dot', '-Tjpg', '-o', gvroot + argholder.jpgname], stdin = subprocess.PIPE)
-    proc.communicate(dotbuf)
+    proc.communicate(dotbuf.encode())
 
     subprocess.call("gm convert -shave 2x2 '%s' '%s'" % (gvroot + argholder.jpgname, gvroot + argholder.jpgname), shell=True)
 
@@ -441,7 +441,7 @@ def WriteMontage(argholder):
         os.chdir(gvroot + '/'.join(imgarg[0:2]))
         cmfile = CheckCM(imgarg[2])
     else:
-        print "montage building should be in %s/gv/" % (gvroot[0:-1])
+        print("montage building should be in %s/gv/" % (gvroot[0:-1]))
         raise SystemExit(1)
 
 
@@ -449,7 +449,7 @@ def WriteMontage(argholder):
         subprocess.call(["montage.py", cmfile])
         SendRestartMSG("rsync call", "inotsock")
     else:
-        print "%s not found in any %s/*.cm" % (imgarg[2], gvroot + '/'.join(imgarg[0:2]))
+        print("%s not found in any %s/*.cm" % (imgarg[2], gvroot + '/'.join(imgarg[0:2])))
         raise SystemExit(1)
 
 
@@ -737,7 +737,7 @@ def GenDot(lines, argholder, parser):
 
                     j += 1
 
-            if ntype is not "img":
+            if ntype != "img":
                 labelhtml.insert(0, "<TABLE CELLBORDER=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>")
                 i = 1
                 try:
@@ -761,7 +761,7 @@ def GenDot(lines, argholder, parser):
                         i += 1
                     labelhtml.insert(len(labelhtml), "</TD></TR></TABLE>")
                 except (IndexError, KeyError) as e:
-                    print e, labelhtml[i]
+                    print(e, labelhtml[i])
 
             wordcolor, wordfsize, wordfstyle = [], [], []
             linecolor, linefsize, linefstyle = [], [], []
@@ -774,7 +774,7 @@ def GenDot(lines, argholder, parser):
                 fromnode += "%s" % ("{:=02}".format(nodelevel[i] - 1))
             tonode = fromnode + "%s" % ("{:=02}".format(nodelevel[level - 1]))
 
-            if nextline.find("#") == -1 and ntype is not "img":
+            if nextline.find("#") == -1 and ntype != "img":
                 nextline = nextline.split()
                 spacesg = [[nextline[x], x] for x in range(len(nextline)) \
                         if nextline[x].count("\"") == 1 or nextline[x].count("\'") == 1]

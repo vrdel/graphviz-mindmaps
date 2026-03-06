@@ -1,7 +1,7 @@
-#!/home/daniel/.pyenv/versions/gvmm/bin/python
+#!/home/daniel/.pyenv/versions/gvmm/bin/python3
 
 import os, sys, sqlite3, math, time, signal
-import socket, select, subprocess, ConfigParser, errno
+import socket, select, subprocess, configparser, errno
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
@@ -25,7 +25,7 @@ def start(dirp, dbp, geom, title):
         for f in os.listdir(dirp):
             f = dirp + "/" + f
             f = "%%%s%%" % f
-            tup = (f.decode('utf-8'), )
+            tup = (f, )
 
             cur.execute('SELECT fileid, url, mtime FROM files WHERE url LIKE ?', tup)
             rows = cur.fetchall()
@@ -65,7 +65,7 @@ def main():
     class proc(subprocess.Popen):
         pass
 
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(CFG)
 
     pixsock = config.defaults().get("pixsock")
@@ -81,7 +81,7 @@ def main():
         server.bind(pixsock)
         server.listen(1)
     except socket.error as m:
-        print m
+        print(m)
         sys.exit(1)
 
     poller = select.poll()
@@ -133,6 +133,7 @@ def main():
             if event[0][1] & select.POLLIN:
                 conn, addr = server.accept()
                 data = conn.recv(64)
+                data = data.decode()
                 data = data.split()
                 if data[1] == "restart":
                     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
@@ -158,7 +159,7 @@ def main():
             cleanup(server, pixsock)
 
         except select.error as m:
-            if m[0] == errno.EINTR:
+            if m.args and m.args[0] == errno.EINTR:
                 poller.unregister(server.fileno())
                 poller = select.poll()
                 poller.register(server.fileno(), select.POLLIN)

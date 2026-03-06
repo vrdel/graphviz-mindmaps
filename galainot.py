@@ -1,7 +1,7 @@
-#!/home/daniel/.pyenv/versions/gvmm/bin/python
+#!/home/daniel/.pyenv/versions/gvmm/bin/python3
 
 import pyinotify, os, sys, signal, socket, select, errno, multiprocessing
-import subprocess, time, re, threading, thread, ConfigParser, fcntl
+import subprocess, time, re, threading, _thread, configparser, fcntl
 
 CFG = os.environ['HOME'] + "/.galapix/galapix.cfg"
 
@@ -10,11 +10,12 @@ def callcom(commexe, po, event=None):
 		event = "gvmm.py"
 
 	output = subprocess.check_output(commexe, shell=True)
+	output = output.decode()
 	if po:
 		output = output.replace("\n\n", "<EMPTYL>")
 		output = output.split("<EMPTYL>")[0]
-		print "- " + time.strftime("%H:%M:%S") + " [%s]" % (event) \
-			+ ": " + output.replace("\n", " ")
+		print("- " + time.strftime("%H:%M:%S") + " [%s]" % (event) \
+			+ ": " + output.replace("\n", " "))
 
 def inotifymon(commexe):
 	wdd = {}
@@ -58,7 +59,7 @@ def inotifymon(commexe):
 	notifier.loop()
 
 def main():
-	config = ConfigParser.ConfigParser()
+	config = configparser.ConfigParser()
 	config.read(CFG)
 
 	inotsock = config.defaults().get("inotsock")
@@ -74,7 +75,7 @@ def main():
 		server.bind(inotsock)
 		server.listen(1)
 	except socket.error as m:
-		print m
+		print(m)
 		sys.exit(1)
 
 
@@ -98,14 +99,14 @@ def main():
 				callcom(commexe, True)
 
 		except select.error as m:
-			print m
-			if m[0] == errno.EINTR:
+			print(m)
+			if m.args and m.args[0] == errno.EINTR:
 				poller.unregister(server.fileno())
 				poller = select.poll()
 				poller.register(server.fileno(), select.POLLIN)
 
 		except KeyboardInterrupt:
-			print "KeyboardInterrupt"
+			print("KeyboardInterrupt")
 			proc.terminate()
 			proc.join()
 			server.close()
