@@ -1,4 +1,4 @@
-#!/home/daniel/.pyenv/versions/gvmm/bin/python3
+#!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
 
 import sys, re, subprocess, argparse, os, fnmatch, fontawesome, tempfile
 import socket, configparser, math
@@ -65,6 +65,35 @@ html_rarrow2 = "<FONT FACE=\"FontAwesome\" POINT-SIZE=\"13\" COLOR=\"#6E1B31\">&
 html_equal = "<FONT POINT-SIZE=\"14\" COLOR=\"#155416\">&#9552;</FONT>"
 
 cfg = os.environ['HOME'] + "/.galapix/galapix.cfg"
+
+
+def ResolveColorNodeTypeToken(token):
+    if token in nodetype:
+        return token
+
+    m = re.match(r"^(c(?:green|cyan|blue|pink|red|yello|orang))([0-9]+)(-?)$", token)
+    if not m:
+        return None
+
+    base = m.group(1)
+    if base not in nodetype:
+        return None
+
+    delta = int(m.group(2))
+    if m.group(3) == "-":
+        delta = -delta
+
+    fm = re.search(r'fillcolor="(#?[0-9A-Fa-f]{6})"', nodetype[base])
+    if not fm:
+        return None
+
+    rgb = fm.group(1).lstrip("#")
+    channels = [int(rgb[0:2], 16), int(rgb[2:4], 16), int(rgb[4:6], 16)]
+    shifted = [min(255, max(0, c + delta)) for c in channels]
+    newfill = "#%02x%02x%02x" % (shifted[0], shifted[1], shifted[2])
+
+    nodetype[token] = nodetype[base].replace(fm.group(1), newfill, 1)
+    return token
 
 
 class Tree:
@@ -552,7 +581,7 @@ def ParseAttributeLine(k, tonode, *args):
                 if m.group(5):
                     wordfstyle.append([wi, fontstyle[m.group(5)], lmeta])
 
-    m = re.search('(sym(?:[0-9]+)|sym(?:\[[0-9,]+\]))?([rgbycpk])?(f[0-9]+)?', k)
+    m = re.search(r'(sym(?:[0-9]+)|sym(?:\[[0-9,]+\]))?([rgbycpk])?(f[0-9]+)?', k)
     if m.group(1):
         if m.group(1).count("[") == 1 and m.group(1).count("]"):
             nm = re.findall('([0-9]+)(?:,?)', m.group(1))
@@ -605,7 +634,7 @@ def ParseAttributeLine(k, tonode, *args):
 def ParseOtlname(keyword, line):
     m = re.search("(%s[ ]*=[ ]*)(\".*\")[ ]*" % (keyword), line)
     if m is None:
-        m = re.search("(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*" % (keyword), line)
+        m = re.search(r"(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*" % (keyword), line)
 
     return m.group(2)
 
@@ -614,7 +643,7 @@ def ParseFnameLine(keyword, line):
 
     m = re.search("(%s[ ]*=[ ]*)(\".*\")[ ]*(notitle)?" % (keyword), line)
     if m is None:
-        m = re.search("(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*(notitle)?" % (keyword), line)
+        m = re.search(r"(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*(notitle)?" % (keyword), line)
         if m.group(3):
             notitle = True
     else:
@@ -661,7 +690,7 @@ def GenDot(lines, argholder, parser):
 
     tabnum = lines[0].count("\t")
 
-    m = re.search('(\t|\#) (.*)', lines[0])
+    m = re.search(r'(\t|#) (.*)', lines[0])
     title = m.group(2)
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=LR;\n\tranksep=0.1;\n\tbgcolor=\"%s\";\n\n\tnode[fontname=\"%s\" fontsize=%s fontcolor=\"%s\" color=\"#000000\" gradientangle=\"90\" penwidth=2.5];\n" % (bgcolor, font['comic'], fontsize['m'], fontcolor['def'])
@@ -681,7 +710,7 @@ def GenDot(lines, argholder, parser):
 
 
     for line in lines[1:]:
-        if re.search("\t(:|\|)\s*fname", line):
+        if re.search(r"\t(:|\|)\s*fname", line):
             jpgname = ParseFnameLine("fname", line)
             jpgname = jpgname.strip()
 
@@ -693,10 +722,10 @@ def GenDot(lines, argholder, parser):
         else:
             nextline = lines[lines.index(line)]
 
-        if re.search("(\t\#) (.*)", line):
+        if re.search(r"(\t#) (.*)", line):
             level = line[:line.find("#")].count("\t") - tabnum
 
-            m = re.search('(\t|\#) (.*)', line)
+            m = re.search(r'(\t|#) (.*)', line)
             label = m.group(2)
 
             ntype = ""
@@ -823,8 +852,9 @@ def GenDot(lines, argholder, parser):
                 JoinSepKeyValue("symb", nextline)
 
                 for k in nextline:
-                    if k in nodetype and k not in set(["verbatim", "verbat", "draw"]):
-                        ntype = k
+                    resolved_ntype = ResolveColorNodeTypeToken(k)
+                    if resolved_ntype and resolved_ntype not in set(["verbatim", "verbat", "draw"]):
+                        ntype = resolved_ntype
                     else:
                         ParseAttributeLine(k, tonode, \
                                 wordcolor, wordfsize, wordfstyle, \
@@ -835,7 +865,7 @@ def GenDot(lines, argholder, parser):
                                 symbcolor, symbsize)
 
                     if k.find("=") > 0:
-                        m = re.match("([\W\w]*)(?:=)(.*)", k)
+                        m = re.match(r"([\W\w]*)(?:=)(.*)", k)
                         tokval = [m.group(1), m.group(2)]
                         if tokval[0] == "img":
                             labelhtml.insert(len(labelhtml) - 1, "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" + GenImgPath(tokval[1].strip()) + "\"/>")
@@ -1108,7 +1138,7 @@ def main():
         nextline = linesall[j + 1]
         level = linesall[j][:ParLoc(linesall[j])].count("\t")
 
-        if re.search("\t(:|;|\|)\s*fname", nextline):
+        if re.search(r"\t(:|;|\|)\s*fname", nextline):
             title = linesall[j]
             tabroot = level
             level += 1
@@ -1126,7 +1156,7 @@ def main():
                             j = i + 2
                             v = []
                             while j < len(linesall) and '# ' not in linesall[j] \
-                                    and not re.search("\t\s*[a-zA-Z0-9]\s*", linesall[j]):
+                                    and not re.search(r"\t\s*[a-zA-Z0-9]\s*", linesall[j]):
                                 if "\t:" in linesall[j]:
                                     v.append(linesall[j].lstrip("\t:").rstrip())
                                 elif "\t|" in linesall[j]:
