@@ -1,4 +1,4 @@
-#!/home/daniel/.pyenv/versions/gvmm/bin/python3
+#!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
 
 import os, sys, sqlite3, math, time, signal
 import socket, select, subprocess, configparser, errno

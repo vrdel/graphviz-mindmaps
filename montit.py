@@ -1,4 +1,4 @@
-#!/home/daniel/.pyenv/versions/gvmm/bin/python3
+#!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
 
 import os, sys, argparse, subprocess, math
 from PIL import Image

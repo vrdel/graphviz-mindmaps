@@ -1,7 +1,12 @@
-#!/home/daniel/.pyenv/versions/gvmm/bin/python3
+#!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
 
-import pyinotify, os, sys, signal, socket, select, errno, multiprocessing
+import os, sys, signal, socket, select, errno, multiprocessing
 import subprocess, time, re, threading, _thread, configparser, fcntl
+
+try:
+	import pyinotify
+except Exception:
+	pyinotify = None
 
 CFG = os.environ['HOME'] + "/.galapix/galapix.cfg"
 
@@ -9,15 +14,53 @@ def callcom(commexe, po, event=None):
 	if not event:
 		event = "gvmm.py"
 
-	output = subprocess.check_output(commexe, shell=True)
-	output = output.decode()
+	proc = subprocess.run(commexe, shell=True, capture_output=True, text=True)
+	output = proc.stdout or ""
+	errout = proc.stderr or ""
+	if proc.returncode != 0:
+		msg = errout.strip() if errout.strip() else output.strip()
+		print("- " + time.strftime("%H:%M:%S") + " [%s]" % (event) \
+			+ ": command failed (exit %d)%s" % (
+				proc.returncode,
+				(" - " + msg.replace("\n", " ")) if msg else ""
+			))
+		return
+
 	if po:
 		output = output.replace("\n\n", "<EMPTYL>")
 		output = output.split("<EMPTYL>")[0]
 		print("- " + time.strftime("%H:%M:%S") + " [%s]" % (event) \
 			+ ": " + output.replace("\n", " "))
 
-def inotifymon(commexe):
+def _snapshot_tree(watchroot):
+	snapshot = {}
+	for (dirpath, dirnames, filenames) in os.walk(watchroot, followlinks=True):
+		if filenames:
+			for f in filenames:
+				p = os.path.realpath(os.path.join(dirpath, f))
+				try:
+					st = os.stat(p)
+				except OSError:
+					continue
+				snapshot[p] = (st.st_mtime_ns, st.st_size)
+	return snapshot
+
+
+def inotifymon_poll(commexe, watchroot, interval=0.8):
+	prev = _snapshot_tree(watchroot)
+	while True:
+		time.sleep(interval)
+		cur = _snapshot_tree(watchroot)
+		if cur != prev:
+			callcom(commexe, True, "poll-change")
+			prev = cur
+
+
+def inotifymon(commexe, watchroot):
+	if pyinotify is None:
+		inotifymon_poll(commexe, watchroot)
+		return
+
 	wdd = {}
 
 	class EventHandler(pyinotify.ProcessEvent):
@@ -49,8 +92,8 @@ def inotifymon(commexe):
 
 	handler = EventHandler()
 
-	wdd.update(wm.add_watch(sys.argv[1], mask, rec=True))
-	for (dirpath, dirnames, filenames) in os.walk(sys.argv[1], followlinks=True):
+	wdd.update(wm.add_watch(watchroot, mask, rec=True))
+	for (dirpath, dirnames, filenames) in os.walk(watchroot, followlinks=True):
 		if filenames:
 			for f in filenames:
 				wdd.update(wm.add_watch(os.path.realpath(dirpath + '/' + f), mask))
@@ -81,10 +124,11 @@ def main():
 
 	commexe = ""
 	commexe = " ".join(sys.argv[2:])
+	watchroot = sys.argv[1]
 
 	callcom(commexe, False)
 
-	proc = multiprocessing.Process(target=inotifymon, args=(commexe,))
+	proc = multiprocessing.Process(target=inotifymon, args=(commexe, watchroot))
 	proc.start()
 
 	poller = select.poll()
@@ -113,4 +157,6 @@ def main():
 			os.unlink(inotsock)
 			sys.exit(1)
 
-main()
+if __name__ == "__main__":
+	multiprocessing.freeze_support()
+	main()
