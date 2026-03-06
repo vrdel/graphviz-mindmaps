@@ -1,7 +1,7 @@
-#!/home/daniel/.pyenv/versions/gvmm/bin/python
+#!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
 
 import sys, re, subprocess, argparse, os, fnmatch, fontawesome, tempfile
-import socket, ConfigParser, math
+import socket, configparser, math
 
 
 MAXDEPTH = 32
@@ -12,9 +12,9 @@ title = ""
 montagetitle = None
 notitle = False
 
-fontcolor = {"def" : "#000000", "r" : "#B30000", "g" : "#027b10", "b" : "#151e94", "y" : "#ebec50", "c" : "#00948c", "p" : "#94008b", "k" : "#000000"}
-linecolors = {"r" : "#FF8080", "g" : "#8BFF80", "b" : "#80CAFF", "y" : "#FFF180", "c" : "#80FFFB", "p" : "#FF80E7"}
-subgraphcolors = {"r" : "#FF000016", "g" : "#00FF0016", "b" : "#0000FF16", "y" : "#FFF40016", "c" : "#00FFD416", "p" : "#FF00EA16", "w" : "#FFFFFFFF", "k" : "#00000016", "t" : ""}
+fontcolor = {"def" : "#000000", "r" : "#B30000", "g" : "#027b10", "b" : "#151e94", "y" : "#ebec50", "c" : "#00948c", "p" : "#94008b", "k" : "#000000", "t" : "#ffffff"}
+linecolors = {"r" : "#FF8080", "g" : "#8BFF80", "b" : "#80CAFF", "y" : "#FFF180", "c" : "#80FFFB", "p" : "#FF80E7", "k" : "#000000"}
+subgraphcolors = {"r" : "#FF000020", "g" : "#00FF0020", "b" : "#0000FF20", "y" : "#FFF40020", "c" : "#00FFD204", "p" : "#FF00EA20", "w" : "#FFFFFF20", "k" : "#00000020", "t" : ""}
 vrbtcolors = {"cgreen" : "#dffde6", "cred" : "#fde0df", "cblue" : "#e1dffd", "ccyan" : "#dffdfa", "cyello" : "#fcfddf", "corang" : "#fdecdf", "cpink" : "#fddff3", "cwhite": "#ffffff", "def" : "#dfeafd"}
 fontstyle = {"ul" : "U", "ld" : "B", "st" : "S", "it" : "I"}
 bgcolor = "#efefef"
@@ -48,7 +48,9 @@ nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial colo
         "cpink" : "shape=box style=\"rounded,radial\" fillcolor=\"#ffb8fe\" color=\"#8a8a8a\"",
         "cred" : "shape=box style=\"rounded,radial\" fillcolor=\"#fbc1bf\" color=\"#8a8a8a\"",
         "cyello" : "shape=box style=\"rounded,radial\" fillcolor=\"#fefb88\" color=\"#8a8a8a\"",
-        "corang" : "shape=box style=\"rounded,radial\" fillcolor=\"#ffc990\" color=\"#8a8a8a\""}
+        "corang" : "shape=box style=\"rounded,radial\" fillcolor=\"#ffc990\" color=\"#8a8a8a\"",
+        "cgrey" : "shape=box style=\"rounded,radial\" fillcolor=\"#9e9e9e\" color=\"#8a8a8a\"",
+        "cblack" : "shape=box style=\"rounded,radial\" fillcolor=\"#2b2b2b\" color=\"#8a8a8a\""}
 edgetype = {"impor" : "style=\"bold\" color=\"#AD5459\"", "impog" : "style=\"bold\" color=\"#64AD54\"",
         "impob" : "style=\"bold\" color=\"#547EAD\"", "cred" : "color=\"#AD3E39\"", "cgreen" : "color=\"#45A135\"",
         "cblue" : "color=\"#395BAD\"", "ccyan" : "color=\"#39ACAD\"", "cyello": "color=\"#A6A037\"",
@@ -65,6 +67,63 @@ html_rarrow2 = "<FONT FACE=\"FontAwesome\" POINT-SIZE=\"13\" COLOR=\"#6E1B31\">&
 html_equal = "<FONT POINT-SIZE=\"14\" COLOR=\"#155416\">&#9552;</FONT>"
 
 cfg = os.environ['HOME'] + "/.galapix/galapix.cfg"
+
+
+def ResolveColorNodeTypeToken(token):
+    if token in nodetype:
+        return token
+
+    aliases = {"nodes": "node"}
+    m = re.match(
+        r"^(c(?:green|cyan|blue|pink|red|yello|orang|black|grey)|impor|impog|impob|quest|commen|check|todo|title|node|nodes)(-?[0-9]+)$",
+        token
+    )
+    if not m:
+        return None
+
+    base = m.group(1)
+    if base in aliases:
+        base = aliases[base]
+    if base not in nodetype:
+        return None
+
+    delta = int(m.group(2))
+
+    fm = re.search(r'fillcolor="(#?[0-9A-Fa-f]{6})"', nodetype[base])
+    if not fm:
+        return None
+
+    rgb = fm.group(1).lstrip("#")
+    channels = [int(rgb[0:2], 16), int(rgb[2:4], 16), int(rgb[4:6], 16)]
+    shifted = [min(255, max(0, c + delta)) for c in channels]
+    newfill = "#%02x%02x%02x" % (shifted[0], shifted[1], shifted[2])
+
+    nodetype[token] = nodetype[base].replace(fm.group(1), newfill, 1)
+    return token
+
+def ResolveVerbatimFillColorToken(token):
+    if token in vrbtcolors:
+        return vrbtcolors[token]
+
+    m = re.match(
+        r"^(c(?:green|cyan|blue|pink|red|yello|orang|white))(-?[0-9]+)$",
+        token
+    )
+    if not m:
+        return None
+
+    base = m.group(1)
+    if base not in vrbtcolors:
+        return None
+
+    delta = int(m.group(2))
+    rgb = vrbtcolors[base].lstrip("#")
+    channels = [int(rgb[0:2], 16), int(rgb[2:4], 16), int(rgb[4:6], 16)]
+    shifted = [min(255, max(0, c + delta)) for c in channels]
+    newfill = "#%02x%02x%02x" % (shifted[0], shifted[1], shifted[2])
+
+    vrbtcolors[token] = newfill
+    return newfill
 
 
 class Tree:
@@ -92,12 +151,18 @@ class Tree:
                 if self._ntype == "def":
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["verbatim"], "".join(self._label))
                 else:
-                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["verbatim"].replace(vrbtcolors['def'], vrbtcolors[self._ntype]), "".join(self._label))
+                    fillcolor = ResolveVerbatimFillColorToken(self._ntype)
+                    if not fillcolor:
+                        fillcolor = vrbtcolors['def']
+                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["verbatim"].replace(vrbtcolors['def'], fillcolor), "".join(self._label))
             elif self._draw:
                 if self._ntype == "def":
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["draw"], "".join(self._label))
                 else:
-                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["draw"].replace(vrbtcolors['cwhite'], vrbtcolors[self._ntype]), "".join(self._label))
+                    fillcolor = ResolveVerbatimFillColorToken(self._ntype)
+                    if not fillcolor:
+                        fillcolor = vrbtcolors['cwhite']
+                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["draw"].replace(vrbtcolors['cwhite'], fillcolor), "".join(self._label))
             else:
                 return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype[self._ntype], "".join(self._label))
 
@@ -164,6 +229,9 @@ class Tree:
 
                 for i in value:
                     if type(i[2]) == dict and i[2]['lineskip']:
+                        lskip = i[2]['lineskip']
+                        if lskip < 0:
+                            lskip = self._resolvelinesel(lskip)
                         wordskip = 0
                         ls, fl = 0, 0
                         if self._verbatim or self._draw:
@@ -172,7 +240,7 @@ class Tree:
                                     fl += 1
                                 else:
                                     break
-                        while ls < i[2]['lineskip'] - 1:
+                        while ls < lskip - 1:
                             while fl < len(self._label):
                                 wordskip += 1
                                 fl += 1
@@ -197,6 +265,16 @@ class Tree:
 
                 for i in prevnbsp:
                     self._label.insert(i, "&nbsp;")
+
+        def _resolvelinesel(self, ls):
+            if ls >= 1:
+                return ls
+            label = "<SEP>".join(self._label)
+            lnum = len(label.split("</TD></TR><TR>"))
+            ls = lnum + ls + 1
+            if ls < 1:
+                return 1
+            return ls
 
         def _lineattr(self, fsattr, tsattr, value, eattr = None):
             if len(value) > 0:
@@ -226,7 +304,7 @@ class Tree:
                     self._label = "<SEP>".join(self._label)
                     self._label = self._label.split("</TD></TR><TR>")
                     for i in value:
-                        li = int(i[0])
+                        li = int(self._resolvelinesel(i[0]))
                         self._label[li - 1] = \
                                 self._label[li - 1].replace(fsattr, \
                                 "%s\"%s\">" % (tsattr, i[1]) if i[1] not in set(['U', 'B', 'S', 'I']) \
@@ -352,7 +430,7 @@ def WriteDot(DotFile):
 
 
 def SendRestartMSG(sockwildcard, sockcfg=None):
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(cfg)
 
     sockp = config.defaults().get(sockcfg)
@@ -361,10 +439,10 @@ def SendRestartMSG(sockwildcard, sockcfg=None):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.connect(sockp)
     except socket.error as m:
-        print sockcfg
-        print m
+        print(sockcfg)
+        print(m)
     else:
-        sock.send("%s restart" % (sockwildcard[0]), 64)
+        sock.send(("%s restart" % (sockwildcard[0])).encode(), 64)
         sock.close()
 
 
@@ -385,7 +463,7 @@ def WriteImg(argholder):
     elif "/" not in argholder.jpgname and "~" not in argholder.jpgname:
         gvroot = os.environ['PWD'] + "/"
     proc = subprocess.Popen(['dot', '-Tjpg', '-o', gvroot + argholder.jpgname], stdin = subprocess.PIPE)
-    proc.communicate(dotbuf)
+    proc.communicate(dotbuf.encode())
 
     subprocess.call("gm convert -shave 2x2 '%s' '%s'" % (gvroot + argholder.jpgname, gvroot + argholder.jpgname), shell=True)
 
@@ -441,7 +519,7 @@ def WriteMontage(argholder):
         os.chdir(gvroot + '/'.join(imgarg[0:2]))
         cmfile = CheckCM(imgarg[2])
     else:
-        print "montage building should be in %s/gv/" % (gvroot[0:-1])
+        print("montage building should be in %s/gv/" % (gvroot[0:-1]))
         raise SystemExit(1)
 
 
@@ -449,7 +527,7 @@ def WriteMontage(argholder):
         subprocess.call(["montage.py", cmfile])
         SendRestartMSG("rsync call", "inotsock")
     else:
-        print "%s not found in any %s/*.cm" % (imgarg[2], gvroot + '/'.join(imgarg[0:2]))
+        print("%s not found in any %s/*.cm" % (imgarg[2], gvroot + '/'.join(imgarg[0:2])))
         raise SystemExit(1)
 
 
@@ -472,7 +550,54 @@ def ParseAttributeLine(k, tonode, *args):
             edgecolor, edgestyle, edgend, edgethick, edglabel, \
             symbcolor, symbsize = args
 
-    m = re.search('(m?[rgbycp])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    def ParseIdxSpec(spec, prefix):
+        idx = []
+        if not spec:
+            return idx
+
+        def ParseSingleIdx(part):
+            part = part.strip()
+            if not part:
+                return None
+            nm = re.match(r"^\$([0-9]*)$", part)
+            if nm:
+                off = int(nm.group(1)) if nm.group(1) else 0
+                return -(off + 1)
+            nm = re.match(r"^([0-9]+)$", part)
+            if nm:
+                return int(nm.group(1))
+            return None
+
+        body = spec[len(prefix):]
+        if body.startswith("[") and body.endswith("]"):
+            body = body[1:-1]
+            for part in body.split(","):
+                part = part.strip()
+                if not part:
+                    continue
+                if "-" in part and "$" not in part:
+                    nm = re.match(r"([0-9]+)-([0-9]+)", part)
+                    if nm:
+                        s = int(nm.group(1))
+                        e = int(nm.group(2))
+                        if s <= e:
+                            for i in range(s, e + 1):
+                                idx.append(i)
+                        else:
+                            for i in range(s, e - 1, -1):
+                                idx.append(i)
+                else:
+                    parsed = ParseSingleIdx(part)
+                    if parsed is not None:
+                        idx.append(parsed)
+        else:
+            parsed = ParseSingleIdx(body)
+            if parsed is not None:
+                idx.append(parsed)
+
+        return idx
+
+    m = re.search('(m?[rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(1):
         if m.group(1)[0] == "m":
             linecolor.insert(0, [0, linecolors[m.group(1)[1:]], False])
@@ -490,42 +615,35 @@ def ParseAttributeLine(k, tonode, *args):
         if m.group(3):
             linefstyle.append([0, fontstyle[m.group(3)]])
 
-    m = re.search('(l[0-9]+)?(m?[rgbycp])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(m?[rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(1):
-        if m.group(4): linefstyle.append([int(m.group(1)[1:]), fontstyle[m.group(4)]])
-        if m.group(3): linefsize.append([int(m.group(1)[1:]), m.group(3)[1:]])
-        if m.group(2):
-            if m.group(2)[0] == "m":
-                linecolor.append([int(m.group(1)[1:]), linecolors[m.group(2)[1:]], False])
-            else:
-                linecolor.append([int(m.group(1)[1:]), fontcolor[m.group(2)], True])
+        lineidx = ParseIdxSpec(m.group(1), "l")
+        for li in lineidx:
+            if m.group(4):
+                linefstyle.append([li, fontstyle[m.group(4)]])
+            if m.group(3):
+                linefsize.append([li, m.group(3)[1:]])
+            if m.group(2):
+                if m.group(2)[0] == "m":
+                    linecolor.append([li, linecolors[m.group(2)[1:]], False])
+                else:
+                    linecolor.append([li, fontcolor[m.group(2)], True])
 
-    lineskip = None
-    m = re.search('(l[0-9]+)?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpk])?(f[0-9]+)?(ld|ul|st|it)?', k)
-    if m.group(1):
-        lineskip = int(m.group(1)[1:])
+    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(2):
-        if m.group(2).count("[") == 1 and m.group(2).count("]"):
-            if "-" in m.group(2):
-                nm = re.match('(?:w\[)([0-9]+)(?:-)([0-9]+)(?:\])', m.group(2))
-                s = nm.group(1)
-                e = nm.group(2)
-                nm = []
-                for i in range(int(s), int(e) + 1):
-                    nm.append(i)
-            else:
-                nm = re.findall('([0-9]+)(?:,?)', m.group(2))
-            for i in nm:
-                if m.group(3): wordcolor.append([int(i), fontcolor[m.group(3)], {'lineskip': lineskip} if lineskip else None])
-                if m.group(4): wordfsize.append([int(i), m.group(4)[1:], {'lineskip': lineskip} if lineskip else None])
-                if m.group(5): wordfstyle.append([int(i), fontstyle[m.group(5)], {'lineskip': lineskip} if lineskip else None])
-        else:
-            if m.group(3): wordcolor.append([int(m.group(2)[1:]), fontcolor[m.group(3)], {'lineskip': lineskip} if lineskip else None])
-            if m.group(4): wordfsize.append([int(m.group(2)[1:]), m.group(4)[1:], {'lineskip': lineskip} if lineskip else None])
-            if m.group(5): wordfstyle.append([int(m.group(2)[1:]), fontstyle[m.group(5)], {'lineskip': lineskip} if lineskip else None])
-    lineskip = None
+        lineidx = ParseIdxSpec(m.group(1), "l") if m.group(1) else [None]
+        wordidx = ParseIdxSpec(m.group(2), "w")
+        for li in lineidx:
+            lmeta = {'lineskip': li} if li else None
+            for wi in wordidx:
+                if m.group(3):
+                    wordcolor.append([wi, fontcolor[m.group(3)], lmeta])
+                if m.group(4):
+                    wordfsize.append([wi, m.group(4)[1:], lmeta])
+                if m.group(5):
+                    wordfstyle.append([wi, fontstyle[m.group(5)], lmeta])
 
-    m = re.search('(sym(?:[0-9]+)|sym(?:\[[0-9,]+\]))?([rgbycpk])?(f[0-9]+)?', k)
+    m = re.search(r'(sym(?:[0-9]+)|sym(?:\[[0-9,]+\]))?([rgbycpkt])?(f[0-9]+)?', k)
     if m.group(1):
         if m.group(1).count("[") == 1 and m.group(1).count("]"):
             nm = re.findall('([0-9]+)(?:,?)', m.group(1))
@@ -536,16 +654,32 @@ def ParseAttributeLine(k, tonode, *args):
             if m.group(2): symbcolor.append([int(m.group(1)[3:]), fontcolor[m.group(2)]])
             if m.group(3): symbsize.append([int(m.group(1)[3:]), m.group(3)[1:]])
 
-    m = re.search('(sg[rgbycpwkt]([sdtl](?!tart))?(start|end)?([\'\"](.*)[\'\"])?)?', k)
+    m = re.search(r'(sg([rgbycpwkt])(-?[0-9]+)?([sdtl](?!tart))?(start|end)?([\'\"](.*)[\'\"])?)?', k)
     if m.group(1):
-        sgcolor.append(subgraphcolors[m.group(1)[2:3]])
-        if "start" in m.group(1): sgcolor[0] = "s" + sgcolor[0]
-        elif "end" in m.group(1): sgcolor[0] = "e" + sgcolor[0]
-        if m.group(2):
-            sgstyle.append(edgestyles[m.group(2)])
+        ckey = m.group(2)
+        cval = subgraphcolors[ckey]
+
+        if m.group(3) and cval:
+            delta = int(m.group(3))
+            mhex = re.match(r"^#([0-9A-Fa-f]{6})([0-9A-Fa-f]{2})?$", cval)
+            if mhex:
+                rgb = mhex.group(1)
+                alpha = mhex.group(2) if mhex.group(2) else ""
+                channels = [int(rgb[0:2], 16), int(rgb[2:4], 16), int(rgb[4:6], 16)]
+                shifted = [min(255, max(0, ch + delta)) for ch in channels]
+                cval = "#%02x%02x%02x%s" % (shifted[0], shifted[1], shifted[2], alpha)
+
+        sgcolor.append(cval)
+        if m.group(5) == "start":
+            sgcolor[0] = "s" + sgcolor[0]
+        elif m.group(5) == "end":
+            sgcolor[0] = "e" + sgcolor[0]
+        if m.group(4):
+            sgstyle.append(edgestyles[m.group(4)])
             if not sgcolor[0]:
                 sgcolor[0] = bgcolor
-        if m.group(5): sgtitle.append(m.group(5))
+        if m.group(7):
+            sgtitle.append(m.group(7))
 
     m = re.search('((arr[0-9]+)?([rgbycp])?(t[0-9]+)?(start|end)([\'\"].*[\'\"])?)?', k)
     if m.group(1):
@@ -578,7 +712,7 @@ def ParseAttributeLine(k, tonode, *args):
 def ParseOtlname(keyword, line):
     m = re.search("(%s[ ]*=[ ]*)(\".*\")[ ]*" % (keyword), line)
     if m is None:
-        m = re.search("(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*" % (keyword), line)
+        m = re.search(r"(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*" % (keyword), line)
 
     return m.group(2)
 
@@ -587,7 +721,7 @@ def ParseFnameLine(keyword, line):
 
     m = re.search("(%s[ ]*=[ ]*)(\".*\")[ ]*(notitle)?" % (keyword), line)
     if m is None:
-        m = re.search("(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*(notitle)?" % (keyword), line)
+        m = re.search(r"(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*(notitle)?" % (keyword), line)
         if m.group(3):
             notitle = True
     else:
@@ -634,7 +768,7 @@ def GenDot(lines, argholder, parser):
 
     tabnum = lines[0].count("\t")
 
-    m = re.search('(\t|\#) (.*)', lines[0])
+    m = re.search(r'(\t|#) (.*)', lines[0])
     title = m.group(2)
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=LR;\n\tranksep=0.1;\n\tbgcolor=\"%s\";\n\n\tnode[fontname=\"%s\" fontsize=%s fontcolor=\"%s\" color=\"#000000\" gradientangle=\"90\" penwidth=2.5];\n" % (bgcolor, font['comic'], fontsize['m'], fontcolor['def'])
@@ -654,7 +788,7 @@ def GenDot(lines, argholder, parser):
 
 
     for line in lines[1:]:
-        if re.search("\t(:|\|)\s*fname", line):
+        if re.search(r"\t(:|\|)\s*fname", line):
             jpgname = ParseFnameLine("fname", line)
             jpgname = jpgname.strip()
 
@@ -666,10 +800,10 @@ def GenDot(lines, argholder, parser):
         else:
             nextline = lines[lines.index(line)]
 
-        if re.search("(\t\#) (.*)", line):
+        if re.search(r"(\t#) (.*)", line):
             level = line[:line.find("#")].count("\t") - tabnum
 
-            m = re.search('(\t|\#) (.*)', line)
+            m = re.search(r'(\t|#) (.*)', line)
             label = m.group(2)
 
             ntype = ""
@@ -737,7 +871,7 @@ def GenDot(lines, argholder, parser):
 
                     j += 1
 
-            if ntype is not "img":
+            if ntype != "img":
                 labelhtml.insert(0, "<TABLE CELLBORDER=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>")
                 i = 1
                 try:
@@ -761,7 +895,7 @@ def GenDot(lines, argholder, parser):
                         i += 1
                     labelhtml.insert(len(labelhtml), "</TD></TR></TABLE>")
                 except (IndexError, KeyError) as e:
-                    print e, labelhtml[i]
+                    print(e, labelhtml[i])
 
             wordcolor, wordfsize, wordfstyle = [], [], []
             linecolor, linefsize, linefstyle = [], [], []
@@ -774,7 +908,7 @@ def GenDot(lines, argholder, parser):
                 fromnode += "%s" % ("{:=02}".format(nodelevel[i] - 1))
             tonode = fromnode + "%s" % ("{:=02}".format(nodelevel[level - 1]))
 
-            if nextline.find("#") == -1 and ntype is not "img":
+            if nextline.find("#") == -1 and ntype != "img":
                 nextline = nextline.split()
                 spacesg = [[nextline[x], x] for x in range(len(nextline)) \
                         if nextline[x].count("\"") == 1 or nextline[x].count("\'") == 1]
@@ -796,8 +930,9 @@ def GenDot(lines, argholder, parser):
                 JoinSepKeyValue("symb", nextline)
 
                 for k in nextline:
-                    if k in nodetype and k not in set(["verbatim", "verbat", "draw"]):
-                        ntype = k
+                    resolved_ntype = ResolveColorNodeTypeToken(k)
+                    if resolved_ntype and resolved_ntype not in set(["verbatim", "verbat", "draw"]):
+                        ntype = resolved_ntype
                     else:
                         ParseAttributeLine(k, tonode, \
                                 wordcolor, wordfsize, wordfstyle, \
@@ -808,7 +943,7 @@ def GenDot(lines, argholder, parser):
                                 symbcolor, symbsize)
 
                     if k.find("=") > 0:
-                        m = re.match("([\W\w]*)(?:=)(.*)", k)
+                        m = re.match(r"([\W\w]*)(?:=)(.*)", k)
                         tokval = [m.group(1), m.group(2)]
                         if tokval[0] == "img":
                             labelhtml.insert(len(labelhtml) - 1, "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" + GenImgPath(tokval[1].strip()) + "\"/>")
@@ -940,7 +1075,7 @@ def GenDot(lines, argholder, parser):
         t = p.getype()
         if p.getype() != "root":
             if p.is_leaf() is not True:
-                if t in set(["cred", "cgreen", "ccyan", "cblue", "cpink",  "cyello", "corang"]):
+                if t in set(["cred", "cgreen", "ccyan", "cblue", "cpink", "cyello", "corang", "cblack", "cgrey"]):
                     s = p.element().replace("shape=box", "margin=\"0.2,0.3\" shape=box fontsize=\"%s\"" % (fontsize['l']) + "\n")
                     dotbuf += s
                 else:
@@ -1081,7 +1216,7 @@ def main():
         nextline = linesall[j + 1]
         level = linesall[j][:ParLoc(linesall[j])].count("\t")
 
-        if re.search("\t(:|;|\|)\s*fname", nextline):
+        if re.search(r"\t(:|;|\|)\s*fname", nextline):
             title = linesall[j]
             tabroot = level
             level += 1
@@ -1099,7 +1234,7 @@ def main():
                             j = i + 2
                             v = []
                             while j < len(linesall) and '# ' not in linesall[j] \
-                                    and not re.search("\t\s*[a-zA-Z0-9]\s*", linesall[j]):
+                                    and not re.search(r"\t\s*[a-zA-Z0-9]\s*", linesall[j]):
                                 if "\t:" in linesall[j]:
                                     v.append(linesall[j].lstrip("\t:").rstrip())
                                 elif "\t|" in linesall[j]:

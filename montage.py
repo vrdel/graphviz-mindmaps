@@ -1,4 +1,4 @@
-#!/home/daniel/.pyenv/versions/gvmm/bin/python
+#!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
 
 import sys, os, subprocess, multiprocessing
 import shutil, tempfile, re, fnmatch
@@ -15,15 +15,11 @@ class ArgHolder(object):
 argholder = None
 
 
-def callmontage(imgs, tile, tmpdir, name, row=None):
+def callmontage(imgs, tile, tmpdir, name, row=None, workdir=None, background="#a0a0a0"):
     skip = False
 
-    os.chdir(curdir)
-
-    if mini and not notitle:
-        background = "#efefef"
-    else:
-        background = "#a0a0a0"
+    if workdir:
+        os.chdir(workdir)
 
     if row == None:
         if len(imgs) == 1:
@@ -54,13 +50,13 @@ def SingleMontage(l, nummini = None):
     global curdir
 
     limg = []
-    m = re.search("(\s*\+?\s*(?:(?:auto)|(?:[\w_\-\+\d]*\.(?:jpg|png))))\s*\{(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(title\s*=\s*(?:(?:auto)|(?:[\"\'].*?[\"\'])))?(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(size\s*=\s*(?:[\"\']?[smb][\"\']?))?\s*(.*[\w_\-\+\d]*.(jpg|png)\s*\+?.*){1,}\}", l)
+    m = re.search(r"(\s*\+?\s*(?:(?:auto)|(?:[\w_\-\+\d]*\.(?:jpg|png))))\s*\{(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(title\s*=\s*(?:(?:auto)|(?:[\"\'].*?[\"\'])))?(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(size\s*=\s*(?:[\"\']?[smb][\"\']?))?\s*(.*[\w_\-\+\d]*.(jpg|png)\s*\+?.*){1,}\}", l)
     if argholder.outfile:
         orgfilename = filename = argholder.outfile
     else:
         orgfilename = filename = m.group(1).strip()
     if "+" in filename:
-        filename = re.findall("(?:\s*\+?\s*((?:auto)|(?:[\w_\-\+\d]*\.(?:jpg|png))))", filename)
+        filename = re.findall(r"(?:\s*\+?\s*((?:auto)|(?:[\w_\-\+\d]*\.(?:jpg|png))))", filename)
         if filename:
             filename = filename[0]
     if filename == "auto":
@@ -99,7 +95,7 @@ def SingleMontage(l, nummini = None):
         else:
             size = 'm'
     t = m.group(4)
-    m = re.findall("(([\w\-_\d]*\.(?:jpg|png)(?:\s*\+\s*[\w\-_\d]*.(?:jpg|png))*)|(<EMPTYL>|\[newrow\]|\[nr\]))", t)
+    m = re.findall(r"(([\w\-_\d]*\.(?:jpg|png)(?:\s*\+\s*[\w\-_\d]*.(?:jpg|png))*)|(<EMPTYL>|\[newrow\]|\[nr\]))", t)
     if "<EMPTYL>" in m[0] or "[newrow]" in m[0] or '[nr]' in m[0]:
         del(m[0])
     for i in m:
@@ -115,7 +111,7 @@ def MultiMontage(l):
     minifilenames = []
     global mini, title, notitle
 
-    m = re.match("((?:auto)|(?:[\w_\-\d]*\.(?:jpg|png)))\s*\{\s*(title\s*=\s*(?:(?:auto)|(?:\".*?\")))?\s*(size\s*=\s*[smb])?\s*(.*)\s*\}", l)
+    m = re.match(r"((?:auto)|(?:[\w_\-\d]*\.(?:jpg|png)))\s*\{\s*(title\s*=\s*(?:(?:auto)|(?:\".*?\")))?\s*(size\s*=\s*[smb])?\s*(.*)\s*\}", l)
     filename = m.group(1)
     if m.group(2):
         title = m.group(2)
@@ -134,12 +130,12 @@ def MultiMontage(l):
     else:
         size = None
     t = m.group(4)
-    m = re.findall("((?:(?:\+?\s*auto)|(?:\+?[\s\w_\-\d]*\.(?:jpg|png)))\s*\{.*?\})|(<EMPTYL>|\[newrow\]|\[nr\])|((?:\s*\+?\s*[\w\-_\d]*\.(?:jpg|png)(?:\s*\+\s*[\w\-_\d]*.(?:jpg|png))*))", t)
+    m = re.findall(r"((?:(?:\+?\s*auto)|(?:\+?[\s\w_\-\d]*\.(?:jpg|png)))\s*\{.*?\})|(<EMPTYL>|\[newrow\]|\[nr\])|((?:\s*\+?\s*[\w\-_\d]*\.(?:jpg|png)(?:\s*\+\s*[\w\-_\d]*.(?:jpg|png))*))", t)
     j, k = 1, 1
     for i in m:
         if i[0]:
             if i[0].strip().startswith("+"):
-                if re.match(".*?-m[0-9]+\.", minifilenames[-1]):
+                if re.match(r".*?-m[0-9]+\.", minifilenames[-1]):
                     left = minifilenames[-1]
                     del(minifilenames[-1])
                 else:
@@ -160,7 +156,7 @@ def MultiMontage(l):
             minifilenames.append(i[1].strip())
         elif i[2]:
             if i[2].strip().startswith("+"):
-                if re.match(".*?-m[0-9]+\.", minifilenames[-1]):
+                if re.match(r".*?-m[0-9]+\.", minifilenames[-1]):
                     minifilenames[-1] = minifilenames[-1] + i[2].strip()
                 else:
                     cml = len(argholder.cmfile)
@@ -189,6 +185,7 @@ def MultiMontage(l):
 
 def CreateMontage(filename, title, size, limg):
     os.chdir(curdir)
+    background = "#efefef" if mini and not notitle else "#a0a0a0"
 
     imgnames = []
     rowimgs = []
@@ -204,14 +201,22 @@ def CreateMontage(filename, title, size, limg):
             multimgnames = line.split("+")
             for i in range(len(multimgnames)):
                 multimgnames[i] = multimgnames[i].strip()
-            m = multiprocessing.Process(name = 'callmontage', target = callmontage, args = (multimgnames, 1, tmpdir, "mimg", multimg))
+            m = multiprocessing.Process(
+                name='callmontage',
+                target=callmontage,
+                args=(multimgnames, 1, tmpdir, "mimg", multimg, curdir, background),
+            )
             m.start()
             m.join()
             imgnames.append("%s/mimg%d.jpg" % (tmpdir, multimg))
             tmpfiles.append("%s/mimg%d.jpg" % (tmpdir, multimg))
         elif "<EMPTYL>" in line or '[newrow]' in line or '[nr]' in line:
             row += 1
-            m = multiprocessing.Process(name = 'callmontage', target = callmontage, args = (imgnames, len(imgnames), tmpdir, "img", row))
+            m = multiprocessing.Process(
+                name='callmontage',
+                target=callmontage,
+                args=(imgnames, len(imgnames), tmpdir, "img", row, curdir, background),
+            )
             m.start()
             m.join()
             imgnames = []
@@ -221,13 +226,21 @@ def CreateMontage(filename, title, size, limg):
             imgnames.append(line)
     else:
         row += 1
-        m = multiprocessing.Process(name = 'callmontage', target = callmontage, args = (imgnames, len(imgnames), tmpdir, "img", row))
+        m = multiprocessing.Process(
+            name='callmontage',
+            target=callmontage,
+            args=(imgnames, len(imgnames), tmpdir, "img", row, curdir, background),
+        )
         m.start()
         m.join()
         rowimgs.append("%s/img%d.jpg" % (tmpdir, row))
         tmpfiles.append("%s/img%d.jpg" % (tmpdir, row))
 
-    m = multiprocessing.Process(name = 'callmontage', target = callmontage, args = (rowimgs, 1, ".", filename.strip()))
+    m = multiprocessing.Process(
+        name='callmontage',
+        target=callmontage,
+        args=(rowimgs, 1, ".", filename.strip(), None, curdir, background),
+    )
     m.start()
     m.join()
 
@@ -264,7 +277,7 @@ def main():
     buf = buf.replace("\n", "")
     f.close()
 
-    m = re.search("\{.*\{.*\}.*\}", buf)
+    m = re.search(r"\{.*\{.*\}.*\}", buf)
 
     if m:
         mini = True
@@ -272,4 +285,6 @@ def main():
     else:
         SingleMontage(buf)
 
-main()
+
+if __name__ == "__main__":
+    main()
