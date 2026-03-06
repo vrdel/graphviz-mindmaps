@@ -472,6 +472,40 @@ def ParseAttributeLine(k, tonode, *args):
             edgecolor, edgestyle, edgend, edgethick, edglabel, \
             symbcolor, symbsize = args
 
+    def ParseIdxSpec(spec, prefix):
+        idx = []
+        if not spec:
+            return idx
+
+        body = spec[len(prefix):]
+        if body.startswith("[") and body.endswith("]"):
+            body = body[1:-1]
+            for part in body.split(","):
+                part = part.strip()
+                if not part:
+                    continue
+                if "-" in part:
+                    nm = re.match(r"([0-9]+)-([0-9]+)", part)
+                    if nm:
+                        s = int(nm.group(1))
+                        e = int(nm.group(2))
+                        if s <= e:
+                            for i in range(s, e + 1):
+                                idx.append(i)
+                        else:
+                            for i in range(s, e - 1, -1):
+                                idx.append(i)
+                else:
+                    nm = re.match(r"([0-9]+)", part)
+                    if nm:
+                        idx.append(int(nm.group(1)))
+        else:
+            nm = re.match(r"([0-9]+)", body)
+            if nm:
+                idx.append(int(nm.group(1)))
+
+        return idx
+
     m = re.search('(m?[rgbycp])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(1):
         if m.group(1)[0] == "m":
@@ -490,40 +524,33 @@ def ParseAttributeLine(k, tonode, *args):
         if m.group(3):
             linefstyle.append([0, fontstyle[m.group(3)]])
 
-    m = re.search('(l[0-9]+)?(m?[rgbycp])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))?(m?[rgbycp])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(1):
-        if m.group(4): linefstyle.append([int(m.group(1)[1:]), fontstyle[m.group(4)]])
-        if m.group(3): linefsize.append([int(m.group(1)[1:]), m.group(3)[1:]])
-        if m.group(2):
-            if m.group(2)[0] == "m":
-                linecolor.append([int(m.group(1)[1:]), linecolors[m.group(2)[1:]], False])
-            else:
-                linecolor.append([int(m.group(1)[1:]), fontcolor[m.group(2)], True])
+        lineidx = ParseIdxSpec(m.group(1), "l")
+        for li in lineidx:
+            if m.group(4):
+                linefstyle.append([li, fontstyle[m.group(4)]])
+            if m.group(3):
+                linefsize.append([li, m.group(3)[1:]])
+            if m.group(2):
+                if m.group(2)[0] == "m":
+                    linecolor.append([li, linecolors[m.group(2)[1:]], False])
+                else:
+                    linecolor.append([li, fontcolor[m.group(2)], True])
 
-    lineskip = None
-    m = re.search('(l[0-9]+)?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpk])?(f[0-9]+)?(ld|ul|st|it)?', k)
-    if m.group(1):
-        lineskip = int(m.group(1)[1:])
+    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpk])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(2):
-        if m.group(2).count("[") == 1 and m.group(2).count("]"):
-            if "-" in m.group(2):
-                nm = re.match('(?:w\[)([0-9]+)(?:-)([0-9]+)(?:\])', m.group(2))
-                s = nm.group(1)
-                e = nm.group(2)
-                nm = []
-                for i in range(int(s), int(e) + 1):
-                    nm.append(i)
-            else:
-                nm = re.findall('([0-9]+)(?:,?)', m.group(2))
-            for i in nm:
-                if m.group(3): wordcolor.append([int(i), fontcolor[m.group(3)], {'lineskip': lineskip} if lineskip else None])
-                if m.group(4): wordfsize.append([int(i), m.group(4)[1:], {'lineskip': lineskip} if lineskip else None])
-                if m.group(5): wordfstyle.append([int(i), fontstyle[m.group(5)], {'lineskip': lineskip} if lineskip else None])
-        else:
-            if m.group(3): wordcolor.append([int(m.group(2)[1:]), fontcolor[m.group(3)], {'lineskip': lineskip} if lineskip else None])
-            if m.group(4): wordfsize.append([int(m.group(2)[1:]), m.group(4)[1:], {'lineskip': lineskip} if lineskip else None])
-            if m.group(5): wordfstyle.append([int(m.group(2)[1:]), fontstyle[m.group(5)], {'lineskip': lineskip} if lineskip else None])
-    lineskip = None
+        lineidx = ParseIdxSpec(m.group(1), "l") if m.group(1) else [None]
+        wordidx = ParseIdxSpec(m.group(2), "w")
+        for li in lineidx:
+            lmeta = {'lineskip': li} if li else None
+            for wi in wordidx:
+                if m.group(3):
+                    wordcolor.append([wi, fontcolor[m.group(3)], lmeta])
+                if m.group(4):
+                    wordfsize.append([wi, m.group(4)[1:], lmeta])
+                if m.group(5):
+                    wordfstyle.append([wi, fontstyle[m.group(5)], lmeta])
 
     m = re.search('(sym(?:[0-9]+)|sym(?:\[[0-9,]+\]))?([rgbycpk])?(f[0-9]+)?', k)
     if m.group(1):
