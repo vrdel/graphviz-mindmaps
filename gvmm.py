@@ -43,6 +43,7 @@ nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial colo
         "check" : "shape=rarrow fontcolor=\"%s\" margin=\"0.20\" style=\"filled\" fillcolor=\"#4A90D9\" fontcolor=\"#ffffff\" color=\"#4A90D9\"" % (fontcolor['def']),
         "todo" : "shape=box fontcolor=\"%s\" margin=\"0.20\" style=\"filled, diagonals\" fillcolor=\"#FFF09A\" fontcolor=\"#404040\" color=\"#404040\"" % (fontcolor['def']),
         "decisi" : "shape=diamond style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#ffc990\" color=\"#8a8a8a\"" % (fontsize['l']),
+        "saying" : "shape=egg style=\"radial\" fontsize=\"%s\" fillcolor=\"#9feeee\" color=\"#8a8a8a\"" % (fontsize['l']),
         "cgreen" : "shape=box style=\"rounded,radial\" fillcolor=\"#bcffc2\" color=\"#8a8a8a\"",
         "ccyan" : "shape=box style=\"rounded,radial\" fillcolor=\"#b9ffff\" color=\"#8a8a8a\"",
         "cblue" : "shape=box style=\"rounded,radial\" fillcolor=\"#b2d5fb\" color=\"#8a8a8a\"",
@@ -1140,9 +1141,9 @@ def GenDot(lines, argholder, parser):
 
 
 def PostAttrProcLabel(label, ntype, vrbt, draw):
-    # if ntype == "commen":
-        # label.insert(0, "<I>")
-        # label.insert(len(label), "</I>")
+    if ntype == "saying":
+        label.insert(0, "<I>")
+        label.insert(len(label), "</I>")
     if ntype == "check" or ntype == "todo":
         label.insert(0, "<B>")
         label.insert(len(label), "</B>")
