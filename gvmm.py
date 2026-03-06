@@ -12,7 +12,7 @@ title = ""
 montagetitle = None
 notitle = False
 
-fontcolor = {"def" : "#000000", "r" : "#B30000", "g" : "#027b10", "b" : "#151e94", "y" : "#ebec50", "c" : "#00948c", "p" : "#94008b", "k" : "#000000"}
+fontcolor = {"def" : "#000000", "r" : "#B30000", "g" : "#027b10", "b" : "#151e94", "y" : "#ebec50", "c" : "#00948c", "p" : "#94008b", "k" : "#000000", "t" : "#ffffff"}
 linecolors = {"r" : "#FF8080", "g" : "#8BFF80", "b" : "#80CAFF", "y" : "#FFF180", "c" : "#80FFFB", "p" : "#FF80E7", "k" : "#000000"}
 subgraphcolors = {"r" : "#FF000020", "g" : "#00FF0020", "b" : "#0000FF20", "y" : "#FFF40020", "c" : "#00FFD204", "p" : "#FF00EA20", "w" : "#FFFFFF20", "k" : "#00000020", "t" : ""}
 vrbtcolors = {"cgreen" : "#dffde6", "cred" : "#fde0df", "cblue" : "#e1dffd", "ccyan" : "#dffdfa", "cyello" : "#fcfddf", "corang" : "#fdecdf", "cpink" : "#fddff3", "cwhite": "#ffffff", "def" : "#dfeafd"}
@@ -101,6 +101,30 @@ def ResolveColorNodeTypeToken(token):
     nodetype[token] = nodetype[base].replace(fm.group(1), newfill, 1)
     return token
 
+def ResolveVerbatimFillColorToken(token):
+    if token in vrbtcolors:
+        return vrbtcolors[token]
+
+    m = re.match(
+        r"^(c(?:green|cyan|blue|pink|red|yello|orang|white))(-?[0-9]+)$",
+        token
+    )
+    if not m:
+        return None
+
+    base = m.group(1)
+    if base not in vrbtcolors:
+        return None
+
+    delta = int(m.group(2))
+    rgb = vrbtcolors[base].lstrip("#")
+    channels = [int(rgb[0:2], 16), int(rgb[2:4], 16), int(rgb[4:6], 16)]
+    shifted = [min(255, max(0, c + delta)) for c in channels]
+    newfill = "#%02x%02x%02x" % (shifted[0], shifted[1], shifted[2])
+
+    vrbtcolors[token] = newfill
+    return newfill
+
 
 class Tree:
     class Node:
@@ -127,12 +151,18 @@ class Tree:
                 if self._ntype == "def":
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["verbatim"], "".join(self._label))
                 else:
-                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["verbatim"].replace(vrbtcolors['def'], vrbtcolors[self._ntype]), "".join(self._label))
+                    fillcolor = ResolveVerbatimFillColorToken(self._ntype)
+                    if not fillcolor:
+                        fillcolor = vrbtcolors['def']
+                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["verbatim"].replace(vrbtcolors['def'], fillcolor), "".join(self._label))
             elif self._draw:
                 if self._ntype == "def":
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["draw"], "".join(self._label))
                 else:
-                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["draw"].replace(vrbtcolors['cwhite'], vrbtcolors[self._ntype]), "".join(self._label))
+                    fillcolor = ResolveVerbatimFillColorToken(self._ntype)
+                    if not fillcolor:
+                        fillcolor = vrbtcolors['cwhite']
+                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["draw"].replace(vrbtcolors['cwhite'], fillcolor), "".join(self._label))
             else:
                 return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype[self._ntype], "".join(self._label))
 
@@ -567,7 +597,7 @@ def ParseAttributeLine(k, tonode, *args):
 
         return idx
 
-    m = re.search('(m?[rgbycpk])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search('(m?[rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(1):
         if m.group(1)[0] == "m":
             linecolor.insert(0, [0, linecolors[m.group(1)[1:]], False])
@@ -585,7 +615,7 @@ def ParseAttributeLine(k, tonode, *args):
         if m.group(3):
             linefstyle.append([0, fontstyle[m.group(3)]])
 
-    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(m?[rgbycpk])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(m?[rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(1):
         lineidx = ParseIdxSpec(m.group(1), "l")
         for li in lineidx:
@@ -599,7 +629,7 @@ def ParseAttributeLine(k, tonode, *args):
                 else:
                     linecolor.append([li, fontcolor[m.group(2)], True])
 
-    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpk])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(2):
         lineidx = ParseIdxSpec(m.group(1), "l") if m.group(1) else [None]
         wordidx = ParseIdxSpec(m.group(2), "w")
@@ -613,7 +643,7 @@ def ParseAttributeLine(k, tonode, *args):
                 if m.group(5):
                     wordfstyle.append([wi, fontstyle[m.group(5)], lmeta])
 
-    m = re.search(r'(sym(?:[0-9]+)|sym(?:\[[0-9,]+\]))?([rgbycpk])?(f[0-9]+)?', k)
+    m = re.search(r'(sym(?:[0-9]+)|sym(?:\[[0-9,]+\]))?([rgbycpkt])?(f[0-9]+)?', k)
     if m.group(1):
         if m.group(1).count("[") == 1 and m.group(1).count("]"):
             nm = re.findall('([0-9]+)(?:,?)', m.group(1))
