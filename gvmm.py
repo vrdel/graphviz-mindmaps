@@ -42,6 +42,7 @@ nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial colo
         "term" : "shape=note fontname=\"%s\" gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15\" fillcolor=\"#fbfbfb\" color=\"#8a8a8a\"" % (font['mono']),
         "check" : "shape=rarrow fontcolor=\"%s\" margin=\"0.20\" style=\"filled\" fillcolor=\"#4A90D9\" fontcolor=\"#ffffff\" color=\"#4A90D9\"" % (fontcolor['def']),
         "todo" : "shape=box fontcolor=\"%s\" margin=\"0.20\" style=\"filled, diagonals\" fillcolor=\"#FFF09A\" fontcolor=\"#404040\" color=\"#404040\"" % (fontcolor['def']),
+        "decisi" : "shape=diamond style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#ffc990\" color=\"#8a8a8a\"" % (fontsize['l']),
         "cgreen" : "shape=box style=\"rounded,radial\" fillcolor=\"#bcffc2\" color=\"#8a8a8a\"",
         "ccyan" : "shape=box style=\"rounded,radial\" fillcolor=\"#b9ffff\" color=\"#8a8a8a\"",
         "cblue" : "shape=box style=\"rounded,radial\" fillcolor=\"#b2d5fb\" color=\"#8a8a8a\"",
