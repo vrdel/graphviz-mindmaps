@@ -14,7 +14,7 @@ notitle = False
 
 fontcolor = {"def" : "#000000", "r" : "#B30000", "g" : "#027b10", "b" : "#151e94", "y" : "#ebec50", "c" : "#00948c", "p" : "#94008b", "k" : "#000000"}
 linecolors = {"r" : "#FF8080", "g" : "#8BFF80", "b" : "#80CAFF", "y" : "#FFF180", "c" : "#80FFFB", "p" : "#FF80E7"}
-subgraphcolors = {"r" : "#FF000016", "g" : "#00FF0016", "b" : "#0000FF16", "y" : "#FFF40016", "c" : "#00FFD416", "p" : "#FF00EA16", "w" : "#FFFFFFFF", "k" : "#00000016", "t" : ""}
+subgraphcolors = {"r" : "#FF000014", "g" : "#00FF0014", "b" : "#0000FF14", "y" : "#FFF40014", "c" : "#00FFD414", "p" : "#FF00EA14", "w" : "#FFFFFF14", "k" : "#00000014", "t" : ""}
 vrbtcolors = {"cgreen" : "#dffde6", "cred" : "#fde0df", "cblue" : "#e1dffd", "ccyan" : "#dffdfa", "cyello" : "#fcfddf", "corang" : "#fdecdf", "cpink" : "#fddff3", "cwhite": "#ffffff", "def" : "#dfeafd"}
 fontstyle = {"ul" : "U", "ld" : "B", "st" : "S", "it" : "I"}
 bgcolor = "#efefef"
@@ -598,16 +598,32 @@ def ParseAttributeLine(k, tonode, *args):
             if m.group(2): symbcolor.append([int(m.group(1)[3:]), fontcolor[m.group(2)]])
             if m.group(3): symbsize.append([int(m.group(1)[3:]), m.group(3)[1:]])
 
-    m = re.search('(sg[rgbycpwkt]([sdtl](?!tart))?(start|end)?([\'\"](.*)[\'\"])?)?', k)
+    m = re.search(r'(sg([rgbycpwkt])(-?[0-9]+)?([sdtl](?!tart))?(start|end)?([\'\"](.*)[\'\"])?)?', k)
     if m.group(1):
-        sgcolor.append(subgraphcolors[m.group(1)[2:3]])
-        if "start" in m.group(1): sgcolor[0] = "s" + sgcolor[0]
-        elif "end" in m.group(1): sgcolor[0] = "e" + sgcolor[0]
-        if m.group(2):
-            sgstyle.append(edgestyles[m.group(2)])
+        ckey = m.group(2)
+        cval = subgraphcolors[ckey]
+
+        if m.group(3) and cval:
+            delta = int(m.group(3))
+            mhex = re.match(r"^#([0-9A-Fa-f]{6})([0-9A-Fa-f]{2})?$", cval)
+            if mhex:
+                rgb = mhex.group(1)
+                alpha = mhex.group(2) if mhex.group(2) else ""
+                channels = [int(rgb[0:2], 16), int(rgb[2:4], 16), int(rgb[4:6], 16)]
+                shifted = [min(255, max(0, ch + delta)) for ch in channels]
+                cval = "#%02x%02x%02x%s" % (shifted[0], shifted[1], shifted[2], alpha)
+
+        sgcolor.append(cval)
+        if m.group(5) == "start":
+            sgcolor[0] = "s" + sgcolor[0]
+        elif m.group(5) == "end":
+            sgcolor[0] = "e" + sgcolor[0]
+        if m.group(4):
+            sgstyle.append(edgestyles[m.group(4)])
             if not sgcolor[0]:
                 sgcolor[0] = bgcolor
-        if m.group(5): sgtitle.append(m.group(5))
+        if m.group(7):
+            sgtitle.append(m.group(7))
 
     m = re.search('((arr[0-9]+)?([rgbycp])?(t[0-9]+)?(start|end)([\'\"].*[\'\"])?)?', k)
     if m.group(1):
