@@ -13,8 +13,8 @@ montagetitle = None
 notitle = False
 
 fontcolor = {"def" : "#000000", "r" : "#B30000", "g" : "#027b10", "b" : "#151e94", "y" : "#ebec50", "c" : "#00948c", "p" : "#94008b", "k" : "#000000"}
-linecolors = {"r" : "#FF8080", "g" : "#8BFF80", "b" : "#80CAFF", "y" : "#FFF180", "c" : "#80FFFB", "p" : "#FF80E7"}
-subgraphcolors = {"r" : "#FF000014", "g" : "#00FF0014", "b" : "#0000FF14", "y" : "#FFF40014", "c" : "#00FFD414", "p" : "#FF00EA14", "w" : "#FFFFFF14", "k" : "#00000014", "t" : ""}
+linecolors = {"r" : "#FF8080", "g" : "#8BFF80", "b" : "#80CAFF", "y" : "#FFF180", "c" : "#80FFFB", "p" : "#FF80E7", "k" : "#000000"}
+subgraphcolors = {"r" : "#FF000020", "g" : "#00FF0020", "b" : "#0000FF20", "y" : "#FFF40020", "c" : "#00FFD204", "p" : "#FF00EA20", "w" : "#FFFFFF20", "k" : "#00000020", "t" : ""}
 vrbtcolors = {"cgreen" : "#dffde6", "cred" : "#fde0df", "cblue" : "#e1dffd", "ccyan" : "#dffdfa", "cyello" : "#fcfddf", "corang" : "#fdecdf", "cpink" : "#fddff3", "cwhite": "#ffffff", "def" : "#dfeafd"}
 fontstyle = {"ul" : "U", "ld" : "B", "st" : "S", "it" : "I"}
 bgcolor = "#efefef"
@@ -541,7 +541,7 @@ def ParseAttributeLine(k, tonode, *args):
 
         return idx
 
-    m = re.search('(m?[rgbycp])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search('(m?[rgbycpk])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(1):
         if m.group(1)[0] == "m":
             linecolor.insert(0, [0, linecolors[m.group(1)[1:]], False])
@@ -559,7 +559,7 @@ def ParseAttributeLine(k, tonode, *args):
         if m.group(3):
             linefstyle.append([0, fontstyle[m.group(3)]])
 
-    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))?(m?[rgbycp])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))?(m?[rgbycpk])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(1):
         lineidx = ParseIdxSpec(m.group(1), "l")
         for li in lineidx:
