@@ -730,6 +730,12 @@ def ParseFnameLine(keyword, line):
 
     return m.group(2)
 
+def ParseInlineAttrLine(keyword, line):
+    m = re.search(r"%s[ ]*=[ ]*(\"[^\"]*\"|'[^']*'|[^\s]+)" % (keyword), line)
+    if not m:
+        return None
+    return m.group(1).strip().strip("\"'")
+
 
 def JoinSepKeyValue(key, line):
     mi = None
@@ -763,13 +769,22 @@ def GenDot(lines, argholder, parser):
     root = tree.addroot(rootnodename)
     parentlist[0] = root
 
-    global dotbuf, title, notitle, montagetitle
+    global dotbuf, title, notitle, montagetitle, bgcolor
     jpgname, dotname = "", ""
 
     tabnum = lines[0].count("\t")
 
     m = re.search(r'(\t|#) (.*)', lines[0])
     title = m.group(2)
+
+    # bgcolor can be specified on the same line as fname. Reset per map.
+    bgcolor = "#efefef"
+    for line in lines[1:]:
+        if re.search(r"\t(:|\|)\s*fname", line):
+            custom_bg = ParseInlineAttrLine("bgcolor", line)
+            if custom_bg:
+                bgcolor = custom_bg
+            break
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=LR;\n\tranksep=0.1;\n\tbgcolor=\"%s\";\n\n\tnode[fontname=\"%s\" fontsize=%s fontcolor=\"%s\" color=\"#000000\" gradientangle=\"90\" penwidth=2.5];\n" % (bgcolor, font['comic'], fontsize['m'], fontcolor['def'])
     dotbuf += "\tedge[arrowhead=none color=\"#8a8a8a\" minlen=3 style=tapered penwidth=6 dir=forward arrowtail=none fontname=\"%s\" fontsize=\"%s\" fontcolor=\"%s\"];\n\n" % (font['comicb'], fontsize['l'], fontcolor['b'])
