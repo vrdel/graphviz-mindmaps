@@ -71,7 +71,7 @@ def ResolveColorNodeTypeToken(token):
     if token in nodetype:
         return token
 
-    m = re.match(r"^(c(?:green|cyan|blue|pink|red|yello|orang))([0-9]+)(-?)$", token)
+    m = re.match(r"^(c(?:green|cyan|blue|pink|red|yello|orang))([+-][0-9]+)$", token)
     if not m:
         return None
 
@@ -80,8 +80,6 @@ def ResolveColorNodeTypeToken(token):
         return None
 
     delta = int(m.group(2))
-    if m.group(3) == "-":
-        delta = -delta
 
     fm = re.search(r'fillcolor="(#?[0-9A-Fa-f]{6})"', nodetype[base])
     if not fm:
