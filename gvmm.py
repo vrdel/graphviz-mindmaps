@@ -642,7 +642,7 @@ def ParseAttributeLine(k, tonode, *args):
 
         return idx
 
-    m = re.search('(m?[rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search('(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
     if m.group(1):
         if m.group(1)[0] == "m":
             linecolor.insert(0, [0, linecolors[m.group(1)[1:]], False])
@@ -651,21 +651,24 @@ def ParseAttributeLine(k, tonode, *args):
         if m.group(2):
             linefsize.append([0, m.group(2)[1:]])
         if m.group(3):
-            linefstyle.append([0, fontstyle[m.group(3)]])
+            for si in range(0, len(m.group(3)), 2):
+                linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
     elif m.group(2):
         linefsize.append([0, m.group(2)[1:]])
         if m.group(3):
-            linefstyle.append([0, fontstyle[m.group(3)]])
+            for si in range(0, len(m.group(3)), 2):
+                linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
     elif m.group(3):
-        if m.group(3):
-            linefstyle.append([0, fontstyle[m.group(3)]])
+        for si in range(0, len(m.group(3)), 2):
+            linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
 
-    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(m?[rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
     if m.group(1):
         lineidx = ParseIdxSpec(m.group(1), "l")
         for li in lineidx:
             if m.group(4):
-                linefstyle.append([li, fontstyle[m.group(4)]])
+                for si in range(0, len(m.group(4)), 2):
+                    linefstyle.append([li, fontstyle[m.group(4)[si:si+2]]])
             if m.group(3):
                 linefsize.append([li, m.group(3)[1:]])
             if m.group(2):
@@ -680,7 +683,7 @@ def ParseAttributeLine(k, tonode, *args):
         for li in lineidx:
             linedate.append([li, True])
 
-    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
     if m.group(2):
         lineidx = ParseIdxSpec(m.group(1), "l") if m.group(1) else [None]
         wordidx = ParseIdxSpec(m.group(2), "w")
@@ -692,7 +695,8 @@ def ParseAttributeLine(k, tonode, *args):
                 if m.group(4):
                     wordfsize.append([wi, m.group(4)[1:], lmeta])
                 if m.group(5):
-                    wordfstyle.append([wi, fontstyle[m.group(5)], lmeta])
+                    for si in range(0, len(m.group(5)), 2):
+                        wordfstyle.append([wi, fontstyle[m.group(5)[si:si+2]], lmeta])
 
     m = re.search(r'(sym(?:[0-9]+)|sym(?:\[[0-9,]+\]))?([rgbycpkt])?(f[0-9]+)?', k)
     if m.group(1):
