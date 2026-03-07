@@ -1193,7 +1193,7 @@ def PostAttrProcLabel(label, ntype, vrbt, draw, textleft=False):
     if ntype == "check" or ntype == "todo":
         label.insert(0, "<B>")
         label.insert(len(label), "</B>")
-    if ntype == "example" or vrbt or draw or textleft:
+    if ntype == "example" or vrbt or draw:
         for i in range(len(label)):
             label[i] = label[i].replace("<TD", "<TD ALIGN=\"left\"")
     if ntype == "term":
@@ -1216,7 +1216,7 @@ def PostAttrProcLabel(label, ntype, vrbt, draw, textleft=False):
             elif '---' in label[i]:
                 label[i-1] = label[i-1].replace("<TR><TD>", '<TR><TD></TD></TR>')
                 label[i] = label[i].replace("---</TD></TR>", "<HR/><TR><TD></TD></TR>")
-    if ntype == "list":
+    if ntype == "list" or textleft:
         for i in range(len(label)):
             label[i] = label[i].replace("<TD", "<TD ALIGN=\"left\"")
 
