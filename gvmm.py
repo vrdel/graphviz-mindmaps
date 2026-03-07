@@ -373,7 +373,7 @@ class Tree:
         p._child.insert(0, c)
         return c
 
-    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=[], linecolor=[], wordfsize=[], linefsize=[], wordfstyle=[], linefstyle=[], linedate=[], sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False):
+    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=[], linecolor=[], wordfsize=[], linefsize=[], wordfstyle=[], linefstyle=[], linedate=[], sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False):
         sgattr = ""
         if sgcolor and sgcolor[0] == "s":
             self._addchild_rev("", ["}"], tabs, "sgwrap", p)
@@ -389,7 +389,7 @@ class Tree:
         c.colorifylines()
         c.linedate()
 
-        PostAttrProcLabel(c._label, ntype, vrbt, draw)
+        PostAttrProcLabel(c._label, ntype, vrbt, draw, textleft)
 
         if sgcolor and sgcolor[0] == "#":
             sgattr = "style = \"%s rounded\";\n" % (sgstyle + "," if sgstyle else "") + tabs + "\t" + "color = \"%s\";\n" % (sgcolor if not sgstyle else "#000000") + tabs + "\t" + "bgcolor = \"%s\"" % (sgcolor)
@@ -882,6 +882,11 @@ def GenDot(lines, argholder, parser):
             if "draw" in nextline:
                 draw = True
 
+            if "textleft" in nextline:
+                textleft = True
+            else:
+                textleft = False
+
             if re.match("img[ ]*=", label):
                 m = re.match("(img)(?:[  ]*=[  ]*)(.*)", label)
                 if m:
@@ -997,6 +1002,8 @@ def GenDot(lines, argholder, parser):
                 JoinSepKeyValue("symb", nextline)
 
                 for k in nextline:
+                    if k == "textleft":
+                        continue
                     resolved_ntype = ResolveColorNodeTypeToken(k)
                     if resolved_ntype and resolved_ntype not in set(["verbatim", "verbat", "draw"]):
                         ntype = resolved_ntype
@@ -1132,7 +1139,7 @@ def GenDot(lines, argholder, parser):
                     sgcolor[0] if sgcolor else None, \
                     sgtitle[0] if sgtitle else None, \
                     sgstyle[0] if sgstyle else None, \
-                    vrbt, draw)
+                    vrbt, draw, textleft)
 
             nodelevel[level - 1] += 1
 
@@ -1191,14 +1198,14 @@ def GenDot(lines, argholder, parser):
         WriteImg(argholder)
 
 
-def PostAttrProcLabel(label, ntype, vrbt, draw):
+def PostAttrProcLabel(label, ntype, vrbt, draw, textleft=False):
     if ntype == "saying":
         label.insert(0, "<I>")
         label.insert(len(label), "</I>")
     if ntype == "check" or ntype == "todo":
         label.insert(0, "<B>")
         label.insert(len(label), "</B>")
-    if ntype == "example" or vrbt or draw:
+    if ntype == "example" or vrbt or draw or textleft:
         for i in range(len(label)):
             label[i] = label[i].replace("<TD", "<TD ALIGN=\"left\"")
     if ntype == "term":
