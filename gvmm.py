@@ -234,12 +234,12 @@ class Tree:
                 if li < 1 or li > len(self._label):
                     continue
 
-                deco = "<TD><FONT COLOR=\"%s\"><B><I><FONT FACE=\"FontAwesome\" POINT-SIZE=\"18\">%s</FONT>&nbsp;" % (fontcolor['b'], fontawesome.symb["calendar"])
+                deco = "<TD><FONT COLOR=\"%s\"><I><FONT FACE=\"FontAwesome\" POINT-SIZE=\"18\">%s</FONT>&nbsp;" % (fontcolor['b'], fontawesome.symb["calendar"])
                 self._label[li - 1] = self._label[li - 1].replace("<TD>", deco, 1)
                 if "</TD>" in self._label[li - 1]:
-                    self._label[li - 1] = self._label[li - 1].replace("</TD>", "</U></B></FONT></TD>", 1)
+                    self._label[li - 1] = self._label[li - 1].replace("</TD>", "</I></FONT></TD>", 1)
                 else:
-                    self._label[li - 1] = self._label[li - 1] + "</I></B></FONT>"
+                    self._label[li - 1] = self._label[li - 1] + "</I></FONT>"
 
             for j in range(len(self._label) - 1):
                 self._label[j] = self._label[j] + "</TD></TR><TR>"
