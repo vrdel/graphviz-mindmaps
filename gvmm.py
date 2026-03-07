@@ -32,7 +32,7 @@ nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial colo
         "underl" : "color=\"#b8b8b8\" fontcolor=\"%s\" shape=underline " % (fontcolor['def']),
         "node" : "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#f4f4f4\" color=\"#6a6a6a\"" % (fontsize['l']),
         "list" : "shape=rect style=\"radial\" fontsize=\"%s\" fillcolor=\"#d3f6ff\" color=\"#6a6a6a\"" % (fontsize['l']),
-        "title" : "shape=doubleoctagon fontname=\"%s\" fontsize=\"%s\" style=\"radial\" fillcolor=\"#abffff\" color=\"#8a8a8a\"" % (font['comicb'], fontsize['l']),
+        "title" : "shape=doubleoctagon fontname=\"%s\" margin=\"0,0\" fontsize=\"%s\" style=\"radial\" fillcolor=\"#abffff\" color=\"#8a8a8a\"" % (font['comicb'], fontsize['l']),
         "date" : "shape=component gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15,0.15\" fillcolor=\"#fbfbfb;0.93:#B30E0E\" color=\"#8a8a8a\"",
         "link" : "shape=component gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15,0.15\" fillcolor=\"#edf1ff;0.93:#3283c9\" color=\"#8a8a8a\"",
         "example" : "shape=note fontname=\"%s\" gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15\" fillcolor=\"#18A828;0.15:#fbfbfb\" color=\"#8a8a8a\"" % (font['mono']),
@@ -43,7 +43,7 @@ nodetype = {"root" : "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial colo
         "check" : "shape=rarrow fontcolor=\"%s\" margin=\"0.20\" style=\"filled\" fillcolor=\"#4A90D9\" fontcolor=\"#ffffff\" color=\"#4A90D9\"" % (fontcolor['def']),
         "todo" : "shape=box fontcolor=\"%s\" margin=\"0.20\" style=\"filled, diagonals\" fillcolor=\"#FFF09A\" fontcolor=\"#404040\" color=\"#404040\"" % (fontcolor['def']),
         "decisi" : "shape=diamond style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#ffc990\" color=\"#8a8a8a\"" % (fontsize['l']),
-        "saying" : "shape=egg style=\"radial\" fontsize=\"%s\" fillcolor=\"#9feeee\" color=\"#8a8a8a\"" % (fontsize['l']),
+        "saying" : "shape=egg style=\"radial\" margin=\"0.0,0.15\" fontsize=\"%s\" fillcolor=\"#A9FFFF\" color=\"#8a8a8a\"" % (fontsize['l']),
         "cgreen" : "shape=box style=\"rounded,radial\" fillcolor=\"#bcffc2\" color=\"#8a8a8a\"",
         "ccyan" : "shape=box style=\"rounded,radial\" fillcolor=\"#b9ffff\" color=\"#8a8a8a\"",
         "cblue" : "shape=box style=\"rounded,radial\" fillcolor=\"#b2d5fb\" color=\"#8a8a8a\"",
@@ -130,7 +130,7 @@ def ResolveVerbatimFillColorToken(token):
 
 class Tree:
     class Node:
-        def __init__(self, nodename, label=[], tabs="", ntype=None, parent=None, wordcolor=[], linecolor=[], wordfsize=[], linefsize=[], wordfstyle=[], linefstyle=[], verbatim=False, draw=False):
+        def __init__(self, nodename, label=[], tabs="", ntype=None, parent=None, wordcolor=[], linecolor=[], wordfsize=[], linefsize=[], wordfstyle=[], linefstyle=[], linedate=[], verbatim=False, draw=False):
             self._ntype = ntype
             self._nodename = nodename
             self._label = label
@@ -143,6 +143,7 @@ class Tree:
             self._linefstyle = linefstyle
             self._wordfsize = wordfsize
             self._wordfstyle = wordfstyle
+            self._linedate = linedate
             self._verbatim = verbatim
             self._draw = draw
 
@@ -221,6 +222,31 @@ class Tree:
                 else:
                     self._lineattr("<TD>", "<TD BGCOLOR=", [i])
 
+        def linedate(self):
+            if len(self._linedate) == 0:
+                return
+
+            self._label = "<SEP>".join(self._label)
+            self._label = self._label.split("</TD></TR><TR>")
+
+            for i in self._linedate:
+                li = int(i[0])
+                if li < 1 or li > len(self._label):
+                    continue
+
+                deco = "<TD><FONT COLOR=\"%s\"><B><I><FONT FACE=\"FontAwesome\" POINT-SIZE=\"18\">%s</FONT>&nbsp;" % (fontcolor['b'], fontawesome.symb["calendar"])
+                self._label[li - 1] = self._label[li - 1].replace("<TD>", deco, 1)
+                if "</TD>" in self._label[li - 1]:
+                    self._label[li - 1] = self._label[li - 1].replace("</TD>", "</U></B></FONT></TD>", 1)
+                else:
+                    self._label[li - 1] = self._label[li - 1] + "</I></B></FONT>"
+
+            for j in range(len(self._label) - 1):
+                self._label[j] = self._label[j] + "</TD></TR><TR>"
+
+            self._label = "".join(self._label)
+            self._label = self._label.split("<SEP>")
+
         def _wordattr(self, value, sattr, eattr = None):
             if len(value) > 0:
                 prevnbsp = [j for j in range(2, len(self._label)) if "nbsp" in self._label[j]]
@@ -232,8 +258,6 @@ class Tree:
                 for i in value:
                     if type(i[2]) == dict and i[2]['lineskip']:
                         lskip = i[2]['lineskip']
-                        if lskip < 0:
-                            lskip = self._resolvelinesel(lskip)
                         wordskip = 0
                         ls, fl = 0, 0
                         if self._verbatim or self._draw:
@@ -268,16 +292,6 @@ class Tree:
                 for i in prevnbsp:
                     self._label.insert(i, "&nbsp;")
 
-        def _resolvelinesel(self, ls):
-            if ls >= 1:
-                return ls
-            label = "<SEP>".join(self._label)
-            lnum = len(label.split("</TD></TR><TR>"))
-            ls = lnum + ls + 1
-            if ls < 1:
-                return 1
-            return ls
-
         def _lineattr(self, fsattr, tsattr, value, eattr = None):
             if len(value) > 0:
                 if value[0][0] == 0:
@@ -306,7 +320,7 @@ class Tree:
                     self._label = "<SEP>".join(self._label)
                     self._label = self._label.split("</TD></TR><TR>")
                     for i in value:
-                        li = int(self._resolvelinesel(i[0]))
+                        li = int(i[0])
                         self._label[li - 1] = \
                                 self._label[li - 1].replace(fsattr, \
                                 "%s\"%s\">" % (tsattr, i[1]) if i[1] not in set(['U', 'B', 'S', 'I']) \
@@ -341,28 +355,29 @@ class Tree:
         self._addchild(tabs + "}", p)
         return c
 
-    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=[], lc=[], ws=[], ls=[], wf=[], lf=[], vrbt=False, draw=False):
-        c = self.Node(nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, vrbt, draw)
+    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=[], lc=[], ws=[], ls=[], wf=[], lf=[], ld=[], vrbt=False, draw=False):
+        c = self.Node(nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, ld, vrbt, draw)
         c._parent = p
         p._child.insert(0, c)
         return c
 
-    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=[], linecolor=[], wordfsize=[], linefsize=[], wordfstyle=[], linefstyle=[], sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False):
+    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=[], linecolor=[], wordfsize=[], linefsize=[], wordfstyle=[], linefstyle=[], linedate=[], sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False):
         sgattr = ""
         if sgcolor and sgcolor[0] == "s":
             self._addchild_rev("", ["}"], tabs, "sgwrap", p)
         self._addchild_rev("", ["}"], tabs, "sgwrap", p)
         if sgtitle:
             self._addchild_rev("", ["label = <<TABLE CELLBORDER=\"0\" CELLPADDING=\"3\" CELLSPACING=\"3\" BORDER=\"0\"><TR><TD BGCOLOR=\"#E9ED5F\" COLOR=\"#000000\"><U>%s</U></TD></TR></TABLE>>" % (sgtitle)], tabs, "sgwrap", p)
-        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, vrbt, draw)
+        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, linedate, vrbt, draw)
         c.wordfsize()
         c.wordfstyle()
         c.linefsize()
         c.colorifywords()
         c.linefstyle()
         c.colorifylines()
+        c.linedate()
 
-        PostAttrProcLabel(c._label, ntype, vrbt, draw)
+        PostAttrProcLabel(c._label, ntype, vrbt, draw, textleft)
 
         if sgcolor and sgcolor[0] == "#":
             sgattr = "style = \"%s rounded\";\n" % (sgstyle + "," if sgstyle else "") + tabs + "\t" + "color = \"%s\";\n" % (sgcolor if not sgstyle else "#000000") + tabs + "\t" + "bgcolor = \"%s\"" % (sgcolor)
@@ -535,13 +550,29 @@ def WriteMontage(argholder):
 
 def Skip(maplist, s=None, lsinw=None):
     if maplist:
+        seen_lmeta = set()
         j = 0
         while j < len(maplist):
-            if lsinw and type(maplist[j][2]) == dict and maplist[j][2]['lineskip']:
-                maplist[j][2]['lineskip'] += lsinw
+            if lsinw and len(maplist[j]) > 2 and type(maplist[j][2]) == dict:
+                lmeta = maplist[j][2]
+                lmeta_id = id(lmeta)
+                if lmeta_id not in seen_lmeta and lmeta.get('lineskip') is not None:
+                    lmeta['lineskip'] += lsinw
+                    seen_lmeta.add(lmeta_id)
             if s:
                 maplist[j][0] += s
             j += 1
+
+def SkipUnscopedWords(maplist, s):
+    if not maplist or not s:
+        return
+
+    j = 0
+    while j < len(maplist):
+        lmeta = maplist[j][2] if len(maplist[j]) > 2 else None
+        if not (type(lmeta) == dict and lmeta.get('lineskip') is not None):
+            maplist[j][0] += s
+        j += 1
 
 
 def ParseAttributeLine(k, tonode, *args):
@@ -550,7 +581,7 @@ def ParseAttributeLine(k, tonode, *args):
             arrlines, arrend, \
             sgcolor, sgtitle, sgstyle, \
             edgecolor, edgestyle, edgend, edgethick, edglabel, \
-            symbcolor, symbsize = args
+            symbcolor, symbsize, linedate = args
 
     def ParseIdxSpec(spec, prefix):
         idx = []
@@ -561,10 +592,6 @@ def ParseAttributeLine(k, tonode, *args):
             part = part.strip()
             if not part:
                 return None
-            nm = re.match(r"^\$([0-9]*)$", part)
-            if nm:
-                off = int(nm.group(1)) if nm.group(1) else 0
-                return -(off + 1)
             nm = re.match(r"^([0-9]+)$", part)
             if nm:
                 return int(nm.group(1))
@@ -577,7 +604,7 @@ def ParseAttributeLine(k, tonode, *args):
                 part = part.strip()
                 if not part:
                     continue
-                if "-" in part and "$" not in part:
+                if "-" in part:
                     nm = re.match(r"([0-9]+)-([0-9]+)", part)
                     if nm:
                         s = int(nm.group(1))
@@ -599,7 +626,7 @@ def ParseAttributeLine(k, tonode, *args):
 
         return idx
 
-    m = re.search('(m?[rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search('(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
     if m.group(1):
         if m.group(1)[0] == "m":
             linecolor.insert(0, [0, linecolors[m.group(1)[1:]], False])
@@ -608,21 +635,24 @@ def ParseAttributeLine(k, tonode, *args):
         if m.group(2):
             linefsize.append([0, m.group(2)[1:]])
         if m.group(3):
-            linefstyle.append([0, fontstyle[m.group(3)]])
+            for si in range(0, len(m.group(3)), 2):
+                linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
     elif m.group(2):
         linefsize.append([0, m.group(2)[1:]])
         if m.group(3):
-            linefstyle.append([0, fontstyle[m.group(3)]])
+            for si in range(0, len(m.group(3)), 2):
+                linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
     elif m.group(3):
-        if m.group(3):
-            linefstyle.append([0, fontstyle[m.group(3)]])
+        for si in range(0, len(m.group(3)), 2):
+            linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
 
-    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(m?[rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))?(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
     if m.group(1):
         lineidx = ParseIdxSpec(m.group(1), "l")
         for li in lineidx:
             if m.group(4):
-                linefstyle.append([li, fontstyle[m.group(4)]])
+                for si in range(0, len(m.group(4)), 2):
+                    linefstyle.append([li, fontstyle[m.group(4)[si:si+2]]])
             if m.group(3):
                 linefsize.append([li, m.group(3)[1:]])
             if m.group(2):
@@ -631,7 +661,13 @@ def ParseAttributeLine(k, tonode, *args):
                 else:
                     linecolor.append([li, fontcolor[m.group(2)], True])
 
-    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
+    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))date', k)
+    if m and m.group(1):
+        lineidx = ParseIdxSpec(m.group(1), "l")
+        for li in lineidx:
+            linedate.append([li, True])
+
+    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
     if m.group(2):
         lineidx = ParseIdxSpec(m.group(1), "l") if m.group(1) else [None]
         wordidx = ParseIdxSpec(m.group(2), "w")
@@ -643,7 +679,8 @@ def ParseAttributeLine(k, tonode, *args):
                 if m.group(4):
                     wordfsize.append([wi, m.group(4)[1:], lmeta])
                 if m.group(5):
-                    wordfstyle.append([wi, fontstyle[m.group(5)], lmeta])
+                    for si in range(0, len(m.group(5)), 2):
+                        wordfstyle.append([wi, fontstyle[m.group(5)[si:si+2]], lmeta])
 
     m = re.search(r'(sym(?:[0-9]+)|sym(?:\[[0-9,]+\]))?([rgbycpkt])?(f[0-9]+)?', k)
     if m.group(1):
@@ -833,6 +870,11 @@ def GenDot(lines, argholder, parser):
             if "draw" in nextline:
                 draw = True
 
+            if "textleft" in nextline:
+                textleft = True
+            else:
+                textleft = False
+
             if re.match("img[ ]*=", label):
                 m = re.match("(img)(?:[  ]*=[  ]*)(.*)", label)
                 if m:
@@ -916,6 +958,7 @@ def GenDot(lines, argholder, parser):
 
             wordcolor, wordfsize, wordfstyle = [], [], []
             linecolor, linefsize, linefstyle = [], [], []
+            linedate = []
             sgcolor, sgtitle, sgstyle = [], [], []
             edgecolor, edgestyle, edgend, edgethick, edglabel = [], [], [], [], []
             symbcolor, symbsize, symblist = [], [], []
@@ -947,6 +990,8 @@ def GenDot(lines, argholder, parser):
                 JoinSepKeyValue("symb", nextline)
 
                 for k in nextline:
+                    if k == "textleft":
+                        continue
                     resolved_ntype = ResolveColorNodeTypeToken(k)
                     if resolved_ntype and resolved_ntype not in set(["verbatim", "verbat", "draw"]):
                         ntype = resolved_ntype
@@ -957,7 +1002,7 @@ def GenDot(lines, argholder, parser):
                                 arrlines, arrend,\
                                 sgcolor, sgtitle, sgstyle, \
                                 edgecolor, edgestyle, edgend, edgethick, edglabel,\
-                                symbcolor, symbsize)
+                                symbcolor, symbsize, linedate)
 
                     if k.find("=") > 0:
                         m = re.match(r"([\W\w]*)(?:=)(.*)", k)
@@ -1024,9 +1069,9 @@ def GenDot(lines, argholder, parser):
                     Skip(linefstyle, s=1)
 
             if symblist:
-                Skip(wordfsize, s=len(symblist))
-                Skip(wordcolor, s=len(symblist))
-                Skip(wordfstyle, s=len(symblist))
+                SkipUnscopedWords(wordfsize, s=len(symblist))
+                SkipUnscopedWords(wordcolor, s=len(symblist))
+                SkipUnscopedWords(wordfstyle, s=len(symblist))
 
             if ntype == "term" or ntype == "link":
                 Skip(wordfsize, s=2)
@@ -1038,6 +1083,7 @@ def GenDot(lines, argholder, parser):
                 if wordcolor: Skip(wordcolor, lsinw=1)
                 if wordfsize: Skip(wordfsize, lsinw=1)
                 if wordfstyle: Skip(wordfstyle, lsinw=1)
+                if linedate: Skip(linedate, s=1)
                 if linecolor and not linecolor[0][0] == 0:
                     Skip(linecolor, s=1)
                 if linefsize and not linefsize[0][0] == 0:
@@ -1077,11 +1123,11 @@ def GenDot(lines, argholder, parser):
 
             parentlist[level] = tree.addchild_rev(tonode, tabs, ntype, labelhtml,\
                     parentlist[level - 1], wordcolor, linecolor, wordfsize, \
-                    linefsize, wordfstyle, linefstyle, \
+                    linefsize, wordfstyle, linefstyle, linedate, \
                     sgcolor[0] if sgcolor else None, \
                     sgtitle[0] if sgtitle else None, \
                     sgstyle[0] if sgstyle else None, \
-                    vrbt, draw)
+                    vrbt, draw, textleft)
 
             nodelevel[level - 1] += 1
 
@@ -1140,14 +1186,14 @@ def GenDot(lines, argholder, parser):
         WriteImg(argholder)
 
 
-def PostAttrProcLabel(label, ntype, vrbt, draw):
+def PostAttrProcLabel(label, ntype, vrbt, draw, textleft=False):
     if ntype == "saying":
         label.insert(0, "<I>")
         label.insert(len(label), "</I>")
     if ntype == "check" or ntype == "todo":
         label.insert(0, "<B>")
         label.insert(len(label), "</B>")
-    if ntype == "example" or vrbt or draw:
+    if ntype == "example" or vrbt or draw or textleft:
         for i in range(len(label)):
             label[i] = label[i].replace("<TD", "<TD ALIGN=\"left\"")
     if ntype == "term":
@@ -1177,18 +1223,20 @@ def PostAttrProcLabel(label, ntype, vrbt, draw):
 
 def PreAttrProcLabel(label, ntype):
     if ntype == "title":
-        label[1] = "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["info-circle"] + "</FONT></TD></TR><TR><TD>" + label[1]
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["info-circle"] + "</FONT></TD></TR><TR><TD>")
     elif ntype == "date":
-        label[1] = "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["clock-o"] + "</FONT></TD></TR><TR><TD>" + label[1]
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["clock-o"] + "</FONT></TD></TR><TR><TD>")
     elif ntype == "quest":
-        label[1] = "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["question-circle"] + "</FONT></TD></TR><TR><TD>" + label[1]
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["question-circle"] + "</FONT></TD></TR><TR><TD>")
+    elif ntype == "saying":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"15\">" + fontawesome.symb["quote-left"] + "  " + fontawesome.symb["quote-right"] + "</FONT></TD></TR><TR><TD>")
     elif ntype == "impor" or ntype == "impog" or ntype == "impob":
-        label[1] = "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["warning"] + "</FONT></TD></TR><TR><TD>" + label[1]
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["warning"] + "</FONT></TD></TR><TR><TD>")
     elif ntype == "term":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"1\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"15\">" % (fontcolor['k'])+ fontawesome.symb["desktop"] + "</FONT>&nbsp;<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"20\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
     elif ntype == "link":
-        label[1] = "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["link"] + "</FONT></TD></TR><TR><TD>" + label[1]
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["link"] + "</FONT></TD></TR><TR><TD>")
 
 
 def ParLoc(line):
