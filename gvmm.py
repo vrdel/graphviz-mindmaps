@@ -548,6 +548,17 @@ def Skip(maplist, s=None, lsinw=None):
                 maplist[j][0] += s
             j += 1
 
+def SkipUnscopedWords(maplist, s):
+    if not maplist or not s:
+        return
+
+    j = 0
+    while j < len(maplist):
+        lmeta = maplist[j][2] if len(maplist[j]) > 2 else None
+        if not (type(lmeta) == dict and lmeta.get('lineskip') is not None):
+            maplist[j][0] += s
+        j += 1
+
 
 def ParseAttributeLine(k, tonode, *args):
     wordcolor, wordfsize, wordfstyle, \
@@ -1029,9 +1040,9 @@ def GenDot(lines, argholder, parser):
                     Skip(linefstyle, s=1)
 
             if symblist:
-                Skip(wordfsize, s=len(symblist))
-                Skip(wordcolor, s=len(symblist))
-                Skip(wordfstyle, s=len(symblist))
+                SkipUnscopedWords(wordfsize, s=len(symblist))
+                SkipUnscopedWords(wordcolor, s=len(symblist))
+                SkipUnscopedWords(wordfstyle, s=len(symblist))
 
             if ntype == "term" or ntype == "link":
                 Skip(wordfsize, s=2)
