@@ -230,7 +230,7 @@ class Tree:
             self._label = self._label.split("</TD></TR><TR>")
 
             for i in self._linedate:
-                li = int(self._resolvelinesel(i[0]))
+                li = int(i[0])
                 if li < 1 or li > len(self._label):
                     continue
 
@@ -258,8 +258,6 @@ class Tree:
                 for i in value:
                     if type(i[2]) == dict and i[2]['lineskip']:
                         lskip = i[2]['lineskip']
-                        if lskip < 0:
-                            lskip = self._resolvelinesel(lskip)
                         wordskip = 0
                         ls, fl = 0, 0
                         if self._verbatim or self._draw:
@@ -294,16 +292,6 @@ class Tree:
                 for i in prevnbsp:
                     self._label.insert(i, "&nbsp;")
 
-        def _resolvelinesel(self, ls):
-            if ls >= 1:
-                return ls
-            label = "<SEP>".join(self._label)
-            lnum = len(label.split("</TD></TR><TR>"))
-            ls = lnum + ls + 1
-            if ls < 1:
-                return 1
-            return ls
-
         def _lineattr(self, fsattr, tsattr, value, eattr = None):
             if len(value) > 0:
                 if value[0][0] == 0:
@@ -332,7 +320,7 @@ class Tree:
                     self._label = "<SEP>".join(self._label)
                     self._label = self._label.split("</TD></TR><TR>")
                     for i in value:
-                        li = int(self._resolvelinesel(i[0]))
+                        li = int(i[0])
                         self._label[li - 1] = \
                                 self._label[li - 1].replace(fsattr, \
                                 "%s\"%s\">" % (tsattr, i[1]) if i[1] not in set(['U', 'B', 'S', 'I']) \
@@ -604,10 +592,6 @@ def ParseAttributeLine(k, tonode, *args):
             part = part.strip()
             if not part:
                 return None
-            nm = re.match(r"^\$([0-9]*)$", part)
-            if nm:
-                off = int(nm.group(1)) if nm.group(1) else 0
-                return -(off + 1)
             nm = re.match(r"^([0-9]+)$", part)
             if nm:
                 return int(nm.group(1))
@@ -620,7 +604,7 @@ def ParseAttributeLine(k, tonode, *args):
                 part = part.strip()
                 if not part:
                     continue
-                if "-" in part and "$" not in part:
+                if "-" in part:
                     nm = re.match(r"([0-9]+)-([0-9]+)", part)
                     if nm:
                         s = int(nm.group(1))
@@ -662,7 +646,7 @@ def ParseAttributeLine(k, tonode, *args):
         for si in range(0, len(m.group(3)), 2):
             linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
 
-    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
+    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))?(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
     if m.group(1):
         lineidx = ParseIdxSpec(m.group(1), "l")
         for li in lineidx:
@@ -677,13 +661,13 @@ def ParseAttributeLine(k, tonode, *args):
                 else:
                     linecolor.append([li, fontcolor[m.group(2)], True])
 
-    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))date', k)
+    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))date', k)
     if m and m.group(1):
         lineidx = ParseIdxSpec(m.group(1), "l")
         for li in lineidx:
             linedate.append([li, True])
 
-    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
+    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
     if m.group(2):
         lineidx = ParseIdxSpec(m.group(1), "l") if m.group(1) else [None]
         wordidx = ParseIdxSpec(m.group(2), "w")
