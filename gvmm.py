@@ -668,11 +668,11 @@ def ParseAttributeLine(k, tonode, *args):
                 linefstyle.append([li, fontstyle[m.group(4)]])
             if m.group(3):
                 linefsize.append([li, m.group(3)[1:]])
-                if m.group(2):
-                    if m.group(2)[0] == "m":
-                        linecolor.append([li, linecolors[m.group(2)[1:]], False])
-                    else:
-                        linecolor.append([li, fontcolor[m.group(2)], True])
+            if m.group(2):
+                if m.group(2)[0] == "m":
+                    linecolor.append([li, linecolors[m.group(2)[1:]], False])
+                else:
+                    linecolor.append([li, fontcolor[m.group(2)], True])
 
     m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))date', k)
     if m and m.group(1):
