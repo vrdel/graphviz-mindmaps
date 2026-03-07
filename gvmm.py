@@ -535,10 +535,15 @@ def WriteMontage(argholder):
 
 def Skip(maplist, s=None, lsinw=None):
     if maplist:
+        seen_lmeta = set()
         j = 0
         while j < len(maplist):
-            if lsinw and type(maplist[j][2]) == dict and maplist[j][2]['lineskip']:
-                maplist[j][2]['lineskip'] += lsinw
+            if lsinw and len(maplist[j]) > 2 and type(maplist[j][2]) == dict:
+                lmeta = maplist[j][2]
+                lmeta_id = id(lmeta)
+                if lmeta_id not in seen_lmeta and lmeta.get('lineskip') is not None:
+                    lmeta['lineskip'] += lsinw
+                    seen_lmeta.add(lmeta_id)
             if s:
                 maplist[j][0] += s
             j += 1
@@ -1177,18 +1182,18 @@ def PostAttrProcLabel(label, ntype, vrbt, draw):
 
 def PreAttrProcLabel(label, ntype):
     if ntype == "title":
-        label[1] = "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["info-circle"] + "</FONT></TD></TR><TR><TD>" + label[1]
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["info-circle"] + "</FONT></TD></TR><TR><TD>")
     elif ntype == "date":
-        label[1] = "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["clock-o"] + "</FONT></TD></TR><TR><TD>" + label[1]
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["clock-o"] + "</FONT></TD></TR><TR><TD>")
     elif ntype == "quest":
-        label[1] = "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["question-circle"] + "</FONT></TD></TR><TR><TD>" + label[1]
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["question-circle"] + "</FONT></TD></TR><TR><TD>")
     elif ntype == "impor" or ntype == "impog" or ntype == "impob":
-        label[1] = "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["warning"] + "</FONT></TD></TR><TR><TD>" + label[1]
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["warning"] + "</FONT></TD></TR><TR><TD>")
     elif ntype == "term":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"1\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"15\">" % (fontcolor['k'])+ fontawesome.symb["desktop"] + "</FONT>&nbsp;<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"20\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
     elif ntype == "link":
-        label[1] = "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["link"] + "</FONT></TD></TR><TR><TD>" + label[1]
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["link"] + "</FONT></TD></TR><TR><TD>")
 
 
 def ParLoc(line):
