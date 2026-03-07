@@ -130,7 +130,7 @@ def ResolveVerbatimFillColorToken(token):
 
 class Tree:
     class Node:
-        def __init__(self, nodename, label=[], tabs="", ntype=None, parent=None, wordcolor=[], linecolor=[], wordfsize=[], linefsize=[], wordfstyle=[], linefstyle=[], verbatim=False, draw=False):
+        def __init__(self, nodename, label=[], tabs="", ntype=None, parent=None, wordcolor=[], linecolor=[], wordfsize=[], linefsize=[], wordfstyle=[], linefstyle=[], linedate=[], verbatim=False, draw=False):
             self._ntype = ntype
             self._nodename = nodename
             self._label = label
@@ -143,6 +143,7 @@ class Tree:
             self._linefstyle = linefstyle
             self._wordfsize = wordfsize
             self._wordfstyle = wordfstyle
+            self._linedate = linedate
             self._verbatim = verbatim
             self._draw = draw
 
@@ -220,6 +221,31 @@ class Tree:
                     self._lineattr("<TD>", "<TD><B><FONT COLOR=", [i], "</FONT></B>")
                 else:
                     self._lineattr("<TD>", "<TD BGCOLOR=", [i])
+
+        def linedate(self):
+            if len(self._linedate) == 0:
+                return
+
+            self._label = "<SEP>".join(self._label)
+            self._label = self._label.split("</TD></TR><TR>")
+
+            for i in self._linedate:
+                li = int(self._resolvelinesel(i[0]))
+                if li < 1 or li > len(self._label):
+                    continue
+
+                deco = "<TD><FONT COLOR=\"%s\"><B><I><FONT FACE=\"FontAwesome\" POINT-SIZE=\"18\">%s</FONT>&nbsp;" % (fontcolor['b'], fontawesome.symb["calendar"])
+                self._label[li - 1] = self._label[li - 1].replace("<TD>", deco, 1)
+                if "</TD>" in self._label[li - 1]:
+                    self._label[li - 1] = self._label[li - 1].replace("</TD>", "</U></B></FONT></TD>", 1)
+                else:
+                    self._label[li - 1] = self._label[li - 1] + "</I></B></FONT>"
+
+            for j in range(len(self._label) - 1):
+                self._label[j] = self._label[j] + "</TD></TR><TR>"
+
+            self._label = "".join(self._label)
+            self._label = self._label.split("<SEP>")
 
         def _wordattr(self, value, sattr, eattr = None):
             if len(value) > 0:
@@ -341,26 +367,27 @@ class Tree:
         self._addchild(tabs + "}", p)
         return c
 
-    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=[], lc=[], ws=[], ls=[], wf=[], lf=[], vrbt=False, draw=False):
-        c = self.Node(nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, vrbt, draw)
+    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=[], lc=[], ws=[], ls=[], wf=[], lf=[], ld=[], vrbt=False, draw=False):
+        c = self.Node(nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, ld, vrbt, draw)
         c._parent = p
         p._child.insert(0, c)
         return c
 
-    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=[], linecolor=[], wordfsize=[], linefsize=[], wordfstyle=[], linefstyle=[], sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False):
+    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=[], linecolor=[], wordfsize=[], linefsize=[], wordfstyle=[], linefstyle=[], linedate=[], sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False):
         sgattr = ""
         if sgcolor and sgcolor[0] == "s":
             self._addchild_rev("", ["}"], tabs, "sgwrap", p)
         self._addchild_rev("", ["}"], tabs, "sgwrap", p)
         if sgtitle:
             self._addchild_rev("", ["label = <<TABLE CELLBORDER=\"0\" CELLPADDING=\"3\" CELLSPACING=\"3\" BORDER=\"0\"><TR><TD BGCOLOR=\"#E9ED5F\" COLOR=\"#000000\"><U>%s</U></TD></TR></TABLE>>" % (sgtitle)], tabs, "sgwrap", p)
-        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, vrbt, draw)
+        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, linedate, vrbt, draw)
         c.wordfsize()
         c.wordfstyle()
         c.linefsize()
         c.colorifywords()
         c.linefstyle()
         c.colorifylines()
+        c.linedate()
 
         PostAttrProcLabel(c._label, ntype, vrbt, draw)
 
@@ -566,7 +593,7 @@ def ParseAttributeLine(k, tonode, *args):
             arrlines, arrend, \
             sgcolor, sgtitle, sgstyle, \
             edgecolor, edgestyle, edgend, edgethick, edglabel, \
-            symbcolor, symbsize = args
+            symbcolor, symbsize, linedate = args
 
     def ParseIdxSpec(spec, prefix):
         idx = []
@@ -641,11 +668,17 @@ def ParseAttributeLine(k, tonode, *args):
                 linefstyle.append([li, fontstyle[m.group(4)]])
             if m.group(3):
                 linefsize.append([li, m.group(3)[1:]])
-            if m.group(2):
-                if m.group(2)[0] == "m":
-                    linecolor.append([li, linecolors[m.group(2)[1:]], False])
-                else:
-                    linecolor.append([li, fontcolor[m.group(2)], True])
+                if m.group(2):
+                    if m.group(2)[0] == "m":
+                        linecolor.append([li, linecolors[m.group(2)[1:]], False])
+                    else:
+                        linecolor.append([li, fontcolor[m.group(2)], True])
+
+    m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))date', k)
+    if m and m.group(1):
+        lineidx = ParseIdxSpec(m.group(1), "l")
+        for li in lineidx:
+            linedate.append([li, True])
 
     m = re.search(r'(l(?:[0-9]+|\$[0-9]*|\[[0-9,\-\$]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?(ld|ul|st|it)?', k)
     if m.group(2):
@@ -932,6 +965,7 @@ def GenDot(lines, argholder, parser):
 
             wordcolor, wordfsize, wordfstyle = [], [], []
             linecolor, linefsize, linefstyle = [], [], []
+            linedate = []
             sgcolor, sgtitle, sgstyle = [], [], []
             edgecolor, edgestyle, edgend, edgethick, edglabel = [], [], [], [], []
             symbcolor, symbsize, symblist = [], [], []
@@ -973,7 +1007,7 @@ def GenDot(lines, argholder, parser):
                                 arrlines, arrend,\
                                 sgcolor, sgtitle, sgstyle, \
                                 edgecolor, edgestyle, edgend, edgethick, edglabel,\
-                                symbcolor, symbsize)
+                                symbcolor, symbsize, linedate)
 
                     if k.find("=") > 0:
                         m = re.match(r"([\W\w]*)(?:=)(.*)", k)
@@ -1054,6 +1088,7 @@ def GenDot(lines, argholder, parser):
                 if wordcolor: Skip(wordcolor, lsinw=1)
                 if wordfsize: Skip(wordfsize, lsinw=1)
                 if wordfstyle: Skip(wordfstyle, lsinw=1)
+                if linedate: Skip(linedate, s=1)
                 if linecolor and not linecolor[0][0] == 0:
                     Skip(linecolor, s=1)
                 if linefsize and not linefsize[0][0] == 0:
@@ -1093,7 +1128,7 @@ def GenDot(lines, argholder, parser):
 
             parentlist[level] = tree.addchild_rev(tonode, tabs, ntype, labelhtml,\
                     parentlist[level - 1], wordcolor, linecolor, wordfsize, \
-                    linefsize, wordfstyle, linefstyle, \
+                    linefsize, wordfstyle, linefstyle, linedate, \
                     sgcolor[0] if sgcolor else None, \
                     sgtitle[0] if sgtitle else None, \
                     sgstyle[0] if sgstyle else None, \
