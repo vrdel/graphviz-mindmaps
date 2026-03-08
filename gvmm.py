@@ -127,6 +127,12 @@ def ResolveVerbatimFillColorToken(token):
     vrbtcolors[token] = newfill
     return newfill
 
+def ResolveBaseNodeTypeToken(token):
+    m = re.match(r"^(impor|impog|impob|quest|date|title|link|saying)(-?[0-9]+)$", token)
+    if m:
+        return m.group(1)
+    return token
+
 
 class Tree:
     class Node:
@@ -1222,20 +1228,22 @@ def PostAttrProcLabel(label, ntype, vrbt, draw, textleft=False):
 
 
 def PreAttrProcLabel(label, ntype):
-    if ntype == "title":
+    btype = ResolveBaseNodeTypeToken(ntype)
+
+    if btype == "title":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["info-circle"] + "</FONT></TD></TR><TR><TD>")
-    elif ntype == "date":
+    elif btype == "date":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["clock-o"] + "</FONT></TD></TR><TR><TD>")
-    elif ntype == "quest":
+    elif btype == "quest":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["question-circle"] + "</FONT></TD></TR><TR><TD>")
-    elif ntype == "saying":
+    elif btype == "saying":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"15\">" + fontawesome.symb["quote-left"] + "  " + fontawesome.symb["quote-right"] + "</FONT></TD></TR><TR><TD>")
-    elif ntype == "impor" or ntype == "impog" or ntype == "impob":
+    elif btype == "impor" or btype == "impog" or btype == "impob":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["warning"] + "</FONT></TD></TR><TR><TD>")
-    elif ntype == "term":
+    elif btype == "term":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"1\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"15\">" % (fontcolor['k'])+ fontawesome.symb["desktop"] + "</FONT>&nbsp;<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"20\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
-    elif ntype == "link":
+    elif btype == "link":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["link"] + "</FONT></TD></TR><TR><TD>")
 
 
