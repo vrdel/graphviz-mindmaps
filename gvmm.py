@@ -594,6 +594,15 @@ def Skip(maplist, s=None, lsinw=None):
                 maplist[j][0] += s
             j += 1
 
+def SkipPositive(maplist, s):
+    if not maplist or not s:
+        return
+    j = 0
+    while j < len(maplist):
+        if maplist[j][0] > 0:
+            maplist[j][0] += s
+        j += 1
+
 def SkipUnscopedWords(maplist, s):
     if not maplist or not s:
         return
@@ -603,6 +612,21 @@ def SkipUnscopedWords(maplist, s):
         lmeta = maplist[j][2] if len(maplist[j]) > 2 else None
         if not (type(lmeta) == dict and lmeta.get('lineskip') is not None):
             maplist[j][0] += s
+        j += 1
+
+def SkipPositiveLineScopedWords(maplist, lsinw):
+    if not maplist or not lsinw:
+        return
+
+    seen_lmeta = set()
+    j = 0
+    while j < len(maplist):
+        lmeta = maplist[j][2] if len(maplist[j]) > 2 else None
+        if type(lmeta) == dict and lmeta.get('lineskip') is not None:
+            lmeta_id = id(lmeta)
+            if lmeta_id not in seen_lmeta and lmeta['lineskip'] > 0:
+                lmeta['lineskip'] += lsinw
+                seen_lmeta.add(lmeta_id)
         j += 1
 
 
@@ -1102,11 +1126,11 @@ def GenDot(lines, argholder, parser):
                 Skip(wordcolor, s=wordskip)
                 Skip(wordfstyle, s=wordskip)
                 if linecolor and not linecolor[0][0] == 0:
-                    Skip(linecolor, s=1)
+                    SkipPositive(linecolor, s=1)
                 if linefsize and not linefsize[0][0] == 0:
-                    Skip(linefsize, s=1)
+                    SkipPositive(linefsize, s=1)
                 if linefstyle and not linefstyle[0][0] == 0:
-                    Skip(linefstyle, s=1)
+                    SkipPositive(linefstyle, s=1)
 
             if symblist:
                 SkipUnscopedWords(wordfsize, s=len(symblist))
@@ -1120,24 +1144,24 @@ def GenDot(lines, argholder, parser):
 
             if ntype in set(["title", "quest", "date", "impor", "impog", "impob"]) or\
                     (ntype != "img" and "FontAwesome" in labelhtml[1]):
-                if wordcolor: Skip(wordcolor, lsinw=1)
-                if wordfsize: Skip(wordfsize, lsinw=1)
-                if wordfstyle: Skip(wordfstyle, lsinw=1)
-                if linedate: Skip(linedate, s=1)
+                if wordcolor: SkipPositiveLineScopedWords(wordcolor, lsinw=1)
+                if wordfsize: SkipPositiveLineScopedWords(wordfsize, lsinw=1)
+                if wordfstyle: SkipPositiveLineScopedWords(wordfstyle, lsinw=1)
+                if linedate: SkipPositive(linedate, s=1)
                 if linecolor and not linecolor[0][0] == 0:
-                    Skip(linecolor, s=1)
+                    SkipPositive(linecolor, s=1)
                 if linefsize and not linefsize[0][0] == 0:
-                    Skip(linefsize, s=1)
+                    SkipPositive(linefsize, s=1)
                 if linefstyle and not linefstyle[0][0] == 0:
-                    Skip(linefstyle, s=1)
+                    SkipPositive(linefstyle, s=1)
 
             if ntype == "term" or ntype == "link":
                 if linecolor and not linecolor[0][0] == 0:
-                    Skip(linecolor, s=1)
+                    SkipPositive(linecolor, s=1)
                 if linefsize and not linefsize[0][0] == 0:
-                    Skip(linefsize, s=1)
+                    SkipPositive(linefsize, s=1)
                 if linefstyle and not linefstyle[0][0] == 0:
-                    Skip(linefstyle, s=1)
+                    SkipPositive(linefstyle, s=1)
 
             if not ntype:
                 ntype = "def"
