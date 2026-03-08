@@ -1274,6 +1274,8 @@ def PreAttrProcLabel(label, ntype):
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"15\">" + fontawesome.symb["quote-left"] + "  " + fontawesome.symb["quote-right"] + "</FONT></TD></TR><TR><TD>")
     elif btype == "impor" or btype == "impog" or btype == "impob":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["warning"] + "</FONT></TD></TR><TR><TD>")
+    elif btype == "todo":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["tasks"] + "</FONT></TD></TR><TR><TD>")
     elif btype == "term":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"1\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"15\">" % (fontcolor['k'])+ fontawesome.symb["desktop"] + "</FONT>&nbsp;<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"20\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
