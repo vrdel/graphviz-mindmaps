@@ -236,7 +236,7 @@ class Tree:
             self._label = self._label.split("</TD></TR><TR>")
 
             for i in self._linedate:
-                li = int(i[0])
+                li = self._resolve_line_sel(int(i[0]), len(self._label))
                 if li < 1 or li > len(self._label):
                     continue
 
@@ -253,6 +253,17 @@ class Tree:
             self._label = "".join(self._label)
             self._label = self._label.split("<SEP>")
 
+        def _resolve_line_sel(self, li, total_lines):
+            if total_lines < 1:
+                return 1
+            if li < 0:
+                li = total_lines + li + 1
+            if li < 1:
+                return 1
+            if li > total_lines:
+                return total_lines
+            return li
+
         def _wordattr(self, value, sattr, eattr = None):
             if len(value) > 0:
                 prevnbsp = [j for j in range(2, len(self._label)) if "nbsp" in self._label[j]]
@@ -263,25 +274,39 @@ class Tree:
 
                 for i in value:
                     if type(i[2]) == dict and i[2]['lineskip']:
-                        lskip = i[2]['lineskip']
-                        wordskip = 0
-                        ls, fl = 0, 0
-                        if self._verbatim or self._draw:
-                            for li in self._label:
-                                if "</TD></TR><TR><TD>" not in li:
-                                    fl += 1
-                                else:
-                                    break
-                        while ls < lskip - 1:
-                            while fl < len(self._label):
-                                wordskip += 1
-                                fl += 1
-                                if "</TD></TR><TR><TD>" in self._label[fl]:
-                                    break
-                            ls += 1
-                        if (self._verbatim or self._draw) and fl == len(self._label) - 1:
-                            wordskip += 1
-                        i[0] += wordskip
+                        from_end_word_sel = i[0] < 0
+                        total_lines = 1
+                        for li in self._label:
+                            if "</TD></TR><TR><TD>" in li:
+                                total_lines += 1
+                        lskip = self._resolve_line_sel(i[2]['lineskip'], total_lines)
+                        line_start = 0
+                        cl = 1
+                        while cl < lskip and line_start < len(self._label):
+                            while line_start < len(self._label) and "</TD></TR><TR><TD>" not in self._label[line_start]:
+                                line_start += 1
+                            if line_start < len(self._label):
+                                line_start += 1
+                            cl += 1
+
+                        linewords = 0
+                        flw = line_start
+                        while flw < len(self._label):
+                            if "</TD></TR><TR><TD>" in self._label[flw]:
+                                break
+                            linewords += 1
+                            flw += 1
+
+                        if i[0] < 0:
+                            relw = linewords + i[0] + 1
+                            if relw < 1:
+                                relw = 1
+                            i[0] = relw
+
+                        if from_end_word_sel:
+                            i[0] += line_start
+                        else:
+                            i[0] += (line_start - 1) if line_start > 0 else 0
 
                     if i[1] in set(["U", "B", "S", "I"]):
                         self._label[int(i[0])] = sattr + "%s>" % i[1] + self._label[int(i[0])]
@@ -326,7 +351,7 @@ class Tree:
                     self._label = "<SEP>".join(self._label)
                     self._label = self._label.split("</TD></TR><TR>")
                     for i in value:
-                        li = int(i[0])
+                        li = self._resolve_line_sel(int(i[0]), len(self._label))
                         self._label[li - 1] = \
                                 self._label[li - 1].replace(fsattr, \
                                 "%s\"%s\">" % (tsattr, i[1]) if i[1] not in set(['U', 'B', 'S', 'I']) \
@@ -593,6 +618,7 @@ def ParseAttributeLine(k, tonode, *args):
         idx = []
         if not spec:
             return idx
+        end_mode = prefix.startswith("E")
 
         def ParseSingleIdx(part):
             part = part.strip()
@@ -600,7 +626,8 @@ def ParseAttributeLine(k, tonode, *args):
                 return None
             nm = re.match(r"^([0-9]+)$", part)
             if nm:
-                return int(nm.group(1))
+                n = int(nm.group(1))
+                return -n if end_mode else n
             return None
 
         body = spec[len(prefix):]
@@ -617,10 +644,10 @@ def ParseAttributeLine(k, tonode, *args):
                         e = int(nm.group(2))
                         if s <= e:
                             for i in range(s, e + 1):
-                                idx.append(i)
+                                idx.append(-i if end_mode else i)
                         else:
                             for i in range(s, e - 1, -1):
-                                idx.append(i)
+                                idx.append(-i if end_mode else i)
                 else:
                     parsed = ParseSingleIdx(part)
                     if parsed is not None:
@@ -652,9 +679,10 @@ def ParseAttributeLine(k, tonode, *args):
         for si in range(0, len(m.group(3)), 2):
             linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
 
-    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))?(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
+    m = re.search(r'((?:E?l)(?:[0-9]+|\[[0-9,\-]+\]))?(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
     if m.group(1):
-        lineidx = ParseIdxSpec(m.group(1), "l")
+        lprefix = "El" if m.group(1).startswith("El") else "l"
+        lineidx = ParseIdxSpec(m.group(1), lprefix)
         for li in lineidx:
             if m.group(4):
                 for si in range(0, len(m.group(4)), 2):
@@ -667,16 +695,22 @@ def ParseAttributeLine(k, tonode, *args):
                 else:
                     linecolor.append([li, fontcolor[m.group(2)], True])
 
-    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))date', k)
+    m = re.search(r'((?:E?l)(?:[0-9]+|\[[0-9,\-]+\]))date', k)
     if m and m.group(1):
-        lineidx = ParseIdxSpec(m.group(1), "l")
+        lprefix = "El" if m.group(1).startswith("El") else "l"
+        lineidx = ParseIdxSpec(m.group(1), lprefix)
         for li in lineidx:
             linedate.append([li, True])
 
-    m = re.search(r'(l(?:[0-9]+|\[[0-9,\-]+\]))?(w(?:[0-9]+)|w(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
+    m = re.search(r'((?:E?l)(?:[0-9]+|\[[0-9,\-]+\]))?((?:E?w)(?:[0-9]+)|(?:E?w)(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
     if m.group(2):
-        lineidx = ParseIdxSpec(m.group(1), "l") if m.group(1) else [None]
-        wordidx = ParseIdxSpec(m.group(2), "w")
+        if m.group(1):
+            lprefix = "El" if m.group(1).startswith("El") else "l"
+            lineidx = ParseIdxSpec(m.group(1), lprefix)
+        else:
+            lineidx = [None]
+        wprefix = "Ew" if m.group(2).startswith("Ew") else "w"
+        wordidx = ParseIdxSpec(m.group(2), wprefix)
         for li in lineidx:
             lmeta = {'lineskip': li} if li else None
             for wi in wordidx:
