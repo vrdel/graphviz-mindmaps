@@ -82,18 +82,113 @@
 			: edgt
 			# cgreen
 				: cgreen
+				# cgreen10
+					: cgreen10
+					# cgreen20
+						: cgreen20
+				# cgreen-10
+					: cgreen-10
+					# cgreen-20
+						: cgreen-20
 			# cred
 				: cred
+				# cred10
+					: cred10
+					# cred20
+						: cred20
+				# cred-10
+					: cred-10
+					# cred-20
+						: cred-20
 			# cblue
 				: cblue
+				# cblue10
+					: cblue10
+					# cblue20
+						: cblue20
+				# cblue-10
+					: cblue-10
+					# cblue-20
+						: cblue-20
 			# ccyan
 				: ccyan
+				# ccyan10
+					: ccyan10
+					# ccyan20
+						: ccyan20
+				# ccyan-10
+					: ccyan-10
+					# ccyan-20
+						: ccyan-20
 			# corang
 				: corang
+				# corang10
+					: corang10
+					# corang20
+						: corang20
+				# corang-10
+					: corang-10
+					# corang-20
+						: corang-20
 			# cyello
 				: cyello
+				# cyello10
+					: cyello10
+					# cyello20
+						: cyello20
+				# cyello-10
+					: cyello-10
+					# cyello-20
+						: cyello-20
 			# cpink
 				: cpink
+				# cpink10
+					: cpink10
+					# cpink20
+						: cpink20
+				# cpink-10
+					: cpink-10
+					# cpink-20
+						: cpink-20
+			# cgrey l1t
+				: cgrey l1t
+				# cblack l1t
+					: cblack l1t
+			# verbatim cgreen
+				: verbatim cgreen
+				:
+				: verbatim cgreen
+				:
+				# verbatim cred
+					: verbatim cred
+					:
+					: verbatim cred
+					:
+					# verbatim ccyan
+						: verbatim ccyan
+						:
+						: verbatim ccyan
+						:
+				# verbatim cblue
+					: verbatim cblue
+					:
+					: verbatim cblue
+					:
+					# verbatim cyello
+						: verbatim cyello
+						:
+						: verbatim cyello
+						:
+				# verbatim corang
+					: verbatim corang
+					:
+					: verbatim corang
+					:
+					# verbatim cpink
+						: verbatim cpink
+						:
+						: verbatim cpink
+						:
 		# types
 		# ---
 		# edgd
@@ -115,20 +210,32 @@
 				:
 				# quest
 					: quest
+					# answer
+						: answer
 				# title
 					: title
+					# saying
+						: saying
 				# example
 					: example
+					# data
+						: data
 				# term
 					: term
 				# date
 					: date
+					# date
+					# in regular node
+					# with `l1date`
+						: l1date node
 				# link
 					: link
 				# check
-						: check
+					: check
+					# decisi
+						: decisi
 				# todo
-						: todo
+					: todo
 			# important
 				:
 				# impor
@@ -138,7 +245,7 @@
 				# impob
 					: impob
 			# draw
-				: draw
+				: draw l2w[2-4]r l3w2g l4w2c
 				:
 				:  +-----------------+
 				:  |   this is some  |
@@ -225,6 +332,20 @@
 						: line2
 						:  : l1r l2p
 						:
+				# line1
+				# line2
+				# line3
+					: El1p El2c El3y
+					# syntax
+						: verbatim edgo
+						:
+						: line1
+						: line2
+						: line3
+						: 	: El1p El2c El3y
+						:
+					# negative offset with "E"
+						: commen edgo
 			# individual words
 				: w1g w2b
 				# syntax
@@ -291,6 +412,11 @@
 					: symb=road:download:arrow-circle-o-down:arrow-circle-o-up
 					# symb=inbox:play-circle-o:repeat:refresh
 						: symb=inbox:play-circle-o:repeat:refresh
+		# symb=adjust:align-center:ambulance
+		# sym1g sym2c sym3f35
+			: symb=adjust:align-center:ambulance sym1g sym2c sym3f35
+			# notice colored and bigger symbols
+				: commen
 		# check fontawesome-codes.md
 		# for more
 			: check
