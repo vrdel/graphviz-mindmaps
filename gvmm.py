@@ -506,6 +506,25 @@ def ApplyInlineBacktickBold(text, allow_linebreak=False):
     pattern = r'`([^`]+?)`' if allow_linebreak else r'`([^`;]+?)`'
     return re.sub(pattern, r'<B>\1</B>', text)
 
+def ResolveSymbolNames(spec):
+    aliases = {
+        "info": "info-circle",
+        "quest": "question-circle",
+        "warn": "warning",
+    }
+
+    resolved = []
+    for name in spec.split(':'):
+        name = name.strip()
+        if not name:
+            continue
+        if name in fontawesome.symb:
+            resolved.append(name)
+            continue
+        if name in aliases and aliases[name] in fontawesome.symb:
+            resolved.append(aliases[name])
+    return resolved
+
 def WriteDot(DotFile):
     outputfile = open(DotFile, 'w')
     outputfile.write(dotbuf)
@@ -1113,7 +1132,7 @@ def GenDot(lines, argholder, parser):
                             labelhtml.insert(len(labelhtml) - 1, "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" + GenImgPath(tokval[1].strip()) + "\"/>")
                             ntype = "imgil"
                         elif tokval[0] == "symb" and ntype != "imgil":
-                            symblist = tokval[1].split(':')
+                            symblist = ResolveSymbolNames(tokval[1])
                         elif tokval[0] == "dood":
                             doodlist = tokval[1].split(':')
                             if len(doodlist) > 1:
