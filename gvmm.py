@@ -265,6 +265,12 @@ class Tree:
             return li
 
         def _label_line_word_indexes(self):
+            def has_visible_content(fragment):
+                text = re.sub(r"<[^>]+>", "", fragment)
+                text = text.replace("&nbsp;", "").strip()
+                text = text.replace("<", "").replace(">", "").strip()
+                return bool(text)
+
             lines = [[]]
             rowsep = "</TD></TR><TR><TD>"
 
@@ -273,12 +279,12 @@ class Tree:
                     continue
 
                 parts = token.split(rowsep)
-                if parts[0]:
+                if has_visible_content(parts[0]):
                     lines[-1].append(idx)
 
                 for part in parts[1:]:
                     lines.append([])
-                    if part:
+                    if has_visible_content(part):
                         lines[-1].append(idx)
 
             return lines
