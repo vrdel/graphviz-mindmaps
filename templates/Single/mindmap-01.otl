@@ -354,6 +354,10 @@
 					: individual words
 					:  : w1g w2b
 					:
+			# `individual` words `bolded`
+				:
+				# enclose each word in backticks
+					: commen
 			# first range of words
 			# second range of words
 				: l1w[2,3,4]g l2w[2-4]r
