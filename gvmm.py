@@ -970,6 +970,9 @@ def GenDot(lines, argholder, parser):
             else:
                 textleft = False
 
+            if not vrbt and not draw and "`" in label:
+                label = re.sub(r'`([^`;]+?)`', r'<B>\1</B>', label)
+
             if re.match("img[ ]*=", label):
                 m = re.match("(img)(?:[  ]*=[  ]*)(.*)", label)
                 if m:
