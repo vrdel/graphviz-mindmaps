@@ -502,6 +502,10 @@ def HtmlCompositeArrow(arrow, htmlcode, i, j, labelhtml):
         labelhtml[j] = splitstr[0] + htmlcode + splitstr[1]
     return labelhtml[j]
 
+def ApplyInlineBacktickBold(text, allow_linebreak=False):
+    pattern = r'`([^`]+?)`' if allow_linebreak else r'`([^`;]+?)`'
+    return re.sub(pattern, r'<B>\1</B>', text)
+
 def WriteDot(DotFile):
     outputfile = open(DotFile, 'w')
     outputfile.write(dotbuf)
@@ -971,7 +975,7 @@ def GenDot(lines, argholder, parser):
                 textleft = False
 
             if not vrbt and not draw and "`" in label:
-                label = re.sub(r'`([^`;]+?)`', r'<B>\1</B>', label)
+                label = ApplyInlineBacktickBold(label)
 
             if re.match("img[ ]*=", label):
                 m = re.match("(img)(?:[  ]*=[  ]*)(.*)", label)
@@ -1413,6 +1417,8 @@ def main():
                                 v[-1] = v[-1].replace("&", "&amp;")
                                 v[-1] = v[-1].replace("<", "&lt;")
                                 v[-1] = v[-1].replace(">", "&gt;")
+                                if "`" in v[-1]:
+                                    v[-1] = ApplyInlineBacktickBold(v[-1], allow_linebreak=True)
                                 v[-1] = v[-1].replace(" ", "<WHITESP>")
                                 v[-1] = v[-1].replace("\t", "<TAB>")
                                 v[-1] = v[-1] + "<BR/> "
