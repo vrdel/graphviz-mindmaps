@@ -264,6 +264,41 @@ class Tree:
                 return total_lines
             return li
 
+        def _label_line_word_indexes(self):
+            lines = [[]]
+            rowsep = "</TD></TR><TR><TD>"
+
+            for idx, token in enumerate(self._label):
+                if token == "&nbsp;":
+                    continue
+
+                parts = token.split(rowsep)
+                if parts[0]:
+                    lines[-1].append(idx)
+
+                for part in parts[1:]:
+                    lines.append([])
+                    if part:
+                        lines[-1].append(idx)
+
+            return lines
+
+        def _scoped_line_word_indexes(self):
+            line_indexes = self._label_line_word_indexes()
+
+            while line_indexes and not line_indexes[0]:
+                del(line_indexes[0])
+
+            if self._verbatim or self._draw:
+                if line_indexes:
+                    del(line_indexes[0])
+                while line_indexes and not line_indexes[0]:
+                    del(line_indexes[0])
+                while line_indexes and not line_indexes[-1]:
+                    del(line_indexes[-1])
+
+            return line_indexes
+
         def _wordattr(self, value, sattr, eattr = None):
             if len(value) > 0:
                 prevnbsp = [j for j in range(2, len(self._label)) if "nbsp" in self._label[j]]
@@ -273,51 +308,39 @@ class Tree:
                         self._label.remove(i)
 
                 for i in value:
+                    target_idx = int(i[0])
                     if type(i[2]) == dict and i[2]['lineskip']:
-                        from_end_word_sel = i[0] < 0
-                        total_lines = 1
-                        for li in self._label:
-                            if "</TD></TR><TR><TD>" in li:
-                                total_lines += 1
-                        lskip = self._resolve_line_sel(i[2]['lineskip'], total_lines)
-                        line_start = 0
-                        cl = 1
-                        while cl < lskip and line_start < len(self._label):
-                            while line_start < len(self._label) and "</TD></TR><TR><TD>" not in self._label[line_start]:
-                                line_start += 1
-                            if line_start < len(self._label):
-                                line_start += 1
-                            cl += 1
+                        line_indexes = self._scoped_line_word_indexes()
+                        if not line_indexes:
+                            continue
+                        lskip = self._resolve_line_sel(i[2]['lineskip'], len(line_indexes))
+                        scoped_words = line_indexes[lskip - 1]
+                        if not scoped_words:
+                            continue
 
-                        linewords = 0
-                        flw = line_start
-                        while flw < len(self._label):
-                            if "</TD></TR><TR><TD>" in self._label[flw]:
-                                break
-                            linewords += 1
-                            flw += 1
+                        wsel = int(i[0])
+                        if wsel < 0:
+                            wsel = len(scoped_words) + wsel + 1
+                        if wsel < 1:
+                            wsel = 1
+                        if wsel > len(scoped_words):
+                            wsel = len(scoped_words)
 
-                        if i[0] < 0:
-                            relw = linewords + i[0] + 1
-                            if relw < 1:
-                                relw = 1
-                            i[0] = relw
+                        target_idx = scoped_words[wsel - 1]
 
-                        if from_end_word_sel:
-                            i[0] += line_start
-                        else:
-                            i[0] += (line_start - 1) if line_start > 0 else 0
+                    if target_idx < 0 or target_idx >= len(self._label):
+                        continue
 
                     if i[1] in set(["U", "B", "S", "I"]):
-                        self._label[int(i[0])] = sattr + "%s>" % i[1] + self._label[int(i[0])]
+                        self._label[target_idx] = sattr + "%s>" % i[1] + self._label[target_idx]
                         eattr = "</%s>" % (i[1])
                     else:
-                        self._label[int(i[0])] = sattr + "\"%s\">" % i[1] + self._label[int(i[0])]
+                        self._label[target_idx] = sattr + "\"%s\">" % i[1] + self._label[target_idx]
 
-                    if "</TD></TR><TR>" in self._label[int(i[0])]:
-                        self._label[int(i[0])] = self._label[int(i[0])].replace("</TD></TR><TR>", eattr + "</TD></TR><TR>")
+                    if "</TD></TR><TR>" in self._label[target_idx]:
+                        self._label[target_idx] = self._label[target_idx].replace("</TD></TR><TR>", eattr + "</TD></TR><TR>")
                     else:
-                        self._label[int(i[0])] = self._label[int(i[0])] + eattr
+                        self._label[target_idx] = self._label[target_idx] + eattr
 
 
                 for i in prevnbsp:
@@ -1122,9 +1145,9 @@ def GenDot(lines, argholder, parser):
 
             if vrbt or draw:
                 wordskip = len(line.split("<BR/>", 1)[0].split()) - 1
-                Skip(wordfsize, s=wordskip)
-                Skip(wordcolor, s=wordskip)
-                Skip(wordfstyle, s=wordskip)
+                SkipUnscopedWords(wordfsize, s=wordskip)
+                SkipUnscopedWords(wordcolor, s=wordskip)
+                SkipUnscopedWords(wordfstyle, s=wordskip)
                 if linecolor and not linecolor[0][0] == 0:
                     SkipPositive(linecolor, s=1)
                 if linefsize and not linefsize[0][0] == 0:
@@ -1138,9 +1161,9 @@ def GenDot(lines, argholder, parser):
                 SkipUnscopedWords(wordfstyle, s=len(symblist))
 
             if ntype == "term" or ntype == "link":
-                Skip(wordfsize, s=2)
-                Skip(wordcolor, s=2)
-                Skip(wordfstyle, s=2)
+                SkipUnscopedWords(wordfsize, s=2)
+                SkipUnscopedWords(wordcolor, s=2)
+                SkipUnscopedWords(wordfstyle, s=2)
 
             if ntype in set(["title", "quest", "date", "impor", "impog", "impob"]) or\
                     (ntype != "img" and "FontAwesome" in labelhtml[1]):
