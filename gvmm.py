@@ -1325,6 +1325,8 @@ def PreAttrProcLabel(label, ntype):
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["clock-o"] + "</FONT></TD></TR><TR><TD>")
     elif btype == "quest":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["question-circle"] + "</FONT></TD></TR><TR><TD>")
+    elif btype == "answer":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["reply"] + "</FONT></TD></TR><TR><TD>")
     elif btype == "saying":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"15\">" + fontawesome.symb["quote-left"] + "  " + fontawesome.symb["quote-right"] + "</FONT></TD></TR><TR><TD>")
     elif btype == "impor" or btype == "impog" or btype == "impob":
