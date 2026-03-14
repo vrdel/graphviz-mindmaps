@@ -147,9 +147,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     print(f"watching {input_dir} for PNG files matching JPGs in {destination_dir}")
-    while True:
-        process_ready_pngs(input_dir, destination_dir, args.quality, observed, True)
-        time.sleep(args.poll_interval)
+    try:
+        while True:
+            process_ready_pngs(input_dir, destination_dir, args.quality, observed, True)
+            time.sleep(args.poll_interval)
+    except KeyboardInterrupt:
+        print("\nstopping watcher")
+        return 0
 
 
 if __name__ == "__main__":
