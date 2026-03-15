@@ -503,8 +503,14 @@ def HtmlCompositeArrow(arrow, htmlcode, i, j, labelhtml):
     return labelhtml[j]
 
 def ApplyInlineBacktickBold(text, allow_linebreak=False):
-    pattern = r'`([^`]+?)`' if allow_linebreak else r'`([^`;]+?)`'
-    return re.sub(pattern, r'<B>\1</B>', text)
+    patterns = [
+        r'`([^`]+?)`' if allow_linebreak else r'`([^`;]+?)`',
+        r'\*([^*]+?)\*' if allow_linebreak else r'\*([^*;]+?)\*',
+    ]
+
+    for pattern in patterns:
+        text = re.sub(pattern, r'<B>\1</B>', text)
+    return text
 
 def ResolveSymbolNames(spec):
     aliases = {
@@ -993,7 +999,7 @@ def GenDot(lines, argholder, parser):
             else:
                 textleft = False
 
-            if not vrbt and not draw and "`" in label:
+            if not vrbt and not draw and ("`" in label or "*" in label):
                 label = ApplyInlineBacktickBold(label)
 
             if re.match("img[ ]*=", label):
@@ -1436,7 +1442,7 @@ def main():
                                 v[-1] = v[-1].replace("&", "&amp;")
                                 v[-1] = v[-1].replace("<", "&lt;")
                                 v[-1] = v[-1].replace(">", "&gt;")
-                                if "`" in v[-1]:
+                                if "`" in v[-1] or "*" in v[-1]:
                                     v[-1] = ApplyInlineBacktickBold(v[-1], allow_linebreak=True)
                                 v[-1] = v[-1].replace(" ", "<WHITESP>")
                                 v[-1] = v[-1].replace("\t", "<TAB>")
