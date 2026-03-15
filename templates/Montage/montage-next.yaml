@@ -1,0 +1,10 @@
+output: auto
+title: simple montage
+rows:
+  - - mindmap-01.jpg
+  - - mindmap-01.jpg
+  - - [mindmap-01.jpg, mindmap-01.jpg]
+  - - output: auto
+      title: joint submontage
+      rows:
+        - - [mindmap-01.jpg, mindmap-01.jpg]
