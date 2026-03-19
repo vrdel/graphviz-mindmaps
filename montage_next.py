@@ -211,6 +211,52 @@ def ensure_list(value: Any, field: str) -> list[Any]:
     return value
 
 
+def normalize_item(item: Any) -> Any:
+    if isinstance(item, str):
+        return item
+
+    if isinstance(item, list):
+        return [str(elem) for elem in item]
+
+    if not isinstance(item, dict):
+        raise ValueError(f"unsupported item type: {item!r}")
+
+    if "image" in item:
+        return str(item["image"])
+    if "join" in item:
+        return [str(elem) for elem in ensure_list(item["join"], "join")]
+    if "montage" in item:
+        if not isinstance(item["montage"], dict):
+            raise ValueError("montage item must contain a mapping")
+        return normalize_spec(item["montage"])
+
+    if any(key in item for key in ("rows", "output", "title", "size")):
+        return normalize_spec(item)
+
+    raise ValueError(f"unsupported item mapping: {item!r}")
+
+
+def normalize_row(row: Any) -> list[Any]:
+    if isinstance(row, dict):
+        items = row.get("items")
+        if items is None:
+            raise ValueError("row mapping must contain 'items'")
+        row_items = ensure_list(items, "row items")
+    else:
+        row_items = ensure_list(row, "row")
+
+    return [normalize_item(item) for item in row_items]
+
+
+def normalize_spec(spec: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(spec, dict):
+        raise ValueError("montage spec must be a mapping")
+
+    normalized = dict(spec)
+    normalized["rows"] = [normalize_row(row) for row in ensure_list(spec.get("rows"), "rows")]
+    return normalized
+
+
 def run_command(cmd: list[str]) -> None:
     subprocess.run(cmd, check=True)
 
@@ -371,7 +417,7 @@ def load_spec(path: Path) -> dict[str, Any]:
     parsed = parse_yaml_like(path.read_text())
     if not isinstance(parsed, dict):
         raise ValueError("top-level YAML document must be a mapping")
-    return parsed
+    return normalize_spec(parsed)
 
 
 def main(argv: list[str] | None = None) -> int:
