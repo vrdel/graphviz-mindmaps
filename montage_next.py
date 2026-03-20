@@ -248,12 +248,35 @@ def normalize_row(row: Any) -> list[Any]:
     return [normalize_item(item) for item in row_items]
 
 
+def normalize_entries(entries: list[Any]) -> list[list[Any]]:
+    rows: list[list[Any]] = []
+    current_row: list[Any] = []
+
+    def flush_row() -> None:
+        nonlocal current_row
+        if current_row:
+            rows.append(current_row)
+            current_row = []
+
+    for entry in entries:
+        if isinstance(entry, dict) and entry.get("new_row"):
+            flush_row()
+            continue
+        current_row.append(normalize_item(entry))
+
+    flush_row()
+    return rows
+
+
 def normalize_spec(spec: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(spec, dict):
         raise ValueError("montage spec must be a mapping")
 
     normalized = dict(spec)
-    normalized["rows"] = [normalize_row(row) for row in ensure_list(spec.get("rows"), "rows")]
+    if "entries" in spec:
+        normalized["rows"] = normalize_entries(ensure_list(spec["entries"], "entries"))
+    else:
+        normalized["rows"] = [normalize_row(row) for row in ensure_list(spec.get("rows"), "rows")]
     return normalized
 
 
@@ -329,7 +352,7 @@ class MontageRenderer:
             "-monitor",
             "-background", background,
             "-geometry", "+0+0",
-            "-tile", f"{len(images)}x",
+            "-tile", "1x",
             *images,
             str(tmp_path),
         ]

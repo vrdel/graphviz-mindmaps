@@ -1,16 +1,12 @@
 output: auto
 title: simple montage
-rows:
-  - items:
-      - image: mindmap-01.jpg
-  - items:
-      - image: mindmap-01.jpg
-  - items:
-      - join: [mindmap-01.jpg, mindmap-01.jpg]
-  - items:
-      - montage:
-          output: auto
-          title: joint submontage
-          rows:
-            - items:
-                - join: [mindmap-01.jpg, mindmap-01.jpg]
+entries:
+  - image: mindmap-01.jpg
+  - image: mindmap-01.jpg
+  - new_row: true
+  - join: [mindmap-01.jpg, mindmap-01.jpg]
+  - montage:
+      output: auto
+      title: joint submontage
+      entries:
+        - join: [mindmap-01.jpg, mindmap-01.jpg]
