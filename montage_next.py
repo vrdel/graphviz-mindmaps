@@ -230,7 +230,7 @@ def normalize_item(item: Any) -> Any:
             raise ValueError("montage item must contain a mapping")
         return normalize_spec(item["montage"])
 
-    if any(key in item for key in ("rows", "output", "title", "size")):
+    if any(key in item for key in ("rows", "entries", "title", "size")):
         return normalize_spec(item)
 
     raise ValueError(f"unsupported item mapping: {item!r}")
@@ -301,31 +301,28 @@ def copy_output(src: Path, dst: Path) -> None:
 
 
 class MontageRenderer:
-    def __init__(self, spec_path: Path, outfile: str = "", scale: str | None = None):
+    def __init__(self, spec_path: Path, outfile: str, scale: str | None = None, no_clean: bool = False):
         self.spec_path = spec_path
         self.outfile = outfile
         self.scale = scale
+        self.no_clean = no_clean
         self.curdir = Path.cwd()
         self.tool_dir = Path(__file__).resolve().parent
         self.auto_nested_index = 1
         self.temp_root = Path(tempfile.mkdtemp(prefix="montage-next-"))
+        self.intermediate_outputs: list[Path] = []
 
     def background_for(self, title: str | None, nested: bool) -> str:
         return UNTITLED_NESTED_BACKGROUND if nested and not title else TITLE_BACKGROUND
 
     def resolve_output(self, spec: dict[str, Any], nested: bool) -> Path:
-        if not nested and self.outfile:
+        if not nested:
             return self.curdir / self.outfile
 
-        output = spec.get("output", "auto")
-        if output == "auto":
-            if nested:
-                name = f"{self.spec_path.stem}-m{self.auto_nested_index}.jpg"
-                self.auto_nested_index += 1
-                return self.curdir / name
-            return self.curdir / f"{self.curdir.name}_{self.spec_path.stem}.jpg"
-
-        return self.curdir / str(output)
+        if nested:
+            name = f"{self.spec_path.stem}-m{self.auto_nested_index}.jpg"
+            self.auto_nested_index += 1
+            return self.curdir / name
 
     def resolve_title(self, spec: dict[str, Any], output_path: Path) -> str | None:
         if "title" not in spec:
@@ -392,6 +389,8 @@ class MontageRenderer:
 
     def render_spec(self, spec: dict[str, Any], nested: bool = False) -> Path:
         output_path = self.resolve_output(spec, nested=nested)
+        if nested:
+            self.intermediate_outputs.append(output_path)
         title = self.resolve_title(spec, output_path)
         size = self.resolve_size(spec, nested=nested)
         rows = ensure_list(spec.get("rows"), "rows")
@@ -425,13 +424,21 @@ class MontageRenderer:
         return output_path
 
     def cleanup(self) -> None:
+        if not self.no_clean:
+            for path in reversed(self.intermediate_outputs):
+                try:
+                    if path.exists() or path.is_symlink():
+                        path.unlink()
+                except OSError:
+                    pass
         shutil.rmtree(self.temp_root, ignore_errors=True)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", dest="scale", nargs="?", const="specified")
-    parser.add_argument("-o", dest="outfile", type=str, required=False, default="")
+    parser.add_argument("-o", dest="outfile", type=str, required=True)
+    parser.add_argument("-n", "--no-clean", dest="no_clean", action="store_true")
     parser.add_argument("cmfile")
     return parser
 
@@ -448,7 +455,12 @@ def main(argv: list[str] | None = None) -> int:
 
     scale = None if args.scale in (None, "specified") else args.scale
     spec_path = Path(args.cmfile).resolve()
-    renderer = MontageRenderer(spec_path=spec_path, outfile=args.outfile, scale=scale)
+    renderer = MontageRenderer(
+        spec_path=spec_path,
+        outfile=args.outfile,
+        scale=scale,
+        no_clean=args.no_clean,
+    )
     try:
         spec = load_spec(spec_path)
         renderer.render_spec(spec, nested=False)
