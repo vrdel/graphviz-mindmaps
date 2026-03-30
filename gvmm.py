@@ -1,6 +1,6 @@
 #!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
 
-import sys, re, subprocess, argparse, os, fnmatch, fontawesome, tempfile
+import sys, re, subprocess, argparse, os, fnmatch, fontawesome, tempfile, unicodedata
 import socket, configparser, math
 
 
@@ -128,6 +128,20 @@ def ResolveVerbatimFillColorToken(token):
 
     vrbtcolors[token] = newfill
     return newfill
+
+
+def NormalizeVerbatimWhitespace(text):
+    normalized = []
+
+    for ch in text:
+        if ch in ("\t", "\n", "\r", " "):
+            normalized.append(ch)
+        elif ch.isspace() or unicodedata.category(ch) == "Zs":
+            normalized.append(" ")
+        else:
+            normalized.append(ch)
+
+    return "".join(normalized)
 
 def ResolveBaseNodeTypeToken(token):
     m = re.match(r"^(impor|impog|impob|quest|date|title|link|saying)(-?[0-9]+)$", token)
@@ -1439,6 +1453,7 @@ def main():
                                     v.append(linesall[j].lstrip("\t|").rstrip())
                                 elif "\t;" in linesall[j]:
                                     v.append(linesall[j].lstrip("\t;").rstrip())
+                                v[-1] = NormalizeVerbatimWhitespace(v[-1])
                                 v[-1] = v[-1].replace("&", "&amp;")
                                 v[-1] = v[-1].replace("<", "&lt;")
                                 v[-1] = v[-1].replace(">", "&gt;")
