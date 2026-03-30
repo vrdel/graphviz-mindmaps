@@ -526,6 +526,23 @@ def ApplyInlineBacktickBold(text, allow_linebreak=False):
         text = re.sub(pattern, r'<B>\1</B>', text)
     return text
 
+
+def ConvertLinebreakMarkers(text):
+    entities = {}
+
+    def protect_entity(match):
+        key = "__ENTITY_%d__" % len(entities)
+        entities[key] = match.group(0)
+        return key
+
+    protected = re.sub(r"&(?:#?[A-Za-z0-9]+);", protect_entity, text)
+    protected = protected.replace(";", "<BR/>")
+
+    for key, value in entities.items():
+        protected = protected.replace(key, value)
+
+    return protected
+
 def ResolveSymbolNames(spec):
     aliases = {
         "info": "info-circle",
@@ -1027,8 +1044,8 @@ def GenDot(lines, argholder, parser):
                 labelhtml = label.split()
                 j = 0
                 for i in labelhtml:
-                    if i[0] != '<' and i.find(";") > 0:
-                        labelhtml[j] = i.replace(";", "<BR/>")
+                    if i.find(";") > 0:
+                        labelhtml[j] = ConvertLinebreakMarkers(i)
 
                     r = i.find(">")
                     if r == 0 and len(i) == 1:
@@ -1349,17 +1366,17 @@ def PostAttrProcLabel(label, ntype, vrbt, draw, textleft=False):
             if i >= 1 and "</TD>" in label[i]:
                 label[i] = label[i].replace("</TD>", "</FONT></U></B></TD>")
                 break
-    if not vrbt and not draw:
-        for i, v in enumerate(label):
-            if '----' in label[i]:
-                label[i-1] = label[i-1].replace("<TR><TD>", '<TR><TD></TD></TR>')
-                label[i] = label[i].replace("----</TD></TR>", "<HR/><TR><TD></TD></TR>")
-            elif '---' in label[i]:
-                label[i-1] = label[i-1].replace("<TR><TD>", '<TR><TD></TD></TR>')
-                label[i] = label[i].replace("---</TD></TR>", "<HR/><TR><TD></TD></TR>")
     if ntype == "list" or textleft:
         for i in range(len(label)):
             label[i] = label[i].replace("<TD", "<TD ALIGN=\"left\"")
+    if not vrbt and not draw:
+        merged = "".join(label)
+        merged = re.sub(r"<TR><TD(?: ALIGN=\"left\")?>----(?:&nbsp;)?</TD></TR>", "<HR/>", merged)
+        merged = re.sub(r"<TR><TD(?: ALIGN=\"left\")?>---(?:&nbsp;)?</TD></TR>", "<HR/>", merged)
+        merged = re.sub(r";?&nbsp;----</TD></TR>", "</TD></TR><HR/>", merged)
+        merged = re.sub(r";?&nbsp;---</TD></TR>", "</TD></TR><HR/>", merged)
+        merged = re.sub(r";?&nbsp;<HR/><TR><TD></TD></TR>", "</TD></TR><HR/>", merged)
+        label[:] = [merged]
 
 
 def PreAttrProcLabel(label, ntype):
