@@ -1,19 +1,71 @@
 #!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
 
-import os, sys, sqlite3, math, time, signal
+import os, sys, sqlite3, math, time, signal, argparse, shlex
 import socket, select, subprocess, configparser, errno
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
 
 CFG = os.environ['HOME'] + "/.galapix/galapix.cfg"
+DEFAULT_BACKEND = "sdl"
+DEFAULT_PYENV_ENV = "galapix-py"
+DEFAULT_PY_PATTERNS = []
+DEFAULT_PY_SORT = "mtime-reverse"
+DEFAULT_PY_BACKGROUND = "4b5262"
+DEFAULT_PY_SELECTION_BORDER = "B02A37"
+DEFAULT_PY_SPACING = 3
+
 
 def cleanup(server, sock):
     server.close()
     os.unlink(sock)
     sys.exit(1)
 
-def start(dirp, dbp, geom, title):
+def build_sdl_command(dirp, dbp, geom, title):
+    return [
+        "galapix.sdl",
+        "--threads", "6",
+        "-g", geom,
+        "-d", dbp,
+        "--title", title,
+        "view",
+        dirp,
+    ]
+
+
+def build_py_command(dirp, dbp, geom, title, pyenv_env):
+    cmd = [
+        "galapix-py",
+        "--ignore-pattern-case",
+    ]
+
+    for pattern in DEFAULT_PY_PATTERNS:
+        cmd.extend(["-p", pattern])
+
+    cmd.extend([
+        "-d", dbp,
+        "view",
+        "--background-color", DEFAULT_PY_BACKGROUND,
+        "--selection-border-color", DEFAULT_PY_SELECTION_BORDER,
+        "--spacing", str(DEFAULT_PY_SPACING),
+        "--show-filenames",
+        "--sort", DEFAULT_PY_SORT,
+        "--geometry", geom,
+        "--title", title,
+        dirp,
+    ])
+
+    shell_lines = [
+        'export PYENV_ROOT="$HOME/.pyenv"',
+        'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"',
+        'eval "$(pyenv init -)"',
+        'pyenv activate %s' % shlex.quote(pyenv_env),
+        "exec " + " ".join(shlex.quote(part) for part in cmd),
+    ]
+    return ["/bin/bash", "-lc", "\n".join(shell_lines)]
+
+
+def start(dirp, dbp, geom, title, backend, pyenv_env):
     rows = []
 
     if os.path.exists(dbp + "/cache3.sqlite3"):
@@ -53,12 +105,19 @@ def start(dirp, dbp, geom, title):
 
         conn.close()
 
-    exestring = "galapix.sdl --threads 6 -g %s -d %s --title %s view" % (geom, dbp, title)
-    exestring += ' ' + dirp
+    if backend == "py":
+        cmd = build_py_command(dirp, dbp, geom, title, pyenv_env)
+    else:
+        cmd = build_sdl_command(dirp, dbp, geom, title)
 
-    return subprocess.Popen(exestring, shell=True, preexec_fn=os.setpgrp)
+    return subprocess.Popen(cmd, preexec_fn=os.setpgrp)
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--backend", choices=("sdl", "py"), default=DEFAULT_BACKEND)
+    parser.add_argument("--pyenv-env", default=DEFAULT_PYENV_ENV)
+    args = parser.parse_args()
+
     Settings = {}
     GalaInstan = {}
 
@@ -117,7 +176,14 @@ def main():
             Settings["dbp"] = config.get(section, "dbpath")
             Settings["title"] = config.get(section, "wintitle")
             Settings["geom"] = config.get(section, "geometry")
-            proc = start(Settings["dirp"], Settings["dbp"], Settings["geom"], Settings["title"])
+            proc = start(
+                Settings["dirp"],
+                Settings["dbp"],
+                Settings["geom"],
+                Settings["title"],
+                args.backend,
+                args.pyenv_env,
+            )
             Settings["pid"] = proc.pid
             Settings["inst"] = proc
             GalaInstan[Settings["title"]] = Settings
@@ -142,14 +208,28 @@ def main():
                             pgid = os.getpgid(GalaInstan[inst]["pid"])
                             os.killpg(pgid, signal.SIGTERM)
                             time.sleep(1)
-                            proc = start(GalaInstan[inst]["dirp"], GalaInstan[inst]["dbp"], GalaInstan[inst]["geom"], GalaInstan[inst]["title"])
+                            proc = start(
+                                GalaInstan[inst]["dirp"],
+                                GalaInstan[inst]["dbp"],
+                                GalaInstan[inst]["geom"],
+                                GalaInstan[inst]["title"],
+                                args.backend,
+                                args.pyenv_env,
+                            )
                             GalaInstan[inst]["pid"] = proc.pid
                             GalaInstan[inst]["inst"] = proc
                         elif data[0] == "all":
                             pgid = os.getpgid(GalaInstan[inst]["pid"])
                             os.killpg(pgid, signal.SIGTERM)
                             time.sleep(1)
-                            proc = start(GalaInstan[inst]["dirp"], GalaInstan[inst]["dbp"], GalaInstan[inst]["geom"], GalaInstan[inst]["title"])
+                            proc = start(
+                                GalaInstan[inst]["dirp"],
+                                GalaInstan[inst]["dbp"],
+                                GalaInstan[inst]["geom"],
+                                GalaInstan[inst]["title"],
+                                args.backend,
+                                args.pyenv_env,
+                            )
                             GalaInstan[inst]["pid"] = proc.pid
 
                     signal.signal(signal.SIGCHLD, chldcleanup)
