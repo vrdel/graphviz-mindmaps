@@ -6,7 +6,7 @@ from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
 
-CFG = os.environ['HOME'] + "/.galapix/galapix.cfg"
+DEFAULT_CFG = os.path.join(os.environ["HOME"], ".galapix", "galapix.cfg")
 DEFAULT_BACKEND = "sdl"
 DEFAULT_PYENV_ENV = "galapix-py"
 DEFAULT_PY_PATTERNS = []
@@ -65,10 +65,10 @@ def build_py_command(dirp, dbp, geom, title, pyenv_env, patterns):
     return ["/bin/bash", "-lc", "\n".join(shell_lines)]
 
 
-def start(dirp, dbp, geom, title, backend, pyenv_env, patterns):
+def start(dirp, dbp, geom, title, backend, pyenv_env, patterns, changes_track):
     rows = []
 
-    if os.path.exists(dbp + "/cache3.sqlite3"):
+    if changes_track and os.path.exists(dbp + "/cache3.sqlite3"):
 
         conn = sqlite3.connect(dbp + "/cache3.sqlite3")
         # conn.text_factory = str
@@ -114,6 +114,7 @@ def start(dirp, dbp, geom, title, backend, pyenv_env, patterns):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default=DEFAULT_CFG)
     parser.add_argument("--backend", choices=("sdl", "py"), default=DEFAULT_BACKEND)
     parser.add_argument("--pyenv-env", default=DEFAULT_PYENV_ENV)
     args = parser.parse_args()
@@ -125,7 +126,7 @@ def main():
         pass
 
     config = configparser.ConfigParser()
-    config.read(CFG)
+    config.read(args.config)
 
     pixsock = config.defaults().get("pixsock")
 
@@ -177,6 +178,7 @@ def main():
             Settings["title"] = config.get(section, "wintitle")
             Settings["geom"] = config.get(section, "geometry")
             Settings["patterns"] = DEFAULT_PY_PATTERNS[:]
+            Settings["changes_track"] = config.getboolean(section, "changes_track", fallback=True)
             if config.has_option(section, "pattern"):
                 Settings["patterns"].append(config.get(section, "pattern"))
             proc = start(
@@ -187,6 +189,7 @@ def main():
                 args.backend,
                 args.pyenv_env,
                 Settings["patterns"],
+                Settings["changes_track"],
             )
             Settings["pid"] = proc.pid
             Settings["inst"] = proc
@@ -220,6 +223,7 @@ def main():
                                 args.backend,
                                 args.pyenv_env,
                                 GalaInstan[inst].get("patterns", DEFAULT_PY_PATTERNS),
+                                GalaInstan[inst].get("changes_track", True),
                             )
                             GalaInstan[inst]["pid"] = proc.pid
                             GalaInstan[inst]["inst"] = proc
@@ -235,6 +239,7 @@ def main():
                                 args.backend,
                                 args.pyenv_env,
                                 GalaInstan[inst].get("patterns", DEFAULT_PY_PATTERNS),
+                                GalaInstan[inst].get("changes_track", True),
                             )
                             GalaInstan[inst]["pid"] = proc.pid
 
