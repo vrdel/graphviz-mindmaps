@@ -9,11 +9,12 @@ import socket
 import sys
 
 
-CFG = os.path.join(os.environ["HOME"], ".galapix", "galapix.cfg")
+DEFAULT_CFG = os.path.join(os.environ["HOME"], ".galapix", "galapix.cfg")
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default=DEFAULT_CFG)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         "-r",
@@ -56,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
     try:
-        pixsock = load_pixsock(CFG)
+        pixsock = load_pixsock(args.config)
         if args.restart is not None:
             send_command(pixsock, f"{args.restart} restart")
         else:
