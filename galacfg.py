@@ -22,15 +22,17 @@ def cleanup(server, sock):
     sys.exit(1)
 
 def build_sdl_command(dirp, dbp, geom, title):
-    return [
+    cmd = [
         "galapix.sdl",
         "--threads", "6",
         "-g", geom,
         "-d", dbp,
         "--title", title,
         "view",
-        dirp,
     ]
+    if dirp:
+        cmd.append(dirp)
+    return cmd
 
 
 def build_py_command(dirp, dbp, geom, title, pyenv_env, patterns):
@@ -52,8 +54,9 @@ def build_py_command(dirp, dbp, geom, title, pyenv_env, patterns):
         "--sort", DEFAULT_PY_SORT,
         "--geometry", geom,
         "--title", title,
-        dirp,
     ])
+    if dirp:
+        cmd.append(dirp)
 
     shell_lines = [
         'export PYENV_ROOT="$HOME/.pyenv"',
@@ -68,7 +71,7 @@ def build_py_command(dirp, dbp, geom, title, pyenv_env, patterns):
 def start(dirp, dbp, geom, title, backend, pyenv_env, patterns, changes_track):
     rows = []
 
-    if changes_track and os.path.exists(dbp + "/cache3.sqlite3"):
+    if dirp and changes_track and os.path.exists(dbp + "/cache3.sqlite3"):
 
         conn = sqlite3.connect(dbp + "/cache3.sqlite3")
         # conn.text_factory = str
