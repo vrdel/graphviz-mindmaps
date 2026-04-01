@@ -1044,7 +1044,7 @@ def GenDot(lines, argholder, parser):
                 labelhtml = label.split()
                 j = 0
                 for i in labelhtml:
-                    if i.find(";") > 0:
+                    if not vrbt and not draw and i.find(";") > 0:
                         labelhtml[j] = ConvertLinebreakMarkers(i)
 
                     r = i.find(">")
