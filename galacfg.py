@@ -33,13 +33,13 @@ def build_sdl_command(dirp, dbp, geom, title):
     ]
 
 
-def build_py_command(dirp, dbp, geom, title, pyenv_env):
+def build_py_command(dirp, dbp, geom, title, pyenv_env, patterns):
     cmd = [
         "galapix-py",
         "--ignore-pattern-case",
     ]
 
-    for pattern in DEFAULT_PY_PATTERNS:
+    for pattern in patterns:
         cmd.extend(["-p", pattern])
 
     cmd.extend([
@@ -65,7 +65,7 @@ def build_py_command(dirp, dbp, geom, title, pyenv_env):
     return ["/bin/bash", "-lc", "\n".join(shell_lines)]
 
 
-def start(dirp, dbp, geom, title, backend, pyenv_env):
+def start(dirp, dbp, geom, title, backend, pyenv_env, patterns):
     rows = []
 
     if os.path.exists(dbp + "/cache3.sqlite3"):
@@ -106,7 +106,7 @@ def start(dirp, dbp, geom, title, backend, pyenv_env):
         conn.close()
 
     if backend == "py":
-        cmd = build_py_command(dirp, dbp, geom, title, pyenv_env)
+        cmd = build_py_command(dirp, dbp, geom, title, pyenv_env, patterns)
     else:
         cmd = build_sdl_command(dirp, dbp, geom, title)
 
@@ -176,6 +176,9 @@ def main():
             Settings["dbp"] = config.get(section, "dbpath")
             Settings["title"] = config.get(section, "wintitle")
             Settings["geom"] = config.get(section, "geometry")
+            Settings["patterns"] = DEFAULT_PY_PATTERNS[:]
+            if config.has_option(section, "pattern"):
+                Settings["patterns"].append(config.get(section, "pattern"))
             proc = start(
                 Settings["dirp"],
                 Settings["dbp"],
@@ -183,6 +186,7 @@ def main():
                 Settings["title"],
                 args.backend,
                 args.pyenv_env,
+                Settings["patterns"],
             )
             Settings["pid"] = proc.pid
             Settings["inst"] = proc
@@ -215,6 +219,7 @@ def main():
                                 GalaInstan[inst]["title"],
                                 args.backend,
                                 args.pyenv_env,
+                                GalaInstan[inst].get("patterns", DEFAULT_PY_PATTERNS),
                             )
                             GalaInstan[inst]["pid"] = proc.pid
                             GalaInstan[inst]["inst"] = proc
@@ -229,6 +234,7 @@ def main():
                                 GalaInstan[inst]["title"],
                                 args.backend,
                                 args.pyenv_env,
+                                GalaInstan[inst].get("patterns", DEFAULT_PY_PATTERNS),
                             )
                             GalaInstan[inst]["pid"] = proc.pid
 
