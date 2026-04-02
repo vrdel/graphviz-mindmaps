@@ -17,9 +17,16 @@ DEFAULT_PY_SPACING = 3
 
 
 def cleanup(server, sock):
-    server.close()
-    os.unlink(sock)
-    sys.exit(1)
+    try:
+        server.close()
+    except OSError:
+        pass
+
+    try:
+        os.unlink(sock)
+    except OSError:
+        if os.path.exists(sock):
+            raise
 
 def build_sdl_command(dirp, dbp, geom, title):
     cmd = [
@@ -150,13 +157,31 @@ def main():
     poller = select.poll()
     poller.register(server.fileno(), select.POLLIN)
 
-    def sigcleanup(*sock):
-        server.close()
-        os.unlink(sock)
-        sys.exit(1)
-
     class StaticVar:
         NumInstan = 0
+
+    def terminate_all_instances():
+        for inst in list(GalaInstan.values()):
+            pid = inst.get("pid")
+            if not pid:
+                continue
+            try:
+                pgid = os.getpgid(pid)
+            except OSError:
+                continue
+            try:
+                os.killpg(pgid, signal.SIGTERM)
+            except OSError:
+                continue
+
+    def shutdown(exit_code=1):
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+        terminate_all_instances()
+        cleanup(server, pixsock)
+        sys.exit(exit_code)
+
+    def sigcleanup(*_):
+        shutdown(1)
 
     def chldcleanup(*msg):
         pid, status = os.wait()
@@ -201,6 +226,7 @@ def main():
             StaticVar.NumInstan = len(GalaInstan)
 
     signal.signal(signal.SIGCHLD, chldcleanup)
+    signal.signal(signal.SIGINT, sigcleanup)
     signal.signal(signal.SIGTERM, sigcleanup)
 
     while True:
@@ -250,7 +276,7 @@ def main():
 
 
         except KeyboardInterrupt:
-            cleanup(server, pixsock)
+            shutdown(130)
 
         except select.error as m:
             if m.args and m.args[0] == errno.EINTR:
