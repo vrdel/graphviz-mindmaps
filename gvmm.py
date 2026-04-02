@@ -369,16 +369,30 @@ class Tree:
                     self._label.insert(i, "&nbsp;")
 
         def _lineattr(self, fsattr, tsattr, value, eattr = None):
+            def is_separator_row(fragment):
+                text = re.sub(r"<[^>]+>", "", fragment)
+                text = text.replace("&nbsp;", "").strip()
+                return text in set(["---", "----"])
+
             if len(value) > 0:
                 if value[0][0] == 0:
                     if "FontAwesome" not in self._label[1]:
                         self._label = "<SEP>".join(self._label)
-                        self._label = self._label.replace(fsattr, \
-                                "%s\"%s\">" % (tsattr, value[0][1]) \
-                                if value[0][1] not in set(['U', 'B', 'S', 'I'])\
-                                else "%s%s>" % (tsattr, value[0][1]) )
-                        if eattr:
-                            self._label = self._label.replace("</TD>", eattr + "</TD>")
+                        self._label = self._label.split("</TD></TR><TR>")
+                        for i in range(len(self._label)):
+                            if is_separator_row(self._label[i]):
+                                continue
+                            self._label[i] = self._label[i].replace(fsattr, \
+                                    "%s\"%s\">" % (tsattr, value[0][1]) \
+                                    if value[0][1] not in set(['U', 'B', 'S', 'I'])\
+                                    else "%s%s>" % (tsattr, value[0][1]) )
+                            if eattr and i < len(self._label) - 1:
+                                self._label[i] = self._label[i] + eattr
+                            elif eattr and i == len(self._label) - 1:
+                                self._label[i] = self._label[i].replace("</TD>", eattr + "</TD>")
+                        for j in range(len(self._label) - 1):
+                            self._label[j] = self._label[j] + "</TD></TR><TR>"
+                        self._label = "".join(self._label)
                         self._label = self._label.split("<SEP>")
                     else:
                         first = self._label[0]
@@ -1371,8 +1385,8 @@ def PostAttrProcLabel(label, ntype, vrbt, draw, textleft=False):
             label[i] = label[i].replace("<TD", "<TD ALIGN=\"left\"")
     if not vrbt and not draw:
         merged = "".join(label)
-        merged = re.sub(r"<TR><TD(?: ALIGN=\"left\")?>----(?:&nbsp;)?</TD></TR>", "<HR/>", merged)
-        merged = re.sub(r"<TR><TD(?: ALIGN=\"left\")?>---(?:&nbsp;)?</TD></TR>", "<HR/>", merged)
+        merged = re.sub(r"<TR><TD(?: ALIGN=\"left\")?>(?:<FONT POINT-SIZE=\"[0-9]+\">)?----(?:&nbsp;)?(?:</FONT>)?</TD></TR>", "<HR/>", merged)
+        merged = re.sub(r"<TR><TD(?: ALIGN=\"left\")?>(?:<FONT POINT-SIZE=\"[0-9]+\">)?---(?:&nbsp;)?(?:</FONT>)?</TD></TR>", "<HR/>", merged)
         merged = re.sub(r";?&nbsp;----</TD></TR>", "</TD></TR><HR/>", merged)
         merged = re.sub(r";?&nbsp;---</TD></TR>", "</TD></TR><HR/>", merged)
         merged = re.sub(r";?&nbsp;<HR/><TR><TD></TD></TR>", "</TD></TR><HR/>", merged)
