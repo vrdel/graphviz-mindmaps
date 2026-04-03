@@ -22,4 +22,4 @@ done
 
 rm -f ~/.galapix/other/cache3.sqlite3
 ulimit -c 0
-echo $args | xargs galapix.sdl --threads 6 view --show-filenames -g $geom -d ~/.galapix/other/ --title "galapix: $args" &>/dev/null
+echo $args | xargs galapix.sdl --threads 6 view --background-color "#4b5262" --selection-border-color "#B02A37" --show-filenames -g $geom -d ~/.galapix/other/ --title "galapix: $args" &>/dev/null
