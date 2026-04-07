@@ -252,16 +252,26 @@ class Tree:
             self._label = self._label.split("</TD></TR><TR>")
 
             for i in self._linedate:
-                li = self._resolve_line_sel(int(i[0]), len(self._label))
-                if li < 1 or li > len(self._label):
-                    continue
+                if self._verbatim or self._draw:
+                    _, scoped_indexes = self._scoped_line_fragment_indexes(self._label)
+                    if not scoped_indexes:
+                        continue
+                    li = self._resolve_line_sel(int(i[0]), len(scoped_indexes))
+                    if li < 1 or li > len(scoped_indexes):
+                        continue
+                    target_idx = scoped_indexes[li - 1]
+                else:
+                    li = self._resolve_line_sel(int(i[0]), len(self._label))
+                    if li < 1 or li > len(self._label):
+                        continue
+                    target_idx = li - 1
 
                 deco = "<TD><FONT COLOR=\"%s\"><I><FONT FACE=\"FontAwesome\" POINT-SIZE=\"18\">%s</FONT>&nbsp;" % (fontcolor['b'], fontawesome.symb["calendar"])
-                self._label[li - 1] = self._label[li - 1].replace("<TD>", deco, 1)
-                if "</TD>" in self._label[li - 1]:
-                    self._label[li - 1] = self._label[li - 1].replace("</TD>", "</I></FONT></TD>", 1)
+                self._label[target_idx] = self._label[target_idx].replace("<TD>", deco, 1)
+                if "</TD>" in self._label[target_idx]:
+                    self._label[target_idx] = self._label[target_idx].replace("</TD>", "</I></FONT></TD>", 1)
                 else:
-                    self._label[li - 1] = self._label[li - 1] + "</I></FONT>"
+                    self._label[target_idx] = self._label[target_idx] + "</I></FONT>"
 
             for j in range(len(self._label) - 1):
                 self._label[j] = self._label[j] + "</TD></TR><TR>"
@@ -321,6 +331,27 @@ class Tree:
 
             return line_indexes
 
+        def _scoped_line_fragment_indexes(self, fragments=None):
+            def has_visible_content(fragment):
+                text = re.sub(r"<[^>]+>", "", fragment)
+                text = text.replace("&nbsp;", "").strip()
+                text = text.replace("<", "").replace(">", "").strip()
+                return bool(text)
+
+            if fragments is None:
+                fragments = "<SEP>".join(self._label).split("</TD></TR><TR>")
+            indexes = [idx for idx, fragment in enumerate(fragments) if has_visible_content(fragment)]
+
+            if self._verbatim or self._draw:
+                if indexes:
+                    del(indexes[0])
+                while indexes and not has_visible_content(fragments[indexes[0]]):
+                    del(indexes[0])
+                while indexes and not has_visible_content(fragments[indexes[-1]]):
+                    indexes.pop()
+
+            return fragments, indexes
+
         def _wordattr(self, value, sattr, eattr = None):
             if len(value) > 0:
                 prevnbsp = [j for j in range(2, len(self._label)) if "nbsp" in self._label[j]]
@@ -374,6 +405,9 @@ class Tree:
                 text = text.replace("&nbsp;", "").strip()
                 return text in set(["---", "----"])
 
+            def replace_td(fragment, replacement):
+                return re.sub(r"<TD(?: ALIGN=\"left\")?>", replacement, fragment, count=1)
+
             if len(value) > 0:
                 if value[0][0] == 0:
                     if "FontAwesome" not in self._label[1]:
@@ -382,7 +416,7 @@ class Tree:
                         for i in range(len(self._label)):
                             if is_separator_row(self._label[i]):
                                 continue
-                            self._label[i] = self._label[i].replace(fsattr, \
+                            self._label[i] = replace_td(self._label[i], \
                                     "%s\"%s\">" % (tsattr, value[0][1]) \
                                     if value[0][1] not in set(['U', 'B', 'S', 'I'])\
                                     else "%s%s>" % (tsattr, value[0][1]) )
@@ -400,25 +434,37 @@ class Tree:
                             for i in range(2, len(self._label)):
                                 self._label[i] = self._label[i].replace("</TD>", eattr + "</TD>")
                         self._label = "<SEP>".join(self._label[1:])
-                        self._label = self._label.replace(fsattr, \
+                        self._label = re.sub(r"<TD(?: ALIGN=\"left\")?>", \
                                 "%s\"%s\">" % (tsattr, value[0][1]) \
                                 if value[0][1] not in set(['U', 'B', 'S', 'I'])\
-                                else "%s%s>" % (tsattr, value[0][1]) )
+                                else "%s%s>" % (tsattr, value[0][1]), self._label)
                         self._label = self._label.split("<SEP>")
                         self._label.insert(0, first)
                 else:
                     self._label = "<SEP>".join(self._label)
                     self._label = self._label.split("</TD></TR><TR>")
                     for i in value:
-                        li = self._resolve_line_sel(int(i[0]), len(self._label))
-                        self._label[li - 1] = \
-                                self._label[li - 1].replace(fsattr, \
+                        if self._verbatim or self._draw:
+                            _, scoped_indexes = self._scoped_line_fragment_indexes(self._label)
+                            if not scoped_indexes:
+                                continue
+                            li = self._resolve_line_sel(int(i[0]), len(scoped_indexes))
+                            if li < 1 or li > len(scoped_indexes):
+                                continue
+                            target_idx = scoped_indexes[li - 1]
+                        else:
+                            li = self._resolve_line_sel(int(i[0]), len(self._label))
+                            if li < 1 or li > len(self._label):
+                                continue
+                            target_idx = li - 1
+                        self._label[target_idx] = \
+                                replace_td(self._label[target_idx], \
                                 "%s\"%s\">" % (tsattr, i[1]) if i[1] not in set(['U', 'B', 'S', 'I']) \
                                 else "%s%s>" % (tsattr, i[1]))
-                        if eattr and li - 1 < len(self._label) - 1:
-                            self._label[li - 1] = self._label[li - 1] + eattr
-                        elif eattr and li - 1 == len(self._label) - 1:
-                            self._label[li - 1] = self._label[li - 1].replace("</TD>", eattr + "</TD>")
+                        if eattr and target_idx < len(self._label) - 1:
+                            self._label[target_idx] = self._label[target_idx] + eattr
+                        elif eattr and target_idx == len(self._label) - 1:
+                            self._label[target_idx] = self._label[target_idx].replace("</TD>", eattr + "</TD>")
                     for j in range(len(self._label) - 1):
                         self._label[j] = self._label[j] + "</TD></TR><TR>"
                     self._label = "".join(self._label)
@@ -1233,12 +1279,6 @@ def GenDot(lines, argholder, parser):
                 SkipUnscopedWords(wordfsize, s=wordskip)
                 SkipUnscopedWords(wordcolor, s=wordskip)
                 SkipUnscopedWords(wordfstyle, s=wordskip)
-                if linecolor and not linecolor[0][0] == 0:
-                    SkipPositive(linecolor, s=1)
-                if linefsize and not linefsize[0][0] == 0:
-                    SkipPositive(linefsize, s=1)
-                if linefstyle and not linefstyle[0][0] == 0:
-                    SkipPositive(linefstyle, s=1)
 
             if symblist:
                 SkipUnscopedWords(wordfsize, s=len(symblist))
