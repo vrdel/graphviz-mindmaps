@@ -49,7 +49,7 @@ def TitleImg(argholder):
 
     # exe = "convert \"%s\" -monitor -bordercolor black -border 4 -font DejaVu-Sans-Condensed-Bold -pointsize %d -fill white -gravity North -background black -splice 0x%d -bordercolor '#a0a0a0' -border 10 -annotate +5+20 '%s' \"%s\"" % (InImg, PointSize, SpliceSize, argholder.ImgTitle, OutImg)
 
-    exe = "gm convert '%s' -mattecolor black -frame 5x5+0+0 -gravity south \
+    exe = "gm convert '%s' -frame 5x5+0+0 -gravity south \
         -background '%s' -extent %dx%d+0-15 -pointsize %d -draw 'rectangle 10,10 %i,%i' \
         -font /usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf -fill white -gravity north \
         -monitor -draw \"text 0,%d '%s'\" '%s'" % (InImg, argholder.Background, im.size[0] + 30, im.size[1] + SpliceSize, \
