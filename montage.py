@@ -7,6 +7,7 @@ import argparse
 mini = False
 curdir = None
 notitle = False
+DEFAULT_BACKGROUND = "#4b5262"
 
 
 class ArgHolder(object):
@@ -185,7 +186,7 @@ def MultiMontage(l):
 
 def CreateMontage(filename, title, size, limg):
     os.chdir(curdir)
-    background = "#efefef" if mini and not notitle else "#a0a0a0"
+    background = "#efefef" if mini and not notitle else argholder.background
 
     imgnames = []
     rowimgs = []
@@ -266,6 +267,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', dest='scale', nargs='?', const="specified")
     parser.add_argument('-o', dest='outfile', type=str, required=False, default="")
+    parser.add_argument('-b', '--background', dest='background', type=str, default=DEFAULT_BACKGROUND)
     parser.add_argument('cmfile')
     parser.parse_args(namespace=argholder)
 

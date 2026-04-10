@@ -16,6 +16,7 @@ from typing import Any
 
 TITLE_BACKGROUND = "#a0a0a0"
 UNTITLED_NESTED_BACKGROUND = "#efefef"
+DEFAULT_BACKGROUND = "#4b5262"
 
 
 def strip_comment(line: str) -> str:
@@ -301,11 +302,12 @@ def copy_output(src: Path, dst: Path) -> None:
 
 
 class MontageRenderer:
-    def __init__(self, spec_path: Path, outfile: str, scale: str | None = None, no_clean: bool = False):
+    def __init__(self, spec_path: Path, outfile: str, scale: str | None = None, no_clean: bool = False, background: str = DEFAULT_BACKGROUND):
         self.spec_path = spec_path
         self.outfile = outfile
         self.scale = scale
         self.no_clean = no_clean
+        self.background = background
         self.curdir = Path.cwd()
         self.tool_dir = Path(__file__).resolve().parent
         self.auto_nested_index = 1
@@ -313,7 +315,7 @@ class MontageRenderer:
         self.intermediate_outputs: list[Path] = []
 
     def background_for(self, title: str | None, nested: bool) -> str:
-        return UNTITLED_NESTED_BACKGROUND if nested and not title else TITLE_BACKGROUND
+        return UNTITLED_NESTED_BACKGROUND if nested and not title else self.background
 
     def resolve_output(self, spec: dict[str, Any], nested: bool) -> Path:
         if not nested:
@@ -438,6 +440,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", dest="scale", nargs="?", const="specified")
     parser.add_argument("-o", dest="outfile", type=str, required=True)
+    parser.add_argument("-b", "--background", dest="background", default=DEFAULT_BACKGROUND)
     parser.add_argument("-n", "--no-clean", dest="no_clean", action="store_true")
     parser.add_argument("cmfile")
     return parser
@@ -460,6 +463,7 @@ def main(argv: list[str] | None = None) -> int:
         outfile=args.outfile,
         scale=scale,
         no_clean=args.no_clean,
+        background=args.background,
     )
     try:
         spec = load_spec(spec_path)

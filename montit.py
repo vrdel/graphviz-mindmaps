@@ -4,6 +4,7 @@ import os, sys, argparse, subprocess, math
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
+DEFAULT_BACKGROUND = "#4b5262"
 
 
 def Montage(argholder):
@@ -14,8 +15,8 @@ def Montage(argholder):
             i += 2
         argholder.MontageTile = argholder.MontageTile * 2
 
-    exe = "gm montage -monitor -background white -geometry +0+0 -tile \"%sx\" \"%s\" \"%s\"" \
-            % (argholder.MontageTile, '" "'.join(argholder.files[:-1]), \
+    exe = "gm montage -monitor -background '%s' -geometry +0+0 -tile \"%sx\" \"%s\" \"%s\"" \
+            % (argholder.Background, argholder.MontageTile, '" "'.join(argholder.files[:-1]), \
             argholder.files[len(argholder.files) - 1])
 
     subprocess.call(exe, shell = True)
@@ -49,9 +50,9 @@ def TitleImg(argholder):
     # exe = "convert \"%s\" -monitor -bordercolor black -border 4 -font DejaVu-Sans-Condensed-Bold -pointsize %d -fill white -gravity North -background black -splice 0x%d -bordercolor '#a0a0a0' -border 10 -annotate +5+20 '%s' \"%s\"" % (InImg, PointSize, SpliceSize, argholder.ImgTitle, OutImg)
 
     exe = "gm convert '%s' -mattecolor black -frame 5x5+0+0 -gravity south \
-        -background '#a0a0a0' -extent %dx%d+0-15 -pointsize %d -draw 'rectangle 10,10 %i,%i' \
+        -background '%s' -extent %dx%d+0-15 -pointsize %d -draw 'rectangle 10,10 %i,%i' \
         -font /usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf -fill white -gravity north \
-        -monitor -draw \"text 0,%d '%s'\" '%s'" % (InImg, im.size[0] + 30, im.size[1] + SpliceSize, \
+        -monitor -draw \"text 0,%d '%s'\" '%s'" % (InImg, argholder.Background, im.size[0] + 30, im.size[1] + SpliceSize, \
                                         PointSize, im.size[0] + 20 - 1, SpliceSize - 15, PointSize + 7, \
                                         argholder.ImgTitle, OutImg)
 
@@ -68,6 +69,7 @@ def main():
     parser.add_argument('-s', dest = 'TitleSize', choices = ['xs', 's', 'm', 'b'], default = 's')
     parser.add_argument('-e', dest = 'EmptyImg', nargs = '?', default = "NoSpec")
     parser.add_argument('-m', dest = 'MontageTile', type = int)
+    parser.add_argument('-b', '--background', dest='Background', default=DEFAULT_BACKGROUND)
     parser.add_argument('files', nargs = argparse.REMAINDER)
 
     parser.parse_args(namespace = argholder)
