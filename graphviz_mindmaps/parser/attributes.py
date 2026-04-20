@@ -82,3 +82,97 @@ def ResolveSymbolNames(spec, symbol_map):
         if aliased and aliased in symbol_map:
             resolved.append(aliased)
     return resolved
+
+
+def ApplyNodeAttributeTokens(
+    tokens,
+    tonode,
+    state,
+    labelhtml,
+    arrlines,
+    arrend,
+    parse_attribute_line,
+    resolve_color_node_type_token,
+    resolve_symbol_names,
+    gen_img_path,
+    symbol_map,
+    tmpdir,
+    tempfile_module,
+    subprocess_module,
+):
+    dood_count = 0
+
+    for token in tokens:
+        if token == "textleft":
+            continue
+
+        resolved_ntype = resolve_color_node_type_token(token)
+        if resolved_ntype and resolved_ntype not in {"verbatim", "verbat", "draw"}:
+            state.ntype = resolved_ntype
+        else:
+            parse_attribute_line(
+                token,
+                tonode,
+                state.wordcolor,
+                state.wordfsize,
+                state.wordfstyle,
+                state.linecolor,
+                state.linefsize,
+                state.linefstyle,
+                arrlines,
+                arrend,
+                state.sgcolor,
+                state.sgtitle,
+                state.sgstyle,
+                state.edgecolor,
+                state.edgestyle,
+                state.edgend,
+                state.edgethick,
+                state.edglabel,
+                state.symbcolor,
+                state.symbsize,
+                state.linedate,
+            )
+
+        if token.find("=") <= 0:
+            continue
+
+        match = re.match(r"([\W\w]*)(?:=)(.*)", token)
+        tokval = [match.group(1), match.group(2)]
+        if tokval[0] == "img":
+            labelhtml.insert(
+                len(labelhtml) - 1,
+                "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\""
+                + gen_img_path(tokval[1].strip())
+                + "\"/>",
+            )
+            state.ntype = "imgil"
+        elif tokval[0] == "symb" and state.ntype != "imgil":
+            state.symblist = resolve_symbol_names(tokval[1], symbol_map)
+        elif tokval[0] == "dood":
+            doodlist = tokval[1].split(":")
+            if len(doodlist) > 1:
+                tmpdir.append(tempfile_module.mkdtemp())
+                exestring = "montage %s -geometry +3+0                                         -tile %dx -background Transparent %s/doodle.png" % (
+                    " ".join(doodlist),
+                    len(doodlist),
+                    tmpdir[-1],
+                )
+                if subprocess_module.call(exestring, shell=True) == 0:
+                    labelhtml.insert(
+                        len(labelhtml) - 1,
+                        "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"10\"                                            BORDER=\"0\"><IMG SRC=\""
+                        + "%s/doodle.png" % (tmpdir[-1])
+                        + "\"/>",
+                    )
+            else:
+                labelhtml.insert(
+                    len(labelhtml) - 1,
+                    "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"10\"                                        BORDER=\"0\"><IMG SRC=\""
+                    + gen_img_path(tokval[1])
+                    + "\"/>",
+                )
+            dood_count += 1
+            state.ntype = "dood"
+
+    return dood_count

@@ -134,3 +134,32 @@ def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larro
         i += 1
     labelhtml.insert(len(labelhtml), "</TD></TR></TABLE>")
     return labelhtml, ntype, label
+
+
+def InsertSymbolRows(labelhtml, symblist, symbcolor, symbsize, symbol_map, fontcolor):
+    if not symblist:
+        return
+
+    index = 0
+    symbols = ""
+    while index < len(symblist):
+        color = "COLOR=\"%s\"" % (fontcolor["r"])
+        size = "POINT-SIZE=\"25\""
+        for entry in symbcolor:
+            if entry[0] - 1 == index:
+                color = "COLOR=\"%s\"" % (entry[1])
+                break
+        for entry in symbsize:
+            if entry[0] - 1 == index:
+                size = "POINT-SIZE=\"%s\"" % (entry[1])
+                break
+        symbols += "<FONT FACE=\"FontAwesome\" %s %s>%s</FONT>&nbsp;" % (
+            color,
+            size,
+            symbol_map[symblist[index]],
+        )
+        index += 1
+
+    wasone = labelhtml[1]
+    labelhtml[1] = symbols + "</TD></TR><TR><TD>"
+    labelhtml.insert(2, wasone)

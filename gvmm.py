@@ -23,7 +23,9 @@ from graphviz_mindmaps.constants import (
     subgraphcolors,
     vrbtcolors,
 )
+from graphviz_mindmaps.model.styles import NodePrepState
 from graphviz_mindmaps.parser.attributes import (
+    ApplyNodeAttributeTokens,
     ResolveBaseNodeTypeToken,
     ResolveColorNodeTypeToken,
     ResolveSymbolNames,
@@ -41,6 +43,7 @@ from graphviz_mindmaps.parser.outline import (
 from graphviz_mindmaps.render.label_html import (
     ApplyInlineBacktickBold,
     BuildNodeLabelHtml,
+    InsertSymbolRows,
 )
 
 gvroot = "/home/daniel/my_notes/"
@@ -887,124 +890,73 @@ def GenDot(lines, argholder, parser):
             except (IndexError, KeyError) as e:
                 print(e, label)
 
-            wordcolor, wordfsize, wordfstyle = [], [], []
-            linecolor, linefsize, linefstyle = [], [], []
-            linedate = []
-            sgcolor, sgtitle, sgstyle = [], [], []
-            edgecolor, edgestyle, edgend, edgethick, edglabel = [], [], [], [], []
-            symbcolor, symbsize, symblist = [], [], []
+            state = NodePrepState(ntype=ntype)
 
             fromnode = rootnodename
             for i in range(0, level - 1):
                 fromnode += "%s" % ("{:=02}".format(nodelevel[i] - 1))
             tonode = fromnode + "%s" % ("{:=02}".format(nodelevel[level - 1]))
 
-            if nextline.find("#") == -1 and ntype != "img":
+            if nextline.find("#") == -1 and state.ntype != "img":
                 nextline = TokenizeNodeAttributeLine(nextline)
+                numdood += ApplyNodeAttributeTokens(
+                    nextline,
+                    tonode,
+                    state,
+                    labelhtml,
+                    arrlines,
+                    arrend,
+                    lambda token, tonode, *args: ParseAttributeLine(token, tonode, *args),
+                    lambda token: ResolveColorNodeTypeToken(token, nodetype),
+                    ResolveSymbolNames,
+                    GenImgPath,
+                    fontawesome.symb,
+                    tmpdir,
+                    tempfile,
+                    subprocess,
+                )
 
-                for k in nextline:
-                    if k == "textleft":
-                        continue
-                    resolved_ntype = ResolveColorNodeTypeToken(k, nodetype)
-                    if resolved_ntype and resolved_ntype not in set(["verbatim", "verbat", "draw"]):
-                        ntype = resolved_ntype
-                    else:
-                        ParseAttributeLine(k, tonode, \
-                                wordcolor, wordfsize, wordfstyle, \
-                                linecolor, linefsize, linefstyle, \
-                                arrlines, arrend,\
-                                sgcolor, sgtitle, sgstyle, \
-                                edgecolor, edgestyle, edgend, edgethick, edglabel,\
-                                symbcolor, symbsize, linedate)
+            InsertSymbolRows(labelhtml, state.symblist, state.symbcolor, state.symbsize, fontawesome.symb, fontcolor)
 
-                    if k.find("=") > 0:
-                        m = re.match(r"([\W\w]*)(?:=)(.*)", k)
-                        tokval = [m.group(1), m.group(2)]
-                        if tokval[0] == "img":
-                            labelhtml.insert(len(labelhtml) - 1, "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" + GenImgPath(tokval[1].strip()) + "\"/>")
-                            ntype = "imgil"
-                        elif tokval[0] == "symb" and ntype != "imgil":
-                            symblist = ResolveSymbolNames(tokval[1], fontawesome.symb)
-                        elif tokval[0] == "dood":
-                            doodlist = tokval[1].split(':')
-                            if len(doodlist) > 1:
-                                global tmpdir
-                                tmpdir.append(tempfile.mkdtemp())
-                                exestring = "montage %s -geometry +3+0 \
-                                        -tile %dx -background Transparent %s/doodle.png" \
-                                        % (' '.join(doodlist), len(doodlist), tmpdir[-1])
-                                if subprocess.call(exestring, shell=True) == 0:
-                                    labelhtml.insert(len(labelhtml) - 1, \
-                                            "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"10\"\
-                                            BORDER=\"0\"><IMG SRC=\"" + "%s/doodle.png" \
-                                            % (tmpdir[-1]) + "\"/>")
-                            else:
-                                labelhtml.insert(len(labelhtml) - 1, \
-                                        "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"10\"\
-                                        BORDER=\"0\"><IMG SRC=\"" +  GenImgPath(tokval[1]) + "\"/>")
-                            numdood += 1
-                            ntype = "dood"
-
-            if symblist:
-                i = 0
-                symbols = ""
-                while i < len(symblist):
-                    color, size = "COLOR=\"%s\"" % (fontcolor['r']), \
-                            "POINT-SIZE=\"25\""
-                    for j in symbcolor:
-                        if j[0] - 1 == i:
-                            color = "COLOR=\"%s\"" % (j[1])
-                            break
-                    for j in symbsize:
-                        if j[0] - 1 == i:
-                            size = "POINT-SIZE=\"%s\"" % (j[1])
-                            break
-                    symbols += "<FONT FACE=\"FontAwesome\" %s %s>" % \
-                            (color, size) + fontawesome.symb[symblist[i]] \
-                            + "</FONT>&nbsp;"
-                    i += 1
-                wasone = labelhtml[1]
-                labelhtml[1] = symbols + "</TD></TR><TR><TD>"
-                labelhtml.insert(2, wasone)
-
+            ntype = state.ntype
             PreAttrProcLabel(labelhtml, ntype)
 
             if vrbt or draw:
                 wordskip = len(line.split("<BR/>", 1)[0].split()) - 1
-                SkipUnscopedWords(wordfsize, s=wordskip)
-                SkipUnscopedWords(wordcolor, s=wordskip)
-                SkipUnscopedWords(wordfstyle, s=wordskip)
+                SkipUnscopedWords(state.wordfsize, s=wordskip)
+                SkipUnscopedWords(state.wordcolor, s=wordskip)
+                SkipUnscopedWords(state.wordfstyle, s=wordskip)
 
-            if symblist:
-                SkipUnscopedWords(wordfsize, s=len(symblist))
-                SkipUnscopedWords(wordcolor, s=len(symblist))
-                SkipUnscopedWords(wordfstyle, s=len(symblist))
+            if state.symblist:
+                SkipUnscopedWords(state.wordfsize, s=len(state.symblist))
+                SkipUnscopedWords(state.wordcolor, s=len(state.symblist))
+                SkipUnscopedWords(state.wordfstyle, s=len(state.symblist))
 
             if ntype == "term" or ntype == "link":
-                SkipUnscopedWords(wordfsize, s=2)
-                SkipUnscopedWords(wordcolor, s=2)
-                SkipUnscopedWords(wordfstyle, s=2)
+                SkipUnscopedWords(state.wordfsize, s=2)
+                SkipUnscopedWords(state.wordcolor, s=2)
+                SkipUnscopedWords(state.wordfstyle, s=2)
 
             if ntype in set(["title", "quest", "date", "impor", "impog", "impob"]) or\
                     (ntype != "img" and "FontAwesome" in labelhtml[1]):
-                if wordcolor: SkipPositiveLineScopedWords(wordcolor, lsinw=1)
-                if wordfsize: SkipPositiveLineScopedWords(wordfsize, lsinw=1)
-                if wordfstyle: SkipPositiveLineScopedWords(wordfstyle, lsinw=1)
-                if linedate: SkipPositive(linedate, s=1)
-                if linecolor and not linecolor[0][0] == 0:
-                    SkipPositive(linecolor, s=1)
-                if linefsize and not linefsize[0][0] == 0:
-                    SkipPositive(linefsize, s=1)
-                if linefstyle and not linefstyle[0][0] == 0:
-                    SkipPositive(linefstyle, s=1)
+                if state.wordcolor: SkipPositiveLineScopedWords(state.wordcolor, lsinw=1)
+                if state.wordfsize: SkipPositiveLineScopedWords(state.wordfsize, lsinw=1)
+                if state.wordfstyle: SkipPositiveLineScopedWords(state.wordfstyle, lsinw=1)
+                if state.linedate: SkipPositive(state.linedate, s=1)
+                if state.linecolor and not state.linecolor[0][0] == 0:
+                    SkipPositive(state.linecolor, s=1)
+                if state.linefsize and not state.linefsize[0][0] == 0:
+                    SkipPositive(state.linefsize, s=1)
+                if state.linefstyle and not state.linefstyle[0][0] == 0:
+                    SkipPositive(state.linefstyle, s=1)
 
             if ntype == "term" or ntype == "link":
-                if linecolor and not linecolor[0][0] == 0:
-                    SkipPositive(linecolor, s=1)
-                if linefsize and not linefsize[0][0] == 0:
-                    SkipPositive(linefsize, s=1)
-                if linefstyle and not linefstyle[0][0] == 0:
-                    SkipPositive(linefstyle, s=1)
+                if state.linecolor and not state.linecolor[0][0] == 0:
+                    SkipPositive(state.linecolor, s=1)
+                if state.linefsize and not state.linefsize[0][0] == 0:
+                    SkipPositive(state.linefsize, s=1)
+                if state.linefstyle and not state.linefstyle[0][0] == 0:
+                    SkipPositive(state.linefstyle, s=1)
 
             if not ntype:
                 ntype = "def"
@@ -1013,10 +965,7 @@ def GenDot(lines, argholder, parser):
             for i in range(0, level + 1):
                 tabs += "\t"
 
-            edgeattrs = ""
-            for i in [edgecolor, edgestyle, edgethick, edgend, edglabel]:
-                if i:
-                    edgeattrs += " " + i[0]
+            edgeattrs = state.edgeattrs()
 
             if ntype in edgetype and not edgeattrs:
                 edge.append("%s%s:e -> %s:w[%s];\n" \
@@ -1029,11 +978,11 @@ def GenDot(lines, argholder, parser):
                         % (tabs, fromnode, tonode))
 
             parentlist[level] = tree.addchild_rev(tonode, tabs, ntype, labelhtml,\
-                    parentlist[level - 1], wordcolor, linecolor, wordfsize, \
-                    linefsize, wordfstyle, linefstyle, linedate, \
-                    sgcolor[0] if sgcolor else None, \
-                    sgtitle[0] if sgtitle else None, \
-                    sgstyle[0] if sgstyle else None, \
+                    parentlist[level - 1], state.wordcolor, state.linecolor, state.wordfsize, \
+                    state.linefsize, state.wordfstyle, state.linefstyle, state.linedate, \
+                    state.sgcolor_value(), \
+                    state.sgtitle_value(), \
+                    state.sgstyle_value(), \
                     vrbt, draw, textleft)
 
             nodelevel[level - 1] += 1
