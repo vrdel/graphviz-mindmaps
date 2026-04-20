@@ -1,7 +1,6 @@
 #!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
 
-import sys, re, subprocess, argparse, os, fnmatch, fontawesome, tempfile
-import socket, configparser
+import sys, re, subprocess, argparse, os, fontawesome, tempfile
 from graphviz_mindmaps.constants import (
     DEFAULT_BGCOLOR,
     MAXDEPTH,
@@ -23,6 +22,16 @@ from graphviz_mindmaps.constants import (
     subgraphcolors,
     vrbtcolors,
 )
+from graphviz_mindmaps.execute.image import (
+    ScaleImg as PackageScaleImg,
+    WriteDot as PackageWriteDot,
+    WriteImg as PackageWriteImg,
+)
+from graphviz_mindmaps.execute.montage import (
+    CheckCM as PackageCheckCM,
+    WriteMontage as PackageWriteMontage,
+)
+from graphviz_mindmaps.execute.restart import SendRestartMSG as PackageSendRestartMSG
 from graphviz_mindmaps.model.graph import (
     AppendNodeEdge,
     BuildNodeRefs,
@@ -475,31 +484,15 @@ class ArgHolder(object):
     pass
 
 def WriteDot(DotFile):
-    outputfile = open(DotFile, 'w')
-    outputfile.write(dotbuf)
-    outputfile.close()
+    PackageWriteDot(dotbuf, DotFile)
 
 
 def SendRestartMSG(sockwildcard, sockcfg=None):
-    config = configparser.ConfigParser()
-    config.read(cfg)
-
-    sockp = config.defaults().get(sockcfg)
-
-    try:
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(sockp)
-    except socket.error as m:
-        print(sockcfg)
-        print(m)
-    else:
-        sock.send(("%s restart" % (sockwildcard[0])).encode(), 64)
-        sock.close()
+    PackageSendRestartMSG(cfg, sockwildcard, sockcfg)
 
 
 def ScaleImg(argholder):
-    cmd = "gm convert -scale %s%% '%s' '%s'" % (argholder.scale, gvroot + argholder.jpgname, gvroot + argholder.jpgname)
-    subprocess.call(cmd, shell=True)
+    PackageScaleImg(argholder, gvroot)
 
 
 def WriteImg(argholder):
@@ -507,79 +500,21 @@ def WriteImg(argholder):
     global dotbuf
     global tmpdir
     global notitle
-
-    if argholder.jpgname.startswith("~") or argholder.jpgname.startswith("/"):
-        gvroot = ""
-        argholder.jpgname = argholder.jpgname.replace("~", os.environ['HOME'])
-    elif "/" not in argholder.jpgname and "~" not in argholder.jpgname:
-        gvroot = os.environ['PWD'] + "/"
-    proc = subprocess.Popen(['dot', '-Tjpg', '-o', gvroot + argholder.jpgname], stdin = subprocess.PIPE)
-    proc.communicate(dotbuf.encode())
-
-    subprocess.call("gm convert -shave 2x2 '%s' '%s'" % (gvroot + argholder.jpgname, gvroot + argholder.jpgname), shell=True)
-
-    if not notitle:
-        subprocess.call("montit.py -s s -t '%s' '%s'" % (title, gvroot + argholder.jpgname), shell=True)
-
-    if argholder.scale:
-        ScaleImg(argholder)
-
-    if argholder.preview:
-        # subprocess.Popen(['feh','-g', '1600x900', gvroot + argholder.jpgname])
-        subprocess.call("FvwmCommand 'All (galapix:*%s*) Close'" % \
-                argholder.jpgname.split("/")[1] if "/" in argholder.jpgname else argholder.jpgname, shell=True)
-        subprocess.Popen(['galaview.sh', gvroot + argholder.jpgname])
-
-    if len(tmpdir) > 0:
-        for t in tmpdir:
-            os.remove("%s/doodle.png" % (t))
-            os.removedirs(t)
-            tmpdir = []
-
-    dotbuf = ""
-    notitle = False
-    if not argholder.mtg:
-        argholder.jpgname = None
+    result = PackageWriteImg(dotbuf, argholder, gvroot, title, notitle, tmpdir)
+    gvroot = result["gvroot"]
+    dotbuf = result["dotbuf"]
+    tmpdir = result["tmpdir"]
+    notitle = result["notitle"]
 
 
 def CheckCM(img):
-    cmfile = None
-
-    # FIX
-    # returns only one file with a match
-    # mindmap could be in several .cm files
-    for fil in os.listdir('.'):
-        if fnmatch.fnmatch(fil, '*.cm'):
-            fo = open(fil)
-            lines = fo.readlines()
-            for line in lines:
-                if img in line:
-                    cmfile = fil
-            fo.close()
-    return cmfile
+    return PackageCheckCM(img)
 
 
 def WriteMontage(argholder):
-    imgarg = []
-    cmfile = ""
     global gvroot
     global montagetitle
-
-    imgarg = argholder.jpgname.split("/")
-    if argholder.jpgname.startswith("gv/"):
-        os.chdir(gvroot + '/'.join(imgarg[0:2]))
-        cmfile = CheckCM(imgarg[2])
-    else:
-        print("montage building should be in %s/gv/" % (gvroot[0:-1]))
-        raise SystemExit(1)
-
-
-    if cmfile:
-        subprocess.call(["montage.py", cmfile])
-        SendRestartMSG("rsync call", "inotsock")
-    else:
-        print("%s not found in any %s/*.cm" % (imgarg[2], gvroot + '/'.join(imgarg[0:2])))
-        raise SystemExit(1)
+    PackageWriteMontage(argholder, gvroot, SendRestartMSG)
 
 
 def Skip(maplist, s=None, lsinw=None):
