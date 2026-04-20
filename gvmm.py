@@ -12,6 +12,7 @@ from graphviz_mindmaps.execute.montage import (
     WriteMontage as PackageWriteMontage,
 )
 from graphviz_mindmaps.execute.restart import SendRestartMSG as PackageSendRestartMSG
+from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
 from graphviz_mindmaps.parser.outline import (
     ExtractMindmapBlocks,
     ParseFnameLine as ParseFnameLineDetails,
@@ -80,31 +81,31 @@ def GenDot(lines, argholder, parser):
     result = PackageGenDot(
         lines,
         argholder,
-        {
-            "dotbuf": dotbuf,
-            "title": title,
-            "notitle": notitle,
-            "bgcolor": bgcolor,
-            "tmpdir": tmpdir,
-            "gvroot": gvroot,
-        },
-        {
-            "fontawesome_symb": fontawesome.symb,
-            "tempfile_module": tempfile,
-            "subprocess_module": subprocess,
-            "parse_fname_line": ParseFnameLine,
-            "write_dot": lambda dotfile, current_dotbuf: PackageWriteDot(current_dotbuf, dotfile),
-            "write_img": lambda current_argholder, current_dotbuf, current_title, current_notitle, current_tmpdir, current_gvroot: PackageWriteImg(current_dotbuf, current_argholder, current_gvroot, current_title, current_notitle, current_tmpdir),
-            "write_montage": lambda current_argholder, current_gvroot, send_restart: PackageWriteMontage(current_argholder, current_gvroot, send_restart),
-            "send_restart_msg": SendRestartMSG,
-        },
+        RenderSession(
+            dotbuf=dotbuf,
+            title=title,
+            notitle=notitle,
+            bgcolor=bgcolor,
+            tmpdir=tmpdir,
+            gvroot=gvroot,
+        ),
+        RenderRuntime(
+            fontawesome_symb=fontawesome.symb,
+            tempfile_module=tempfile,
+            subprocess_module=subprocess,
+            parse_fname_line=ParseFnameLine,
+            write_dot=lambda dotfile, current_dotbuf: PackageWriteDot(current_dotbuf, dotfile),
+            write_img=lambda current_argholder, current_dotbuf, current_title, current_notitle, current_tmpdir, current_gvroot: PackageWriteImg(current_dotbuf, current_argholder, current_gvroot, current_title, current_notitle, current_tmpdir),
+            write_montage=lambda current_argholder, current_gvroot, send_restart: PackageWriteMontage(current_argholder, current_gvroot, send_restart),
+            send_restart_msg=SendRestartMSG,
+        ),
     )
-    dotbuf = result["dotbuf"]
-    title = result["title"]
-    notitle = result["notitle"]
-    bgcolor = result["bgcolor"]
-    tmpdir = result["tmpdir"]
-    gvroot = result["gvroot"]
+    dotbuf = result.dotbuf
+    title = result.title
+    notitle = result.notitle
+    bgcolor = result.bgcolor
+    tmpdir = result.tmpdir
+    gvroot = result.gvroot
 
 
 def main():

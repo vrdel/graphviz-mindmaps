@@ -14,6 +14,7 @@ from graphviz_mindmaps.constants import (
     nodetype,
     vrbtcolors,
 )
+from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
 from graphviz_mindmaps.model.graph import (
     AppendNodeEdge,
     BuildNodeRefs,
@@ -49,14 +50,14 @@ from graphviz_mindmaps.render.label_html import (
 )
 
 
-def GenDot(lines, argholder, state, runtime):
+def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     tree = Tree(
         nodetype,
         vrbtcolors,
         fontcolor,
         font,
         fontsize,
-        runtime["fontawesome_symb"],
+        runtime.fontawesome_symb,
         ResolveVerbatimFillColorToken,
         PostAttrProcLabel,
     )
@@ -66,11 +67,11 @@ def GenDot(lines, argholder, state, runtime):
     root = tree.addroot(rootnodename)
     parentlist[0] = root
 
-    dotbuf = state["dotbuf"]
-    title = state["title"]
-    notitle = state["notitle"]
-    bgcolor = state["bgcolor"]
-    tmpdir = state["tmpdir"]
+    dotbuf = session.dotbuf
+    title = session.title
+    notitle = session.notitle
+    bgcolor = session.bgcolor
+    tmpdir = session.tmpdir
 
     jpgname, dotname = "", ""
 
@@ -103,7 +104,7 @@ def GenDot(lines, argholder, state, runtime):
 
     for line in lines[1:]:
         if re.search(r"\t(:|\|)\s*fname", line):
-            jpgname = runtime["parse_fname_line"]("fname", line).strip()
+            jpgname = runtime.parse_fname_line("fname", line).strip()
             if re.search("otlname", line):
                 title = ParseOtlname("otlname", line) + "  -  " + title
 
@@ -150,17 +151,17 @@ def GenDot(lines, argholder, state, runtime):
                     lambda token: ResolveColorNodeTypeToken(token, nodetype),
                     ResolveSymbolNames,
                     GenImgPath,
-                    runtime["fontawesome_symb"],
+                    runtime.fontawesome_symb,
                     tmpdir,
-                    runtime["tempfile_module"],
-                    runtime["subprocess_module"],
+                    runtime.tempfile_module,
+                    runtime.subprocess_module,
                     bgcolor,
                 )
 
-            InsertSymbolRows(labelhtml, state_obj.symblist, state_obj.symbcolor, state_obj.symbsize, runtime["fontawesome_symb"], fontcolor)
+            InsertSymbolRows(labelhtml, state_obj.symblist, state_obj.symbcolor, state_obj.symbsize, runtime.fontawesome_symb, fontcolor)
 
             ntype = state_obj.ntype
-            PreAttrProcLabel(labelhtml, ntype, ResolveBaseNodeTypeToken, runtime["fontawesome_symb"], fontcolor)
+            PreAttrProcLabel(labelhtml, ntype, ResolveBaseNodeTypeToken, runtime.fontawesome_symb, fontcolor)
 
             if vrbt or draw:
                 wordskip = len(line.split("<BR/>", 1)[0].split()) - 1
@@ -244,31 +245,29 @@ def GenDot(lines, argholder, state, runtime):
         argholder.jpgname = jpgname
 
     if argholder.dotname:
-        runtime["write_dot"](argholder.dotname, dotbuf)
+        runtime.write_dot(argholder.dotname, dotbuf)
     elif argholder.jpgname and argholder.mtg:
         argholder.jpgname = argholder.jpgname.strip()
-        result = runtime["write_img"](argholder, dotbuf, title, notitle, tmpdir, state["gvroot"])
+        result = runtime.write_img(argholder, dotbuf, title, notitle, tmpdir, session.gvroot)
         dotbuf = result["dotbuf"]
         tmpdir = result["tmpdir"]
         notitle = result["notitle"]
-        state["gvroot"] = result["gvroot"]
-        runtime["write_montage"](argholder, state["gvroot"], runtime["send_restart_msg"])
+        session.gvroot = result["gvroot"]
+        runtime.write_montage(argholder, session.gvroot, runtime.send_restart_msg)
         if argholder.sock:
-            runtime["send_restart_msg"](argholder.sock, "pixsock")
+            runtime.send_restart_msg(argholder.sock, "pixsock")
     elif argholder.sock:
-        runtime["send_restart_msg"](argholder.sock, "pixsock")
+        runtime.send_restart_msg(argholder.sock, "pixsock")
     else:
-        result = runtime["write_img"](argholder, dotbuf, title, notitle, tmpdir, state["gvroot"])
+        result = runtime.write_img(argholder, dotbuf, title, notitle, tmpdir, session.gvroot)
         dotbuf = result["dotbuf"]
         tmpdir = result["tmpdir"]
         notitle = result["notitle"]
-        state["gvroot"] = result["gvroot"]
+        session.gvroot = result["gvroot"]
 
-    return {
-        "dotbuf": dotbuf,
-        "title": title,
-        "notitle": notitle,
-        "bgcolor": bgcolor,
-        "tmpdir": tmpdir,
-        "gvroot": state["gvroot"],
-    }
+    session.dotbuf = dotbuf
+    session.title = title
+    session.notitle = notitle
+    session.bgcolor = bgcolor
+    session.tmpdir = tmpdir
+    return session
