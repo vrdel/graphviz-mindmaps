@@ -23,6 +23,12 @@ from graphviz_mindmaps.constants import (
     subgraphcolors,
     vrbtcolors,
 )
+from graphviz_mindmaps.model.graph import (
+    AppendNodeEdge,
+    BuildNodeRefs,
+    EmitTreeNodes,
+    FinalizeEdges,
+)
 from graphviz_mindmaps.model.styles import NodePrepState
 from graphviz_mindmaps.parser.attributes import (
     ApplyNodeAttributeTokens,
@@ -711,10 +717,7 @@ def GenDot(lines, argholder, parser):
 
             state = NodePrepState(ntype=ntype)
 
-            fromnode = rootnodename
-            for i in range(0, level - 1):
-                fromnode += "%s" % ("{:=02}".format(nodelevel[i] - 1))
-            tonode = fromnode + "%s" % ("{:=02}".format(nodelevel[level - 1]))
+            fromnode, tonode, tabs = BuildNodeRefs(rootnodename, nodelevel, level)
 
             if nextline.find("#") == -1 and state.ntype != "img":
                 nextline = TokenizeNodeAttributeLine(nextline)
@@ -780,21 +783,8 @@ def GenDot(lines, argholder, parser):
             if not ntype:
                 ntype = "def"
 
-            tabs = ""
-            for i in range(0, level + 1):
-                tabs += "\t"
-
             edgeattrs = state.edgeattrs()
-
-            if ntype in edgetype and not edgeattrs:
-                edge.append("%s%s:e -> %s:w[%s];\n" \
-                        % (tabs, fromnode, tonode, edgetype[ntype]))
-            elif edgeattrs:
-                edge.append("%s%s:e -> %s:w[%s];\n" \
-                        % (tabs, fromnode, tonode, edgeattrs))
-            else:
-                edge.append("%s%s:e -> %s:w;\n" \
-                        % (tabs, fromnode, tonode))
+            AppendNodeEdge(edge, tabs, fromnode, tonode, ntype, edgeattrs, edgetype)
 
             parentlist[level] = tree.addchild_rev(tonode, tabs, ntype, labelhtml,\
                     parentlist[level - 1], state.wordcolor, state.linecolor, state.wordfsize, \
@@ -809,31 +799,11 @@ def GenDot(lines, argholder, parser):
             for i in range(level, len(nodelevel) - 1):
                 nodelevel[i] = 1
 
-    for p in tree.postorder():
-        t = p.getype()
-        if p.getype() != "root":
-            if p.is_leaf() is not True:
-                if t in set(["cred", "cgreen", "ccyan", "cblue", "cpink", "cyello", "corang", "cblack", "cgrey"]):
-                    s = p.element().replace("shape=box", "margin=\"0.2,0.3\" shape=box fontsize=\"%s\"" % (fontsize['l']) + "\n")
-                    dotbuf += s
-                else:
-                    s = p.element().replace(nodetype['def'], nodetype['node']) + "\n"
-                    if t not in ["img", "imgil"]:
-                        s = s.replace("shape=box", "shape=box margin=\"0.2,0.2\"")
-                    dotbuf += s
-            else:
-                dotbuf += p.element() + "\n"
+    dotbuf += EmitTreeNodes(tree, nodetype, fontsize)
 
     dotbuf += "\n\n"
 
-    for i in arrlines:
-        i[1].append(arrend[i[0]])
-        edge.append("%s -> %s %s;\n" % (i[1][0], i[1][1], i[2].replace("[", "[ltail=\"%s\" lhead=\"%s\" " % (i[1][0].replace("node", "cluster"), i[1][1].replace("node", "cluster")))))
-
-    i = len(edge) - 1
-    while i >= 0:
-        dotbuf += edge[i]
-        i -= 1
+    dotbuf += "".join(FinalizeEdges(edge, arrlines, arrend))
 
     dotbuf += "\t}\n}"
 
