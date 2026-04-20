@@ -51,6 +51,8 @@ from graphviz_mindmaps.render.label_html import (
     ApplyInlineBacktickBold,
     BuildNodeLabelHtml,
     InsertSymbolRows,
+    PostAttrProcLabel,
+    PreAttrProcLabel,
 )
 
 gvroot = "/home/daniel/my_notes/"
@@ -741,7 +743,7 @@ def GenDot(lines, argholder, parser):
             InsertSymbolRows(labelhtml, state.symblist, state.symbcolor, state.symbsize, fontawesome.symb, fontcolor)
 
             ntype = state.ntype
-            PreAttrProcLabel(labelhtml, ntype)
+            PreAttrProcLabel(labelhtml, ntype, ResolveBaseNodeTypeToken, fontawesome.symb, fontcolor)
 
             if vrbt or draw:
                 wordskip = len(line.split("<BR/>", 1)[0].split()) - 1
@@ -829,65 +831,6 @@ def GenDot(lines, argholder, parser):
 
     else:
         WriteImg(argholder)
-
-
-def PostAttrProcLabel(label, ntype, vrbt, draw, textleft=False):
-    if ntype == "saying":
-        label.insert(0, "<I>")
-        label.insert(len(label), "</I>")
-    if ntype == "check" or ntype == "todo":
-        label.insert(0, "<B>")
-        label.insert(len(label), "</B>")
-    if ntype == "example" or vrbt or draw:
-        for i in range(len(label)):
-            label[i] = label[i].replace("<TD", "<TD ALIGN=\"left\"")
-    if ntype == "term":
-        for i in range(len(label)):
-            if i == 1:
-                label[i] = label[i].replace("<TD", "<TD BGCOLOR=\"#18A828\"")
-            elif i > 1:
-                label[i] = label[i].replace("<TD", "<TD ALIGN=\"left\"")
-    if vrbt or draw:
-        label[1] = "<B><U><FONT>" + label[1]
-        for i, v in enumerate(label):
-            if i >= 1 and "</TD>" in label[i]:
-                label[i] = label[i].replace("</TD>", "</FONT></U></B></TD>")
-                break
-    if ntype == "list" or textleft:
-        for i in range(len(label)):
-            label[i] = label[i].replace("<TD", "<TD ALIGN=\"left\"")
-    if not vrbt and not draw:
-        merged = "".join(label)
-        merged = re.sub(r"<TR><TD(?: ALIGN=\"left\")?>(?:<FONT POINT-SIZE=\"[0-9]+\">)?----(?:&nbsp;)?(?:</FONT>)?</TD></TR>", "<HR/>", merged)
-        merged = re.sub(r"<TR><TD(?: ALIGN=\"left\")?>(?:<FONT POINT-SIZE=\"[0-9]+\">)?---(?:&nbsp;)?(?:</FONT>)?</TD></TR>", "<HR/>", merged)
-        merged = re.sub(r";?&nbsp;----</TD></TR>", "</TD></TR><HR/>", merged)
-        merged = re.sub(r";?&nbsp;---</TD></TR>", "</TD></TR><HR/>", merged)
-        merged = re.sub(r";?&nbsp;<HR/><TR><TD></TD></TR>", "</TD></TR><HR/>", merged)
-        label[:] = [merged]
-
-
-def PreAttrProcLabel(label, ntype):
-    btype = ResolveBaseNodeTypeToken(ntype)
-
-    if btype == "title":
-        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["info-circle"] + "</FONT></TD></TR><TR><TD>")
-    elif btype == "date":
-        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["clock-o"] + "</FONT></TD></TR><TR><TD>")
-    elif btype == "quest":
-        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["question-circle"] + "</FONT></TD></TR><TR><TD>")
-    elif btype == "answer":
-        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["reply"] + "</FONT></TD></TR><TR><TD>")
-    elif btype == "saying":
-        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"15\">" + fontawesome.symb["quote-left"] + "  " + fontawesome.symb["quote-right"] + "</FONT></TD></TR><TR><TD>")
-    elif btype == "impor" or btype == "impog" or btype == "impob":
-        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["warning"] + "</FONT></TD></TR><TR><TD>")
-    elif btype == "todo":
-        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["tasks"] + "</FONT></TD></TR><TR><TD>")
-    elif btype == "term":
-        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"1\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
-        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"15\">" % (fontcolor['k'])+ fontawesome.symb["desktop"] + "</FONT>&nbsp;<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"20\">" % (fontcolor['k']) + fontawesome.symb["terminal"] + "</FONT></TD></TR><TR><TD>")
-    elif btype == "link":
-        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["link"] + "</FONT></TD></TR><TR><TD>")
 
 
 def main():

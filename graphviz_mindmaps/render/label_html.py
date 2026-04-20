@@ -163,3 +163,62 @@ def InsertSymbolRows(labelhtml, symblist, symbcolor, symbsize, symbol_map, fontc
     wasone = labelhtml[1]
     labelhtml[1] = symbols + "</TD></TR><TR><TD>"
     labelhtml.insert(2, wasone)
+
+
+def PostAttrProcLabel(label, ntype, vrbt, draw, textleft=False):
+    if ntype == "saying":
+        label.insert(0, "<I>")
+        label.insert(len(label), "</I>")
+    if ntype == "check" or ntype == "todo":
+        label.insert(0, "<B>")
+        label.insert(len(label), "</B>")
+    if ntype == "example" or vrbt or draw:
+        for index in range(len(label)):
+            label[index] = label[index].replace("<TD", "<TD ALIGN=\"left\"")
+    if ntype == "term":
+        for index in range(len(label)):
+            if index == 1:
+                label[index] = label[index].replace("<TD", "<TD BGCOLOR=\"#18A828\"")
+            elif index > 1:
+                label[index] = label[index].replace("<TD", "<TD ALIGN=\"left\"")
+    if vrbt or draw:
+        label[1] = "<B><U><FONT>" + label[1]
+        for index, _ in enumerate(label):
+            if index >= 1 and "</TD>" in label[index]:
+                label[index] = label[index].replace("</TD>", "</FONT></U></B></TD>")
+                break
+    if ntype == "list" or textleft:
+        for index in range(len(label)):
+            label[index] = label[index].replace("<TD", "<TD ALIGN=\"left\"")
+    if not vrbt and not draw:
+        merged = "".join(label)
+        merged = re.sub(r"<TR><TD(?: ALIGN=\"left\")?>(?:<FONT POINT-SIZE=\"[0-9]+\">)?----(?:&nbsp;)?(?:</FONT>)?</TD></TR>", "<HR/>", merged)
+        merged = re.sub(r"<TR><TD(?: ALIGN=\"left\")?>(?:<FONT POINT-SIZE=\"[0-9]+\">)?---(?:&nbsp;)?(?:</FONT>)?</TD></TR>", "<HR/>", merged)
+        merged = re.sub(r";?&nbsp;----</TD></TR>", "</TD></TR><HR/>", merged)
+        merged = re.sub(r";?&nbsp;---</TD></TR>", "</TD></TR><HR/>", merged)
+        merged = re.sub(r";?&nbsp;<HR/><TR><TD></TD></TR>", "</TD></TR><HR/>", merged)
+        label[:] = [merged]
+
+
+def PreAttrProcLabel(label, ntype, resolve_base_node_type_token, symbol_map, fontcolor):
+    btype = resolve_base_node_type_token(ntype)
+
+    if btype == "title":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + symbol_map["info-circle"] + "</FONT></TD></TR><TR><TD>")
+    elif btype == "date":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + symbol_map["clock-o"] + "</FONT></TD></TR><TR><TD>")
+    elif btype == "quest":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + symbol_map["question-circle"] + "</FONT></TD></TR><TR><TD>")
+    elif btype == "answer":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + symbol_map["reply"] + "</FONT></TD></TR><TR><TD>")
+    elif btype == "saying":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"15\">" + symbol_map["quote-left"] + "  " + symbol_map["quote-right"] + "</FONT></TD></TR><TR><TD>")
+    elif btype == "impor" or btype == "impog" or btype == "impob":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + symbol_map["warning"] + "</FONT></TD></TR><TR><TD>")
+    elif btype == "todo":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + symbol_map["tasks"] + "</FONT></TD></TR><TR><TD>")
+    elif btype == "term":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"1\">" % (fontcolor["k"]) + symbol_map["terminal"] + "</FONT></TD></TR><TR><TD>")
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"15\">" % (fontcolor["k"]) + symbol_map["desktop"] + "</FONT>&nbsp;<FONT FACE=\"FontAwesome\" COLOR=\"%s\" POINT-SIZE=\"20\">" % (fontcolor["k"]) + symbol_map["terminal"] + "</FONT></TD></TR><TR><TD>")
+    elif btype == "link":
+        label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + symbol_map["link"] + "</FONT></TD></TR><TR><TD>")
