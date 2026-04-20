@@ -130,7 +130,8 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
-    repo_root = Path(__file__).resolve().parent
+    # repo_root = Path(__file__).resolve().parent
+    repo_root = Path("/home/daniel/my_work/gvmm/").resolve()
     template_single = repo_root / "templates" / "Single"
     template_montage = repo_root / "templates" / "Montage"
 
