@@ -39,7 +39,13 @@ from graphviz_mindmaps.model.graph import (
     FinalizeEdges,
     Tree,
 )
-from graphviz_mindmaps.model.styles import NodePrepState
+from graphviz_mindmaps.model.styles import (
+    NodePrepState,
+    Skip,
+    SkipPositive,
+    SkipPositiveLineScopedWords,
+    SkipUnscopedWords,
+)
 from graphviz_mindmaps.parser.attributes import (
     ApplyNodeAttributeTokens,
     ParseAttributeLine,
@@ -110,57 +116,6 @@ def WriteMontage(argholder):
     global gvroot
     global montagetitle
     PackageWriteMontage(argholder, gvroot, SendRestartMSG)
-
-
-def Skip(maplist, s=None, lsinw=None):
-    if maplist:
-        seen_lmeta = set()
-        j = 0
-        while j < len(maplist):
-            if lsinw and len(maplist[j]) > 2 and type(maplist[j][2]) == dict:
-                lmeta = maplist[j][2]
-                lmeta_id = id(lmeta)
-                if lmeta_id not in seen_lmeta and lmeta.get('lineskip') is not None:
-                    lmeta['lineskip'] += lsinw
-                    seen_lmeta.add(lmeta_id)
-            if s:
-                maplist[j][0] += s
-            j += 1
-
-def SkipPositive(maplist, s):
-    if not maplist or not s:
-        return
-    j = 0
-    while j < len(maplist):
-        if maplist[j][0] > 0:
-            maplist[j][0] += s
-        j += 1
-
-def SkipUnscopedWords(maplist, s):
-    if not maplist or not s:
-        return
-
-    j = 0
-    while j < len(maplist):
-        lmeta = maplist[j][2] if len(maplist[j]) > 2 else None
-        if not (type(lmeta) == dict and lmeta.get('lineskip') is not None):
-            maplist[j][0] += s
-        j += 1
-
-def SkipPositiveLineScopedWords(maplist, lsinw):
-    if not maplist or not lsinw:
-        return
-
-    seen_lmeta = set()
-    j = 0
-    while j < len(maplist):
-        lmeta = maplist[j][2] if len(maplist[j]) > 2 else None
-        if type(lmeta) == dict and lmeta.get('lineskip') is not None:
-            lmeta_id = id(lmeta)
-            if lmeta_id not in seen_lmeta and lmeta['lineskip'] > 0:
-                lmeta['lineskip'] += lsinw
-                seen_lmeta.add(lmeta_id)
-        j += 1
 
 
 def ParseFnameLine(keyword, line):
