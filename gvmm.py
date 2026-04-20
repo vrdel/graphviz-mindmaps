@@ -1,7 +1,21 @@
 #!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
 
-import sys, re, subprocess, argparse, os, fnmatch, fontawesome, tempfile, unicodedata
+import sys, re, subprocess, argparse, os, fnmatch, fontawesome, tempfile
 import socket, configparser, math
+from graphviz_mindmaps.helpers import (
+    BuildNodeLabelHtml,
+    ExtractMindmapBlocks,
+    GenImgPath,
+    ParseFnameLine as ParseFnameLineDetails,
+    ParseInlineAttrLine,
+    ParseOtlname,
+    ResolveBaseNodeTypeToken,
+    ResolveColorNodeTypeToken,
+    ResolveNodeRenderFlags,
+    ResolveSymbolNames,
+    ResolveVerbatimFillColorToken,
+    TokenizeNodeAttributeLine,
+)
 
 
 MAXDEPTH = 32
@@ -73,83 +87,6 @@ html_equal = "<FONT POINT-SIZE=\"14\" COLOR=\"#155416\">&#9552;</FONT>"
 cfg = os.environ['HOME'] + "/.galapix/galapix.cfg"
 
 
-def ResolveColorNodeTypeToken(token):
-    if token in nodetype:
-        return token
-
-    aliases = {"nodes": "node"}
-    m = re.match(
-        r"^(c(?:green|cyan|blue|pink|red|yello|orang|black|grey)|impor|impog|impob|quest|commen|check|todo|title|node|nodes)(-?[0-9]+)$",
-        token
-    )
-    if not m:
-        return None
-
-    base = m.group(1)
-    if base in aliases:
-        base = aliases[base]
-    if base not in nodetype:
-        return None
-
-    delta = int(m.group(2))
-
-    fm = re.search(r'fillcolor="(#?[0-9A-Fa-f]{6})"', nodetype[base])
-    if not fm:
-        return None
-
-    rgb = fm.group(1).lstrip("#")
-    channels = [int(rgb[0:2], 16), int(rgb[2:4], 16), int(rgb[4:6], 16)]
-    shifted = [min(255, max(0, c + delta)) for c in channels]
-    newfill = "#%02x%02x%02x" % (shifted[0], shifted[1], shifted[2])
-
-    nodetype[token] = nodetype[base].replace(fm.group(1), newfill, 1)
-    return token
-
-def ResolveVerbatimFillColorToken(token):
-    if token in vrbtcolors:
-        return vrbtcolors[token]
-
-    m = re.match(
-        r"^(c(?:green|cyan|blue|pink|red|yello|orang|white))(-?[0-9]+)$",
-        token
-    )
-    if not m:
-        return None
-
-    base = m.group(1)
-    if base not in vrbtcolors:
-        return None
-
-    delta = int(m.group(2))
-    rgb = vrbtcolors[base].lstrip("#")
-    channels = [int(rgb[0:2], 16), int(rgb[2:4], 16), int(rgb[4:6], 16)]
-    shifted = [min(255, max(0, c + delta)) for c in channels]
-    newfill = "#%02x%02x%02x" % (shifted[0], shifted[1], shifted[2])
-
-    vrbtcolors[token] = newfill
-    return newfill
-
-
-def NormalizeVerbatimWhitespace(text):
-    normalized = []
-
-    for ch in text:
-        if ch in ("\t", "\n", "\r", " "):
-            normalized.append(ch)
-        elif ch.isspace() or unicodedata.category(ch) == "Zs":
-            normalized.append(" ")
-        else:
-            normalized.append(ch)
-
-    return "".join(normalized)
-
-def ResolveBaseNodeTypeToken(token):
-    m = re.match(r"^(impor|impog|impob|quest|date|title|link|saying)(-?[0-9]+)$", token)
-    if m:
-        return m.group(1)
-    return token
-
-
 class Tree:
     class Node:
         def __init__(self, nodename, label=[], tabs="", ntype=None, parent=None, wordcolor=[], linecolor=[], wordfsize=[], linefsize=[], wordfstyle=[], linefstyle=[], linedate=[], verbatim=False, draw=False):
@@ -176,7 +113,7 @@ class Tree:
                 if self._ntype == "def":
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["verbatim"], "".join(self._label))
                 else:
-                    fillcolor = ResolveVerbatimFillColorToken(self._ntype)
+                    fillcolor = ResolveVerbatimFillColorToken(self._ntype, vrbtcolors)
                     if not fillcolor:
                         fillcolor = vrbtcolors['def']
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["verbatim"].replace(vrbtcolors['def'], fillcolor), "".join(self._label))
@@ -184,7 +121,7 @@ class Tree:
                 if self._ntype == "def":
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["draw"], "".join(self._label))
                 else:
-                    fillcolor = ResolveVerbatimFillColorToken(self._ntype)
+                    fillcolor = ResolveVerbatimFillColorToken(self._ntype, vrbtcolors)
                     if not fillcolor:
                         fillcolor = vrbtcolors['cwhite']
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (nodetype["draw"].replace(vrbtcolors['cwhite'], fillcolor), "".join(self._label))
@@ -558,70 +495,6 @@ class Tree:
 class ArgHolder(object):
     pass
 
-
-def HtmlCompositeArrow(arrow, htmlcode, i, j, labelhtml):
-    resf = i.find(arrow)
-
-    if resf == -1:
-        return
-
-    if resf == 0 and len(i) == 2:
-        labelhtml[j] = i.replace(arrow, htmlcode)
-    elif resf == 0 and len(i) > 2:
-        splitstr = i.split(arrow, 1)
-        labelhtml[j] = htmlcode
-        labelhtml.insert(j + 1, splitstr[1])
-    elif resf > 0:
-        splitstr = i.split(arrow, 1)
-        labelhtml[j] = splitstr[0] + htmlcode + splitstr[1]
-    return labelhtml[j]
-
-def ApplyInlineBacktickBold(text, allow_linebreak=False):
-    patterns = [
-        r'`([^`]+?)`' if allow_linebreak else r'`([^`;]+?)`',
-        r'\*([^*]+?)\*' if allow_linebreak else r'\*([^*;]+?)\*',
-    ]
-
-    for pattern in patterns:
-        text = re.sub(pattern, r'<B>\1</B>', text)
-    return text
-
-
-def ConvertLinebreakMarkers(text):
-    entities = {}
-
-    def protect_entity(match):
-        key = "__ENTITY_%d__" % len(entities)
-        entities[key] = match.group(0)
-        return key
-
-    protected = re.sub(r"&(?:#?[A-Za-z0-9]+);", protect_entity, text)
-    protected = protected.replace(";", "<BR/>")
-
-    for key, value in entities.items():
-        protected = protected.replace(key, value)
-
-    return protected
-
-def ResolveSymbolNames(spec):
-    aliases = {
-        "info": "info-circle",
-        "quest": "question-circle",
-        "warn": "warning",
-    }
-
-    resolved = []
-    for name in spec.split(':'):
-        name = name.strip()
-        if not name:
-            continue
-        if name in fontawesome.symb:
-            resolved.append(name)
-            continue
-        if name in aliases and aliases[name] in fontawesome.symb:
-            resolved.append(aliases[name])
-    return resolved
-
 def WriteDot(DotFile):
     outputfile = open(DotFile, 'w')
     outputfile.write(dotbuf)
@@ -963,57 +836,12 @@ def ParseAttributeLine(k, tonode, *args):
         elif m.group(6): edglabel.append("label=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"").replace(';', '<BR/>')))
 
 
-def ParseOtlname(keyword, line):
-    m = re.search("(%s[ ]*=[ ]*)(\".*\")[ ]*" % (keyword), line)
-    if m is None:
-        m = re.search(r"(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*" % (keyword), line)
-
-    return m.group(2)
-
 def ParseFnameLine(keyword, line):
     global notitle
-
-    m = re.search("(%s[ ]*=[ ]*)(\".*\")[ ]*(notitle)?" % (keyword), line)
-    if m is None:
-        m = re.search(r"(%s[ ]*=[ ]*)([\w/.\-~_]*)[ ]*(notitle)?" % (keyword), line)
-        if m.group(3):
-            notitle = True
-    else:
-        if m.group(3):
-            notitle = True
-
-    return m.group(2)
-
-def ParseInlineAttrLine(keyword, line):
-    m = re.search(r"%s[ ]*=[ ]*(\"[^\"]*\"|'[^']*'|[^\s]+)" % (keyword), line)
-    if not m:
-        return None
-    return m.group(1).strip().strip("\"'")
-
-
-def JoinSepKeyValue(key, line):
-    mi = None
-    for (i, s) in enumerate(line):
-        if key in s: mi = i
-    if mi:
-        i = int(mi)
-        jnl = " ".join(line[i:])
-        if re.match("%s = " %(key), jnl):
-            line[i] = line[i] + line[i + 1] + line[i + 2]
-            del(line[i + 1])
-            del(line[i + 1])
-        elif re.match("(%s =)|(%s= )" % (key, key), jnl):
-            line[i] = line[i] + line[i + 1]
-            del(line[i + 1])
-
-def GenImgPath(imgpath):
-    if imgpath.startswith('/'):
-        imgpath = imgpath
-    elif imgpath.startswith('~'):
-        imgpath = imgpath.replace('~', os.environ['HOME'])
-    else:
-        imgpath = os.environ['PWD'] + '/' + imgpath
-    return imgpath
+    fname, should_hide_title = ParseFnameLineDetails(keyword, line)
+    if should_hide_title:
+        notitle = True
+    return fname
 
 def GenDot(lines, argholder, parser):
     tree = Tree()
@@ -1076,103 +904,21 @@ def GenDot(lines, argholder, parser):
             label = m.group(2)
 
             ntype = ""
-            vrbt = False
-            draw = False
+            vrbt, draw, textleft = ResolveNodeRenderFlags(nextline)
 
-            if "verbatim" in nextline or "verbat" in nextline:
-                vrbt = True
-
-            if "draw" in nextline:
-                draw = True
-
-            if "textleft" in nextline:
-                textleft = True
-            else:
-                textleft = False
-
-            if not vrbt and not draw and ("`" in label or "*" in label):
-                label = ApplyInlineBacktickBold(label)
-
-            if re.match("img[ ]*=", label):
-                m = re.match("(img)(?:[  ]*=[  ]*)(.*)", label)
-                if m:
-                    splittedstr = [m.group(1), m.group(2)]
-                    if splittedstr[0] == "img":
-                        labelhtml = ["<TABLE BORDER=\"0\" CELLBORDER=\"0\"><TR><TD CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" + GenImgPath(splittedstr[1].strip()) + "\"/></TD></TR></TABLE>"]
-                        ntype = "img"
-            else:
-                labelhtml = label.split()
-                j = 0
-                for i in labelhtml:
-                    if not vrbt and not draw and i.find(";") > 0:
-                        labelhtml[j] = ConvertLinebreakMarkers(i)
-
-                    r = i.find(">")
-                    if r == 0 and len(i) == 1:
-                        labelhtml[j] = i.replace(">", "&gt;")
-
-                    r = i.find("<")
-                    if r == 0 and len(i) == 1:
-                        labelhtml[j] = i.replace("<", "&lt;")
-
-                    if not vrbt and not draw:
-                        HtmlCompositeArrow("<=", html_larrow1, i, j, labelhtml)
-                        HtmlCompositeArrow("=>", html_rarrow1, i, j, labelhtml)
-
-                        HtmlCompositeArrow("->", html_rarrow2, i, j, labelhtml)
-                        HtmlCompositeArrow("<-", html_larrow2, i, j, labelhtml)
-                    else:
-                        HtmlCompositeArrow("<=", "&lt;&#9552;", i, j, labelhtml)
-                        HtmlCompositeArrow("=>", "&#9552;&gt;", i, j, labelhtml)
-
-                        #HtmlCompositeArrow("->", "&#8722;&gt;", i, j, labelhtml)
-                        #HtmlCompositeArrow("<-", "&lt;&#8772;", i, j, labelhtml)
-
-                        if '<-' in labelhtml[j]:
-                            labelhtml[j] = re.sub("<-", "&lt;-", labelhtml[j])
-
-                        if '->' in labelhtml[j]:
-                            labelhtml[j] = re.sub("->", "-&gt;", labelhtml[j])
-
-                        #if '<' in labelhtml[j]:
-                        #    labelhtml[j] = re.sub("<", "&lt;", labelhtml[j])
-
-                        #if '>' in labelhtml[j]:
-                        #    labelhtml[j] = re.sub(">", "&gt;", labelhtml[j])
-
-                        if "><<" in labelhtml[j] or ">><" in labelhtml[j]:
-                            labelhtml[j] = re.sub("(?<=WHITESP>)<(<WHITESP>)", \
-                                "&lt;<WHITESP>", labelhtml[j])
-                            labelhtml[j] = re.sub("(?<=WHITESP>)>(<WHITESP>)", \
-                                "&gt;<WHITESP>", labelhtml[j])
-
-                    j += 1
-
-            if ntype != "img":
-                labelhtml.insert(0, "<TABLE CELLBORDER=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>")
-                i = 1
-                try:
-                    while i < len(labelhtml):
-                        if "<TAB>" in labelhtml[i]:
-                            labelhtml[i] = labelhtml[i].replace("<TAB>", "&emsp;&emsp;")
-                        if "<WHITESP>" in labelhtml[i]:
-                            front = re.search("(<WHITESP>)*", labelhtml[i]).group(0)
-                            rem = re.split("^(<WHITESP>)*", labelhtml[i])[2]
-                            tl = rem.split("<WHITESP>")
-                            del(labelhtml[i])
-                            for el in reversed(tl):
-                                if el: labelhtml.insert(i, el)
-                                else: labelhtml[i] = " " + labelhtml[i]
-                            labelhtml[i] =  " " * front.count("<WHITESP") + labelhtml[i]
-                        if "<BR/>" in labelhtml[i]:
-                            labelhtml[i] = labelhtml[i].replace("<BR/>", "</TD></TR><TR><TD>")
-                        elif "<BR/>" not in labelhtml[i]:
-                            labelhtml.insert(i + 1, "&nbsp;")
-                            i += 1
-                        i += 1
-                    labelhtml.insert(len(labelhtml), "</TD></TR></TABLE>")
-                except (IndexError, KeyError) as e:
-                    print(e, labelhtml[i])
+            try:
+                labelhtml, ntype, label = BuildNodeLabelHtml(
+                    label,
+                    vrbt,
+                    draw,
+                    html_larrow1,
+                    html_rarrow1,
+                    html_larrow2,
+                    html_rarrow2,
+                    GenImgPath,
+                )
+            except (IndexError, KeyError) as e:
+                print(e, label)
 
             wordcolor, wordfsize, wordfstyle = [], [], []
             linecolor, linefsize, linefstyle = [], [], []
@@ -1187,30 +933,12 @@ def GenDot(lines, argholder, parser):
             tonode = fromnode + "%s" % ("{:=02}".format(nodelevel[level - 1]))
 
             if nextline.find("#") == -1 and ntype != "img":
-                nextline = nextline.split()
-                spacesg = [[nextline[x], x] for x in range(len(nextline)) \
-                        if nextline[x].count("\"") == 1 or nextline[x].count("\'") == 1]
-
-                lens = len(spacesg)
-                for i in range(0, lens, 2):
-                    if (spacesg[i + 1][1] - spacesg[i][1]) >= 2:
-                        spacesg[i][0] = spacesg[i][0] + " " + \
-                                " ".join(nextline[spacesg[i][1] + 1 : spacesg[i + 1][1]])
-
-                j = 0
-                for i in range(0, lens, 2):
-                    del(nextline[spacesg[i][1] - j : spacesg[i + 1][1] + 1 - j])
-                    j += spacesg[i + 1][1] - spacesg[i][1] + 1
-
-                nextline += [spacesg[i][0] + " " + spacesg[i + 1][0] for i in range(0, lens, 2)]
-
-                JoinSepKeyValue("img", nextline)
-                JoinSepKeyValue("symb", nextline)
+                nextline = TokenizeNodeAttributeLine(nextline)
 
                 for k in nextline:
                     if k == "textleft":
                         continue
-                    resolved_ntype = ResolveColorNodeTypeToken(k)
+                    resolved_ntype = ResolveColorNodeTypeToken(k, nodetype)
                     if resolved_ntype and resolved_ntype not in set(["verbatim", "verbat", "draw"]):
                         ntype = resolved_ntype
                     else:
@@ -1229,7 +957,7 @@ def GenDot(lines, argholder, parser):
                             labelhtml.insert(len(labelhtml) - 1, "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\"" + GenImgPath(tokval[1].strip()) + "\"/>")
                             ntype = "imgil"
                         elif tokval[0] == "symb" and ntype != "imgil":
-                            symblist = ResolveSymbolNames(tokval[1])
+                            symblist = ResolveSymbolNames(tokval[1], fontawesome.symb)
                         elif tokval[0] == "dood":
                             doodlist = tokval[1].split(':')
                             if len(doodlist) > 1:
@@ -1457,23 +1185,10 @@ def PreAttrProcLabel(label, ntype):
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + fontawesome.symb["link"] + "</FONT></TD></TR><TR><TD>")
 
 
-def ParLoc(line):
-    parloc = line.find("#")
-    if parloc == -1:
-        parloc = line.find(":")
-    if parloc == -1:
-        parloc = line.find(";")
-    if parloc == -1:
-        parloc = line.find("|")
-    return parloc
-
-
 def main():
     argholder = ArgHolder()
 
-    j, level, tabroot = 0, 0, 0
-    title = None
-    linesbymm, linesall = [], []
+    linesall = []
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', dest='sock', nargs='+')
@@ -1494,67 +1209,7 @@ def main():
     else:
         linesall = sys.stdin.read().splitlines()
 
-    j = 0
-    while j < len(linesall) - 1:
-        nextline = linesall[j + 1]
-        level = linesall[j][:ParLoc(linesall[j])].count("\t")
-
-        if re.search(r"\t(:|;|\|)\s*fname", nextline):
-            title = linesall[j]
-            tabroot = level
-            level += 1
-
-            i = j + 2
-            while i < len(linesall) - 1 and level > tabroot:
-                level = linesall[i][:ParLoc(linesall[i])].count("\t")
-                if "# " in linesall[i] and level > tabroot:
-                    linesbymm.append(linesall[i])
-                    if "# " not in linesall[i + 1] and level > tabroot:
-                        linesbymm.append(linesall[i + 1])
-                        if "verbatim" in linesall[i + 1] or\
-                            "verbat" in linesall[i + 1] or\
-                            "draw" in linesall[i + 1]:
-                            j = i + 2
-                            v = []
-                            while j < len(linesall) and '# ' not in linesall[j] \
-                                    and not re.search(r"\t\s*[a-zA-Z0-9]\s*", linesall[j]):
-                                if "\t:" in linesall[j]:
-                                    v.append(linesall[j].lstrip("\t:").rstrip())
-                                elif "\t|" in linesall[j]:
-                                    v.append(linesall[j].lstrip("\t|").rstrip())
-                                elif "\t;" in linesall[j]:
-                                    v.append(linesall[j].lstrip("\t;").rstrip())
-                                v[-1] = NormalizeVerbatimWhitespace(v[-1])
-                                v[-1] = v[-1].replace("&", "&amp;")
-                                v[-1] = v[-1].replace("<", "&lt;")
-                                v[-1] = v[-1].replace(">", "&gt;")
-                                if "`" in v[-1] or "*" in v[-1]:
-                                    v[-1] = ApplyInlineBacktickBold(v[-1], allow_linebreak=True)
-                                v[-1] = v[-1].replace(" ", "<WHITESP>")
-                                v[-1] = v[-1].replace("\t", "<TAB>")
-                                v[-1] = v[-1] + "<BR/> "
-                                j += 1
-                            else:
-                                vrbtnode = "".join(v)
-                                vrbtnode = vrbtnode.strip("<BR/>")
-                                vrbtnode = linesall[i] + "<BR/>" + vrbtnode
-                                linesbymm[-2] = vrbtnode
-                    elif "# " in linesall[i + 1] and linesall[i + 1][:ParLoc(linesall[i + 1])].count("\t") == level:
-                        j = i + 1
-                        while level * "\t" + "# " in linesall[j]:
-                            linesbymm[-1] = linesbymm[-1].rstrip() + linesall[j].replace("#", ";").strip()
-                            del(linesall[j])
-                        else:
-                            if "# " not in linesall[j]:
-                                linesbymm.append(linesall[j])
-                i += 1
-            else:
-                j = i - 2
-                linesbymm.insert(0, title)
-                linesbymm.insert(1, nextline)
-                GenDot(linesbymm, argholder, parser)
-                linesbymm = []
-
-        j += 1
+    for linesbymm in ExtractMindmapBlocks(linesall):
+        GenDot(linesbymm, argholder, parser)
 
 main()
