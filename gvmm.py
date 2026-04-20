@@ -2,19 +2,24 @@
 
 import sys, re, subprocess, argparse, os, fnmatch, fontawesome, tempfile
 import socket, configparser, math
-from graphviz_mindmaps.helpers import (
-    BuildNodeLabelHtml,
+from graphviz_mindmaps.parser.attributes import (
+    ResolveBaseNodeTypeToken,
+    ResolveColorNodeTypeToken,
+    ResolveSymbolNames,
+    ResolveVerbatimFillColorToken,
+)
+from graphviz_mindmaps.parser.outline import (
     ExtractMindmapBlocks,
     GenImgPath,
     ParseFnameLine as ParseFnameLineDetails,
     ParseInlineAttrLine,
     ParseOtlname,
-    ResolveBaseNodeTypeToken,
-    ResolveColorNodeTypeToken,
     ResolveNodeRenderFlags,
-    ResolveSymbolNames,
-    ResolveVerbatimFillColorToken,
     TokenizeNodeAttributeLine,
+)
+from graphviz_mindmaps.render.label_html import (
+    ApplyInlineBacktickBold,
+    BuildNodeLabelHtml,
 )
 
 
@@ -1209,7 +1214,7 @@ def main():
     else:
         linesall = sys.stdin.read().splitlines()
 
-    for linesbymm in ExtractMindmapBlocks(linesall):
+    for linesbymm in ExtractMindmapBlocks(linesall, ApplyInlineBacktickBold):
         GenDot(linesbymm, argholder, parser)
 
 main()
