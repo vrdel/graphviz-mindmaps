@@ -14,10 +14,4 @@ class RenderSession:
 @dataclass
 class RenderRuntime:
     fontawesome_symb: dict
-    tempfile_module: object
-    subprocess_module: object
-    parse_fname_line: object
-    write_dot: object
-    write_img: object
-    write_montage: object
     send_restart_msg: object

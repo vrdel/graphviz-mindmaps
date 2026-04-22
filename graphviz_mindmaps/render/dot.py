@@ -1,4 +1,6 @@
 import re
+import subprocess
+import tempfile
 
 from graphviz_mindmaps.constants import (
     DEFAULT_BGCOLOR,
@@ -14,6 +16,8 @@ from graphviz_mindmaps.constants import (
     nodetype,
     vrbtcolors,
 )
+from graphviz_mindmaps.execute.image import WriteDot, WriteImg
+from graphviz_mindmaps.execute.montage import WriteMontage
 from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
 from graphviz_mindmaps.model.graph import (
     AppendNodeEdge,
@@ -37,6 +41,7 @@ from graphviz_mindmaps.parser.attributes import (
 )
 from graphviz_mindmaps.parser.outline import (
     GenImgPath,
+    ParseFnameLine,
     ParseInlineAttrLine,
     ParseOtlname,
     ResolveNodeRenderFlags,
@@ -104,7 +109,11 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
     for line in lines[1:]:
         if re.search(r"\t(:|\|)\s*fname", line):
-            jpgname = runtime.parse_fname_line("fname", line).strip()
+            jpgname, should_hide_title = ParseFnameLine("fname", line)
+            jpgname = jpgname.strip()
+            if should_hide_title:
+                session.notitle = True
+                notitle = True
             if re.search("otlname", line):
                 title = ParseOtlname("otlname", line) + "  -  " + title
 
@@ -153,8 +162,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     GenImgPath,
                     runtime.fontawesome_symb,
                     tmpdir,
-                    runtime.tempfile_module,
-                    runtime.subprocess_module,
+                    tempfile,
+                    subprocess,
                     bgcolor,
                 )
 
@@ -245,21 +254,21 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
         argholder.jpgname = jpgname
 
     if argholder.dotname:
-        runtime.write_dot(argholder.dotname, dotbuf)
+        WriteDot(dotbuf, argholder.dotname)
     elif argholder.jpgname and argholder.mtg:
         argholder.jpgname = argholder.jpgname.strip()
-        result = runtime.write_img(argholder, dotbuf, title, notitle, tmpdir, session.gvroot)
+        result = WriteImg(dotbuf, argholder, session.gvroot, title, notitle, tmpdir)
         dotbuf = result["dotbuf"]
         tmpdir = result["tmpdir"]
         notitle = result["notitle"]
         session.gvroot = result["gvroot"]
-        runtime.write_montage(argholder, session.gvroot, runtime.send_restart_msg)
+        WriteMontage(argholder, session.gvroot, runtime.send_restart_msg)
         if argholder.sock:
             runtime.send_restart_msg(argholder.sock, "pixsock")
     elif argholder.sock:
         runtime.send_restart_msg(argholder.sock, "pixsock")
     else:
-        result = runtime.write_img(argholder, dotbuf, title, notitle, tmpdir, session.gvroot)
+        result = WriteImg(dotbuf, argholder, session.gvroot, title, notitle, tmpdir)
         dotbuf = result["dotbuf"]
         tmpdir = result["tmpdir"]
         notitle = result["notitle"]

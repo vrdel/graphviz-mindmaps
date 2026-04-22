@@ -2,18 +2,14 @@
 
 import argparse
 import os
-import subprocess
 import sys
-import tempfile
 
 import fontawesome
 
 from graphviz_mindmaps.constants import DEFAULT_BGCOLOR
-from graphviz_mindmaps.execute.image import WriteDot, WriteImg
-from graphviz_mindmaps.execute.montage import WriteMontage
 from graphviz_mindmaps.execute.restart import SendRestartMSG
 from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
-from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks, ParseFnameLine
+from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
 from graphviz_mindmaps.render.dot import GenDot
 from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
 
@@ -44,34 +40,11 @@ def read_input_lines(files):
 
 
 def build_runtime(session, cfg):
-    def parse_fname_line(keyword, line):
-        fname, should_hide_title = ParseFnameLine(keyword, line)
-        if should_hide_title:
-            session.notitle = True
-        return fname
-
-    def write_img(argholder, current_dotbuf, current_title, current_notitle, current_tmpdir, current_gvroot):
-        result = WriteImg(current_dotbuf, argholder, current_gvroot, current_title, current_notitle, current_tmpdir)
-        session.gvroot = result["gvroot"]
-        session.dotbuf = result["dotbuf"]
-        session.tmpdir = result["tmpdir"]
-        session.notitle = result["notitle"]
-        return result
-
-    def write_montage(argholder, current_gvroot, send_restart):
-        return WriteMontage(argholder, current_gvroot, send_restart)
-
     def send_restart_msg(sockwildcard, sockcfg=None):
         return SendRestartMSG(cfg, sockwildcard, sockcfg)
 
     return RenderRuntime(
         fontawesome_symb=fontawesome.symb,
-        tempfile_module=tempfile,
-        subprocess_module=subprocess,
-        parse_fname_line=parse_fname_line,
-        write_dot=lambda dotfile, current_dotbuf: WriteDot(current_dotbuf, dotfile),
-        write_img=write_img,
-        write_montage=write_montage,
         send_restart_msg=send_restart_msg,
     )
 
