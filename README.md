@@ -2,6 +2,11 @@
 
 Graphviz-based mindmap renderer and related image/montage tooling.
 
+## License
+
+Licensed under the Apache License, Version 2.0.
+See [LICENSE](/home/daniel/my_work/graphviz-mindmaps/LICENSE).
+
 ## Python Dependency
 
 The wheel declares this Python package dependency:
