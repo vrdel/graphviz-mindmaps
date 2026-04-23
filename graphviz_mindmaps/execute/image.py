@@ -48,7 +48,7 @@ def WriteImg(dotbuf, argholder, gvroot, title, notitle, tmpdir):
     )
 
     if not notitle:
-        subprocess.call("montit.py -s s -t '%s' '%s'" % (title, gvroot + argholder.jpgname), shell=True)
+        subprocess.call("montit -s s -t '%s' '%s'" % (title, gvroot + argholder.jpgname), shell=True)
 
     if argholder.scale:
         ScaleImg(argholder, gvroot)

@@ -246,7 +246,7 @@ def CreateMontage(filename, title, size, limg):
     m.join()
 
     if title:
-        subprocess.call("montit.py -s '%s' -t '%s' '%s'" % (size, title, filename), shell = True)
+        subprocess.call("montit -s '%s' -t '%s' '%s'" % (size, title, filename), shell = True)
 
     if argholder.scale and not mini:
         cmd = "gm convert -scale %s%% '%s' '%s'" % (argholder.scale, filename, filename)

@@ -27,7 +27,7 @@ def WriteMontage(argholder, gvroot, send_restart_msg):
         raise SystemExit(1)
 
     if cmfile:
-        subprocess.call(["montage.py", cmfile])
+        subprocess.call(["montage", cmfile])
         send_restart_msg("rsync call", "inotsock")
     else:
         print("%s not found in any %s/*.cm" % (imgarg[2], gvroot + "/".join(imgarg[0:2])))
