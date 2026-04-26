@@ -67,8 +67,7 @@ def WriteImg(dotbuf, argholder, gvroot, title, notitle, tmpdir):
 
     next_dotbuf = ""
     next_notitle = False
-    if not argholder.mtg:
-        argholder.jpgname = None
+    argholder.jpgname = None
 
     return {
         "gvroot": gvroot,

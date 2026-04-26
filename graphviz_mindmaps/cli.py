@@ -18,7 +18,6 @@ def build_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", dest="sock", nargs="+")
     parser.add_argument("-f", dest="files", nargs="+", help="mindmap outliner files")
-    parser.add_argument("-m", "--mtg", action="store_true", help="build montage with montage.py")
     parser.add_argument("-p", dest="preview", action="store_true", help="preview with galaview.sh")
     parser.add_argument("-s", dest="scale", nargs="?", const="specified", help="scale image for specified percentage")
     group = parser.add_mutually_exclusive_group()

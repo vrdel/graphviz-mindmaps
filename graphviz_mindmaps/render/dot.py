@@ -17,7 +17,6 @@ from graphviz_mindmaps.constants import (
     vrbtcolors,
 )
 from graphviz_mindmaps.execute.image import WriteDot, WriteImg
-from graphviz_mindmaps.execute.montage import WriteMontage
 from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
 from graphviz_mindmaps.model.graph import (
     AppendNodeEdge,
@@ -255,16 +254,6 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
     if argholder.dotname:
         WriteDot(dotbuf, argholder.dotname)
-    elif argholder.jpgname and argholder.mtg:
-        argholder.jpgname = argholder.jpgname.strip()
-        result = WriteImg(dotbuf, argholder, session.gvroot, title, notitle, tmpdir)
-        dotbuf = result["dotbuf"]
-        tmpdir = result["tmpdir"]
-        notitle = result["notitle"]
-        session.gvroot = result["gvroot"]
-        WriteMontage(argholder, session.gvroot, runtime.send_restart_msg)
-        if argholder.sock:
-            runtime.send_restart_msg(argholder.sock, "pixsock")
     elif argholder.sock:
         runtime.send_restart_msg(argholder.sock, "pixsock")
     else:
