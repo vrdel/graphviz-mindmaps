@@ -4,10 +4,9 @@ import argparse
 import os
 import sys
 
-import fontawesome
-
 from graphviz_mindmaps.constants import DEFAULT_BGCOLOR
 from graphviz_mindmaps.execute.restart import SendRestartMSG
+from graphviz_mindmaps import fontawesome
 from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
 from graphviz_mindmaps.render.dot import GenDot

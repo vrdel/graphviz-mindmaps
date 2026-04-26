@@ -1,5 +1,3 @@
-#!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
-
 import os, sys, argparse, subprocess, math
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
@@ -118,4 +116,5 @@ def main():
     elif argholder.ImgTitle != "NoSpec":
         TitleImg(argholder)
 
-main()
+if __name__ == "__main__":
+    main()

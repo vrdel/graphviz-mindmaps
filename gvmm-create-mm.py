@@ -55,7 +55,7 @@ def print_single_makefile_hint(otl_mindmap: str) -> None:
     print(f"mm1 = {otl_mindmap}")
     print("$(mm1): step-$(mm1) step-$(montage1)")
     print("step-$(mm1):")
-    print("\tgvmm.py -f $(mm1) > /dev/null")
+    print("\tgvmm -f $(mm1) > /dev/null")
     print(".PHONY: $(mm1)...")
     print("\nAdd to existing montage (.gmm)")
     print("----")

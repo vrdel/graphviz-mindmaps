@@ -1,5 +1,3 @@
-#!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
-
 import sys, os, subprocess, multiprocessing
 import shutil, tempfile, re, fnmatch
 import argparse

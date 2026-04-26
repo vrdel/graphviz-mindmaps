@@ -1,5 +1,3 @@
-#!/home/daniel/.pyenv/versions/gvmm-py3/bin/python3
-
 from __future__ import annotations
 
 import argparse

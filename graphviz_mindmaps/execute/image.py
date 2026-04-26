@@ -5,7 +5,7 @@ import sys
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
-MONTIT_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "montit.py")
+MONTIT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tools", "montit.py")
 
 
 def WriteDot(dotbuf, dotfile):

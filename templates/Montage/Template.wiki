@@ -215,7 +215,7 @@ auto {
 == montage - image ==
 
 {{{
-montage.py montage.cm
+montage montage.cm
 }}}
 
 {{{

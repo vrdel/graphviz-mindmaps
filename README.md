@@ -1,15 +1,16 @@
 # graphviz-mindmaps
 
-Graphviz-based mindmap renderer and related image/montage tooling.
+Graphviz-based mindmap rendering with helper tools for image titling and montage generation.
 
-## License
+The repo currently provides three user-facing command-line tools:
 
-Licensed under the Apache License, Version 2.0.
-See [LICENSE](/home/daniel/my_work/graphviz-mindmaps/LICENSE).
+- `gvmm` renders `.otl` outline files into images or `.dot` output
+- `montage` builds image montages from `.gmm` specs
+- `montit` adds a title bar to an image
 
-## Python Dependency
+## Install
 
-The wheel declares this Python package dependency:
+The Python package depends on:
 
 - `Pillow`
 
@@ -19,43 +20,77 @@ Install with:
 python3 -m pip install .
 ```
 
-## External Runtime Requirements
+## Runtime Requirements
 
-The project also shells out to external tools which are not Python packages and are therefore not installed by `pip`.
+Some required tools are external executables and are not installed by `pip`.
 
-Required at runtime:
+Required:
 
 - `dot` from Graphviz
 - `gm` from GraphicsMagick
-- `montage`
-- `montit`
 
-Used in some flows:
+Used in some workflows:
 
 - `galaview.sh`
 - `FvwmCommand`
 - `make`
 
-## Wheel Entrypoints
+## Entrypoints
 
-The packaged wheel currently exposes:
+The wheel exposes these console scripts:
 
 - `gvmm`
 - `montage`
 - `montit`
 
-## Local Helper
-
 The repo also contains a local helper script:
 
-- [gvmm-exe.py](/home/daniel/my_work/graphviz-mindmaps/gvmm-exe.py)
+- [gvmm-exe.py](/home/daniel/my_work/git.graphviz-mindmaps/graphviz-mindmaps/gvmm-exe.py)
 
-It runs an arbitrary command inside the configured `pyenv` virtualenv, defaulting to `graphviz-mindmap`.
+`gvmm-exe.py` runs one of the installed tools inside a selected `pyenv` virtualenv and defaults to `graphviz-mindmap`.
 
-Examples:
+## Usage
+
+Render one or more outline files with `gvmm`:
+
+```bash
+gvmm -f notes.otl
+gvmm -f notes-1.otl notes-2.otl
+gvmm -f notes.otl -i output.jpg
+gvmm -f notes.otl -d output.dot
+gvmm -f notes.otl -s 80
+```
+
+Build a montage from a `.gmm` file:
+
+```bash
+montage montage.gmm
+montage -o output.jpg montage.gmm
+montage -s 80 -b '#4b5262' montage.gmm
+```
+
+Add a title bar to an image:
+
+```bash
+montit -s s -t "Title" image.jpg
+montit -s m -t "Title" input.jpg output.jpg
+```
+
+Run the same tools through the local `pyenv` helper:
 
 ```bash
 ./gvmm-exe.py gvmm -f notes.otl
-./gvmm-exe.py montage list.txt
-./gvmm-exe.py montit -s s -t title image.jpg
+./gvmm-exe.py montage montage.gmm
+./gvmm-exe.py montit -s s -t "Title" image.jpg
 ```
+
+## Notes
+
+- `gvmm` can read outline input from files via `-f` or from standard input.
+- `montage` reads the legacy `.gmm` montage format used in this repository.
+- `montit` is intended to title raw images; the current montage flow titles raw intermediate outputs before writing the final destination.
+
+## License
+
+Licensed under the Apache License, Version 2.0.
+See [LICENSE](/home/daniel/my_work/git.graphviz-mindmaps/graphviz-mindmaps/LICENSE).

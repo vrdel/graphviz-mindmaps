@@ -2,7 +2,7 @@ mm1 = mindmap-01.otl
 wiki1 = Template.wiki
 
 step-$(mm1):
-	gvmm.py -s 60 -f $(mm1) > /dev/null
+	gvmm -s 60 -f $(mm1) > /dev/null
 	vim -c ':Vimwiki2HTML' -c ':wq' '$(wiki1)' > /dev/null
 	galacomm.py -r my_whiteboard > /dev/null || galaview.sh `basename $(mm1) .otl`.[jp]* &
 

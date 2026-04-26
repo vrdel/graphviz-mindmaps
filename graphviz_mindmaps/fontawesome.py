@@ -1,5 +1,3 @@
-#!/home/daniel/.pyenv/versions/gvmm/bin/python
-
 if __name__ != "__main__":
 	symb = {"smile" : "&#9787;",
 			"glass" :  "&#xf000;",
