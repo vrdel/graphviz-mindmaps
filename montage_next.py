@@ -418,7 +418,10 @@ class MontageRenderer:
             run_command(cmd)
 
         if title:
-            run_command([str(self.tool_dir / "montit.py"), "-s", size, "-t", title, str(output_path)])
+            raw_output = self.temp_root / f"raw-{next(tempfile._get_candidate_names())}.jpg"
+            copy_output(output_path, raw_output)
+            run_command([str(self.tool_dir / "montit.py"), "-s", size, "-t", title, str(raw_output), str(output_path)])
+            self.intermediate_outputs.append(raw_output)
 
         if self.scale and not nested:
             run_command(["gm", "convert", "-scale", f"{self.scale}%", str(output_path), str(output_path)])

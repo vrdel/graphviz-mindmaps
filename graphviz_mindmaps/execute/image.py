@@ -1,5 +1,11 @@
 import os
 import subprocess
+import sys
+
+from PIL import Image
+
+Image.MAX_IMAGE_PIXELS = None
+MONTIT_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "montit.py")
 
 
 def WriteDot(dotbuf, dotfile):
@@ -8,13 +14,26 @@ def WriteDot(dotbuf, dotfile):
     outputfile.close()
 
 
+def ResizeByPercent(path, scale_percent):
+    with Image.open(path) as image:
+        width = max(1, round(image.width * scale_percent / 100))
+        height = max(1, round(image.height * scale_percent / 100))
+        resized = image.resize((width, height), Image.Resampling.LANCZOS)
+        resized.save(path)
+
+
+def ShaveImage(path, shave_x=2, shave_y=2):
+    with Image.open(path) as image:
+        left = min(shave_x, image.width // 2)
+        top = min(shave_y, image.height // 2)
+        right = max(left + 1, image.width - left)
+        bottom = max(top + 1, image.height - top)
+        shaved = image.crop((left, top, right, bottom))
+        shaved.save(path)
+
+
 def ScaleImg(argholder, gvroot):
-    cmd = "gm convert -scale %s%% '%s' '%s'" % (
-        argholder.scale,
-        gvroot + argholder.jpgname,
-        gvroot + argholder.jpgname,
-    )
-    subprocess.call(cmd, shell=True)
+    ResizeByPercent(gvroot + argholder.jpgname, int(argholder.scale))
 
 
 def ResolveOutputRoot(gvroot, jpgname, environ=None):
@@ -42,13 +61,12 @@ def WriteImg(dotbuf, argholder, gvroot, title, notitle, tmpdir):
     proc = subprocess.Popen(["dot", "-Tjpg", "-o", gvroot + argholder.jpgname], stdin=subprocess.PIPE)
     proc.communicate(dotbuf.encode())
 
-    subprocess.call(
-        "gm convert -shave 2x2 '%s' '%s'" % (gvroot + argholder.jpgname, gvroot + argholder.jpgname),
-        shell=True,
-    )
+    ShaveImage(gvroot + argholder.jpgname, shave_x=2, shave_y=2)
 
     if not notitle:
-        subprocess.call("montit -s s -t '%s' '%s'" % (title, gvroot + argholder.jpgname), shell=True)
+        subprocess.call(
+            [sys.executable, MONTIT_PATH, "-s", "s", "-t", title, gvroot + argholder.jpgname]
+        )
 
     if argholder.scale:
         ScaleImg(argholder, gvroot)

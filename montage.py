@@ -4,6 +4,10 @@ import sys, os, subprocess, multiprocessing
 import shutil, tempfile, re, fnmatch
 import argparse
 
+from PIL import Image
+
+Image.MAX_IMAGE_PIXELS = None
+
 mini = False
 curdir = None
 notitle = False
@@ -14,6 +18,15 @@ class ArgHolder(object):
     pass
 
 argholder = None
+MONTIT_PATH = os.path.join(os.path.dirname(__file__), "montit.py")
+
+
+def ResizeByPercent(path, scale_percent):
+    with Image.open(path) as image:
+        width = max(1, round(image.width * scale_percent / 100))
+        height = max(1, round(image.height * scale_percent / 100))
+        resized = image.resize((width, height), Image.Resampling.LANCZOS)
+        resized.save(path)
 
 
 def callmontage(imgs, tile, tmpdir, name, row=None, workdir=None, background="#a0a0a0"):
@@ -52,7 +65,7 @@ def SingleMontage(l, nummini = None):
 
     limg = []
     m = re.search(r"(\s*\+?\s*(?:(?:auto)|(?:[\w_\-\+\d]*\.(?:jpg|png))))\s*\{(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(title\s*=\s*(?:(?:auto)|(?:[\"\'].*?[\"\'])))?(?:\s*<EMPTYL>|\[newrow\]|\[nr\])?\s*(size\s*=\s*(?:[\"\']?[smb][\"\']?))?\s*(.*[\w_\-\+\d]*.(jpg|png)\s*\+?.*){1,}\}", l)
-    if argholder.outfile:
+    if argholder.outfile and nummini is None:
         orgfilename = filename = argholder.outfile
     else:
         orgfilename = filename = m.group(1).strip()
@@ -195,6 +208,8 @@ def CreateMontage(filename, title, size, limg):
     row = 0
     multimg = 0
     tmpdir = tempfile.mkdtemp()
+    raw_output = os.path.join(tmpdir, "final-raw.jpg")
+    tmpfiles.append(raw_output)
 
     for line in limg:
         if line.find("+") > 0:
@@ -240,22 +255,23 @@ def CreateMontage(filename, title, size, limg):
     m = multiprocessing.Process(
         name='callmontage',
         target=callmontage,
-        args=(rowimgs, 1, ".", filename.strip(), None, curdir, background),
+        args=(rowimgs, 1, tmpdir, os.path.basename(raw_output), None, tmpdir, background),
     )
     m.start()
     m.join()
 
     if title:
-        subprocess.call("montit -s '%s' -t '%s' '%s'" % (size, title, filename), shell = True)
+        subprocess.call([sys.executable, MONTIT_PATH, "-s", size, "-t", title, raw_output, filename])
+    else:
+        shutil.copyfile(raw_output, filename)
 
     if argholder.scale and not mini:
-        cmd = "gm convert -scale %s%% '%s' '%s'" % (argholder.scale, filename, filename)
-        subprocess.call(cmd, shell=True)
+        ResizeByPercent(filename, int(argholder.scale))
 
-    os.chdir(tmpdir)
     for i in tmpfiles:
-        os.remove(i)
-    os.removedirs(tmpdir)
+        if os.path.exists(i):
+            os.remove(i)
+    os.rmdir(tmpdir)
 
 
 def main():
