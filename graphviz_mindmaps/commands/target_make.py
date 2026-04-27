@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from __future__ import annotations
 
 import subprocess
@@ -23,7 +21,7 @@ def find_target_makefile(target: str) -> Path | None:
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if not argv:
-        print("Usage: gvmm-target-make.py <target>", file=sys.stderr)
+        print("Usage: gvmm-target-make <target>", file=sys.stderr)
         return 2
 
     target_name = argv[0]
