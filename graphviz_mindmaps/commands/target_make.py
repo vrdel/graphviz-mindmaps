@@ -21,7 +21,7 @@ def find_target_makefile(target: str) -> Path | None:
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if not argv:
-        print("Usage: gvmm-target-make <target>", file=sys.stderr)
+        print("Usage: target-make <target>", file=sys.stderr)
         return 2
 
     target_name = argv[0]

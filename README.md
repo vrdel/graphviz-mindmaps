@@ -2,11 +2,13 @@
 
 Graphviz-based mindmap rendering with helper tools for image titling and montage generation.
 
-The repo currently provides three user-facing command-line tools:
+The repo currently provides user-facing command-line tools:
 
 - `gvmm` renders `.otl` outline files into images or `.dot` output
+- `create-mm` creates mindmap project files from templates
+- `target-make` finds a Makefile containing a target and runs it
 - `montage` builds image montages from `.gmm` specs
-- `montit` adds a title bar to an image
+- `montage-title` adds a title bar to an image
 
 ## Install
 
@@ -40,8 +42,10 @@ Used in some workflows:
 The wheel exposes these console scripts:
 
 - `gvmm`
+- `create-mm`
+- `target-make`
 - `montage`
-- `montit`
+- `montage-title`
 
 The repo also contains a local helper script:
 
@@ -72,23 +76,25 @@ montage -s 80 -b '#4b5262' montage.gmm
 Add a title bar to an image:
 
 ```bash
-montit -s s -t "Title" image.jpg
-montit -s m -t "Title" input.jpg output.jpg
+montage-title -s s -t "Title" image.jpg
+montage-title -s m -t "Title" input.jpg output.jpg
 ```
 
 Run the same tools through the local `pyenv` helper:
 
 ```bash
 ./gvmm-exe.py gvmm -f notes.otl
+./gvmm-exe.py create-mm -m
+./gvmm-exe.py target-make notes.otl
 ./gvmm-exe.py montage montage.gmm
-./gvmm-exe.py montit -s s -t "Title" image.jpg
+./gvmm-exe.py montage-title -s s -t "Title" image.jpg
 ```
 
 ## Notes
 
 - `gvmm` can read outline input from files via `-f` or from standard input.
 - `montage` reads the legacy `.gmm` montage format used in this repository.
-- `montit` is intended to title raw images; the current montage flow titles raw intermediate outputs before writing the final destination.
+- `montage-title` is intended to title raw images; the current montage flow titles raw intermediate outputs before writing the final destination.
 
 ## License
 

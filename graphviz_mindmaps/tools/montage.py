@@ -16,7 +16,7 @@ class ArgHolder(object):
     pass
 
 argholder = None
-MONTIT_PATH = os.path.join(os.path.dirname(__file__), "montit.py")
+MONTAGE_TITLE_PATH = os.path.join(os.path.dirname(__file__), "montage_title.py")
 
 
 def ResizeByPercent(path, scale_percent):
@@ -259,7 +259,7 @@ def CreateMontage(filename, title, size, limg):
     m.join()
 
     if title:
-        subprocess.call([sys.executable, MONTIT_PATH, "-s", size, "-t", title, raw_output, filename])
+        subprocess.call([sys.executable, MONTAGE_TITLE_PATH, "-s", size, "-t", title, raw_output, filename])
     else:
         shutil.copyfile(raw_output, filename)
 

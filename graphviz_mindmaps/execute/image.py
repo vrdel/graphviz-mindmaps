@@ -5,7 +5,7 @@ import sys
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
-MONTIT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tools", "montit.py")
+MONTAGE_TITLE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tools", "montage_title.py")
 
 
 def WriteDot(dotbuf, dotfile):
@@ -65,7 +65,7 @@ def WriteImg(dotbuf, argholder, gvroot, title, notitle, tmpdir):
 
     if not notitle:
         subprocess.call(
-            [sys.executable, MONTIT_PATH, "-s", "s", "-t", title, gvroot + argholder.jpgname]
+            [sys.executable, MONTAGE_TITLE_PATH, "-s", "s", "-t", title, gvroot + argholder.jpgname]
         )
 
     if argholder.scale:

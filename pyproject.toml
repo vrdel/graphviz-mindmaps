@@ -12,10 +12,10 @@ dependencies = ["Pillow"]
 
 [project.scripts]
 gvmm = "graphviz_mindmaps.cli:main"
-"gvmm-create" = "graphviz_mindmaps.commands.create:main"
-"gvmm-target-make" = "graphviz_mindmaps.commands.target_make:main"
+"create-mm" = "graphviz_mindmaps.commands.create_mm:main"
 "montage" = "graphviz_mindmaps.tools.montage:main"
-"montit" = "graphviz_mindmaps.tools.montit:main"
+"montage-title" = "graphviz_mindmaps.tools.montage_title:main"
+"target-make" = "graphviz_mindmaps.commands.target_make:main"
 
 [tool.setuptools]
 include-package-data = true

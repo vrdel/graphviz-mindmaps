@@ -8,17 +8,20 @@ import subprocess
 
 DEFAULT_PYENV_ROOT = os.path.expanduser("~/.pyenv")
 DEFAULT_PYENV_ENV = "graphviz-mindmap"
+SUPPORTED_COMMANDS = ("gvmm", "create-mm", "target-make", "montage", "montage-title")
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="gvmm-exe.py",
-        description="Run a tool installed in a selected pyenv virtualenv.",
+        description="Run a graphviz-mindmaps tool inside a selected pyenv virtualenv.",
         epilog=(
             "examples:\n"
             "  %(prog)s gvmm -f notes.otl\n"
-            "  %(prog)s montage list.txt\n"
-            "  %(prog)s montit -s s -t title image.jpg\n"
+            "  %(prog)s create-mm -m\n"
+            "  %(prog)s target-make notes.otl\n"
+            "  %(prog)s montage montage.gmm\n"
+            "  %(prog)s montage-title -s s -t title image.jpg\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -38,7 +41,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "command",
         metavar="COMMAND",
-        help="executable to run from the selected environment",
+        help="supported command: " + ", ".join(SUPPORTED_COMMANDS),
     )
     parser.add_argument(
         "args",
@@ -68,13 +71,20 @@ def build_env(pyenv_root: str, pyenv_env: str) -> dict:
 def main() -> int:
     parser = build_parser()
     parsed = parser.parse_args()
+    command = parsed.command
+
+    if command not in SUPPORTED_COMMANDS:
+        parser.error("unsupported command %r; expected one of: %s" % (
+            parsed.command,
+            ", ".join(SUPPORTED_COMMANDS),
+        ))
 
     try:
         env = build_env(parsed.pyenv_root, parsed.pyenv_env)
     except FileNotFoundError as exc:
         parser.error(str(exc))
 
-    argv = [parsed.command] + parsed.args
+    argv = [command] + parsed.args
 
     try:
         result = subprocess.run(argv, env=env)
@@ -82,7 +92,7 @@ def main() -> int:
         return 130
     except FileNotFoundError:
         parser.error(
-            "command not found in PATH for selected environment: %s" % parsed.command
+            "command not found in PATH for selected environment: %s" % command
         )
     return result.returncode
 

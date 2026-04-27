@@ -14,7 +14,7 @@ DEFAULT_MAKEFILE = "Makefile"
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="gvmm-create",
+        prog="create-mm",
         add_help=False,
         formatter_class=argparse.RawTextHelpFormatter,
     )
