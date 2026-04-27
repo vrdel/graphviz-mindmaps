@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from __future__ import annotations
 
 import argparse
@@ -16,7 +14,7 @@ DEFAULT_MAKEFILE = "Makefile"
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="gvmm-create-mm.py",
+        prog="gvmm-create",
         add_help=False,
         formatter_class=argparse.RawTextHelpFormatter,
     )
@@ -130,8 +128,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
-    # repo_root = Path(__file__).resolve().parent
-    repo_root = Path("/home/daniel/my_work/gvmm/").resolve()
+    repo_root = Path(__file__).resolve().parents[2]
     template_single = repo_root / "templates" / "Single"
     template_montage = repo_root / "templates" / "Montage"
 
