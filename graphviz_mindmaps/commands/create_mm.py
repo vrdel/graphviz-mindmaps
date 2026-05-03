@@ -8,6 +8,7 @@ from pathlib import Path
 
 DEFAULT_OTL = "mindmap-01.otl"
 DEFAULT_MONTAGE = "montage.gmm"
+DEFAULT_MONTAGE_NEXT = "montage-next.yaml"
 DEFAULT_WIKI = "Template.wiki"
 DEFAULT_MAKEFILE = "Makefile"
 
@@ -22,6 +23,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="create single mindmap from templates")
     parser.add_argument("-m", action="store_true", dest="create_montage",
                         help="create montage from templates")
+    parser.add_argument("-n", action="store_true", dest="create_montage_next",
+                        help=f"create new YAML montage ({DEFAULT_MONTAGE_NEXT})")
     parser.add_argument("-p", dest="otl_mindmap", default=DEFAULT_OTL,
                         help=f"filename of otl mindmap ({DEFAULT_OTL})")
     parser.add_argument("-g", dest="montage", default=DEFAULT_MONTAGE,
@@ -97,7 +100,13 @@ def create_montage(args: argparse.Namespace, template_dir: Path) -> None:
     otl_path = Path(args.otl_mindmap)
     wiki_path = Path(args.wiki)
     makefile_path = Path(args.makefile)
-    montage_path = Path(args.montage)
+    montage_template = DEFAULT_MONTAGE_NEXT if args.create_montage_next else DEFAULT_MONTAGE
+    montage_name = (
+        DEFAULT_MONTAGE_NEXT
+        if args.create_montage_next and args.montage == DEFAULT_MONTAGE
+        else args.montage
+    )
+    montage_path = Path(montage_name)
     stem = otl_path.stem
 
     copy_file(template_dir / DEFAULT_OTL, otl_path)
@@ -110,9 +119,13 @@ def create_montage(args: argparse.Namespace, template_dir: Path) -> None:
     replace_in_file(wiki_path, "mindmap-01", stem)
     replace_in_file(makefile_path, DEFAULT_WIKI, args.wiki)
 
-    copy_file(template_dir / DEFAULT_MONTAGE, montage_path)
+    copy_file(template_dir / montage_template, montage_path)
     replace_in_file(montage_path, "mindmap-01", stem)
-    replace_in_file(makefile_path, DEFAULT_MONTAGE, args.montage)
+    replace_in_file(makefile_path, DEFAULT_MONTAGE, montage_name)
+    if args.create_montage_next:
+        replace_in_file(makefile_path, "gvmm-exe.py montage ", "gvmm-exe.py montage-next ")
+        replace_in_file(makefile_path, "# montage ", "# montage-next ")
+        replace_in_file(makefile_path, ".gmm", ".yaml")
 
     if args.scale > 0:
         replace_in_file(makefile_path, "s 60", f"s {args.scale}")
@@ -135,10 +148,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.create_single:
         create_single(args, template_single)
 
-    if args.create_montage:
+    if args.create_montage or args.create_montage_next:
         create_montage(args, template_montage)
 
-    if not args.create_single and not args.create_montage:
+    if not args.create_single and not args.create_montage and not args.create_montage_next:
         parser.print_usage(sys.stderr)
         return 2
 
