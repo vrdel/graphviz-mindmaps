@@ -254,8 +254,6 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
     if argholder.dotname:
         WriteDot(dotbuf, argholder.dotname)
-    elif argholder.sock:
-        runtime.send_restart_msg(argholder.sock, "pixsock")
     else:
         result = WriteImg(dotbuf, argholder, session.gvroot, title, notitle, tmpdir)
         dotbuf = result["dotbuf"]

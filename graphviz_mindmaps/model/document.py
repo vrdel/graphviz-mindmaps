@@ -14,4 +14,3 @@ class RenderSession:
 @dataclass
 class RenderRuntime:
     fontawesome_symb: dict
-    send_restart_msg: object

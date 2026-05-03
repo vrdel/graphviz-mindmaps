@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
 import sys
 
 from graphviz_mindmaps.constants import DEFAULT_BGCOLOR
-from graphviz_mindmaps.execute.restart import SendRestartMSG
 from graphviz_mindmaps import fontawesome
 from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
@@ -15,7 +13,7 @@ from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
 
 def build_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-r", dest="sock", nargs="+")
+    parser.add_argument("-r", dest="sock", nargs="+", help=argparse.SUPPRESS)
     parser.add_argument("-f", dest="files", nargs="+", help="mindmap outliner files")
     parser.add_argument("-p", dest="preview", action="store_true", help="preview with galaview.sh")
     parser.add_argument("-s", dest="scale", nargs="?", const="specified", help="scale image for specified percentage")
@@ -37,13 +35,9 @@ def read_input_lines(files):
     return linesall
 
 
-def build_runtime(session, cfg):
-    def send_restart_msg(sockwildcard, sockcfg=None):
-        return SendRestartMSG(cfg, sockwildcard, sockcfg)
-
+def build_runtime():
     return RenderRuntime(
         fontawesome_symb=fontawesome.symb,
-        send_restart_msg=send_restart_msg,
     )
 
 
@@ -59,8 +53,7 @@ def main():
         tmpdir=[],
         gvroot="/home/daniel/my_notes/",
     )
-    cfg = os.environ["HOME"] + "/.galapix/galapix.cfg"
-    runtime = build_runtime(session, cfg)
+    runtime = build_runtime()
 
     linesall = read_input_lines(argholder.files)
     for linesbymm in ExtractMindmapBlocks(linesall, ApplyInlineBacktickBold):
