@@ -11,7 +11,7 @@ step-$(montage1):
 	# galacomm.py -r vimwiki_mindmaps > /dev/null || galaview.sh "`basename \"${PWD}\"`_`basename \"$(montage1)\" .gmm`".* &
 
 step-$(mm1):
-	gvmm -f $(mm1) > /dev/null
+	gvmm-exe.py gvmm -f $(mm1) > /dev/null
 
 $(mm1): step-$(mm1) step-$(montage1)
 

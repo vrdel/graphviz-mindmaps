@@ -202,12 +202,10 @@ def CreateMontage(filename, title, size, limg):
     imgnames = []
     rowimgs = []
     multimgnames = []
-    tmpfiles = []
     row = 0
     multimg = 0
     tmpdir = tempfile.mkdtemp()
     raw_output = os.path.join(tmpdir, "final-raw.jpg")
-    tmpfiles.append(raw_output)
 
     for line in limg:
         if line.find("+") > 0:
@@ -223,7 +221,6 @@ def CreateMontage(filename, title, size, limg):
             m.start()
             m.join()
             imgnames.append("%s/mimg%d.jpg" % (tmpdir, multimg))
-            tmpfiles.append("%s/mimg%d.jpg" % (tmpdir, multimg))
         elif "<EMPTYL>" in line or '[newrow]' in line or '[nr]' in line:
             row += 1
             m = multiprocessing.Process(
@@ -235,7 +232,6 @@ def CreateMontage(filename, title, size, limg):
             m.join()
             imgnames = []
             rowimgs.append("%s/img%d.jpg" % (tmpdir, row))
-            tmpfiles.append("%s/img%d.jpg" % (tmpdir, row))
         else:
             imgnames.append(line)
     else:
@@ -248,7 +244,6 @@ def CreateMontage(filename, title, size, limg):
         m.start()
         m.join()
         rowimgs.append("%s/img%d.jpg" % (tmpdir, row))
-        tmpfiles.append("%s/img%d.jpg" % (tmpdir, row))
 
     m = multiprocessing.Process(
         name='callmontage',
@@ -266,10 +261,7 @@ def CreateMontage(filename, title, size, limg):
     if argholder.scale and not mini:
         ResizeByPercent(filename, int(argholder.scale))
 
-    for i in tmpfiles:
-        if os.path.exists(i):
-            os.remove(i)
-    os.rmdir(tmpdir)
+    shutil.rmtree(tmpdir)
 
 
 def main():
