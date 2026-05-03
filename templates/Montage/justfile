@@ -1,0 +1,18 @@
+mm := "mindmap-01.otl"
+montage := "montage.yml"
+wiki := "Template.wiki"
+output := "final_montage.jpg"
+scale := "60"
+background := "#4b5262"
+
+default: build
+
+build: montage
+
+mindmap:
+    gvmm-exe.py gvmm -f {{mm}} > /dev/null
+
+montage: mindmap
+    gvmm-exe.py montage -b "{{background}}" -s {{scale}} {{montage}} -o {{output}} > /dev/null
+    vim -c ':Vimwiki2HTML' -c ':wq' '{{wiki}}' > /dev/null
+    galacomm.py -r my_whiteboard > /dev/null || galaview.sh {{output}} &

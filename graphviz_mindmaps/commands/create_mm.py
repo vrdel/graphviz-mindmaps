@@ -10,6 +10,7 @@ DEFAULT_OTL = "mindmap-01.otl"
 DEFAULT_MONTAGE = "montage.yml"
 DEFAULT_WIKI = "Template.wiki"
 DEFAULT_MAKEFILE = "Makefile"
+DEFAULT_JUSTFILE = "justfile"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -29,7 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-w", dest="wiki", default=DEFAULT_WIKI,
                         help=f"filename of vimwiki ({DEFAULT_WIKI})")
     parser.add_argument("-f", dest="makefile", default=DEFAULT_MAKEFILE,
-                        help=f"filename of Makefile ({DEFAULT_MAKEFILE})")
+                        help=f"filename of build file ({DEFAULT_MAKEFILE} for -s, {DEFAULT_JUSTFILE} for -m)")
     parser.add_argument("-l", dest="scale", type=int, default=0,
                         help="scale final montage (60)")
     parser.add_argument("-h", "--help", action="help", help="usage")
@@ -96,7 +97,8 @@ def create_montage(args: argparse.Namespace, template_dir: Path) -> None:
     print("Creating montage otl mindmaps...")
     otl_path = Path(args.otl_mindmap)
     wiki_path = Path(args.wiki)
-    makefile_path = Path(args.makefile)
+    justfile_name = DEFAULT_JUSTFILE if args.makefile == DEFAULT_MAKEFILE else args.makefile
+    justfile_path = Path(justfile_name)
     montage_template = DEFAULT_MONTAGE
     montage_name = args.montage
     montage_path = Path(montage_name)
@@ -105,19 +107,19 @@ def create_montage(args: argparse.Namespace, template_dir: Path) -> None:
     copy_file(template_dir / DEFAULT_OTL, otl_path)
     replace_in_file(otl_path, "mindmap-01", stem)
 
-    copy_file(template_dir / DEFAULT_MAKEFILE, makefile_path)
-    replace_in_file(makefile_path, "mindmap-01", stem)
+    copy_file(template_dir / DEFAULT_JUSTFILE, justfile_path)
+    replace_in_file(justfile_path, "mindmap-01", stem)
 
     copy_file(template_dir / DEFAULT_WIKI, wiki_path)
     replace_in_file(wiki_path, "mindmap-01", stem)
-    replace_in_file(makefile_path, DEFAULT_WIKI, args.wiki)
+    replace_in_file(justfile_path, DEFAULT_WIKI, args.wiki)
 
     copy_file(template_dir / montage_template, montage_path)
     replace_in_file(montage_path, "mindmap-01", stem)
-    replace_in_file(makefile_path, DEFAULT_MONTAGE, montage_name)
+    replace_in_file(justfile_path, DEFAULT_MONTAGE, montage_name)
 
     if args.scale > 0:
-        replace_in_file(makefile_path, "s 60", f"s {args.scale}")
+        replace_in_file(justfile_path, 'scale := "60"', f'scale := "{args.scale}"')
 
 
 def main(argv: list[str] | None = None) -> int:
