@@ -2,7 +2,7 @@ import os, sys, argparse, subprocess, math
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 Image.MAX_IMAGE_PIXELS = None
-DEFAULT_BACKGROUND = "#4b5262"
+DEFAULT_BACKGROUND = "#a0a0a0"
 TITLE_FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf"
 FRAME_FILL = "#5d6576"
 TITLE_FILL = "black"

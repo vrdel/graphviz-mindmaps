@@ -15,7 +15,7 @@ from typing import Any
 
 TITLE_BACKGROUND = "#a0a0a0"
 UNTITLED_NESTED_BACKGROUND = "#efefef"
-DEFAULT_BACKGROUND = "#4b5262"
+DEFAULT_BACKGROUND = "#a0a0a0"
 
 
 def strip_comment(line: str) -> str:

@@ -4,7 +4,7 @@ wiki1 = Template.wiki
 montage_output1 = final_montage.jpg
 
 step-$(montage1):
-	gvmm-exe.py montage -s 60 $(montage1) -o $(montage_output1) > /dev/null
+	gvmm-exe.py montage -b "#4b5262" -s 60 $(montage1) -o $(montage_output1) > /dev/null
 	# montage -s 60 $(montage1) > /dev/null
 	vim -c ':Vimwiki2HTML' -c ':wq' '$(wiki1)' > /dev/null
 	galacomm.py -r my_whiteboard > /dev/null || galaview.sh $(montage_output1) &
