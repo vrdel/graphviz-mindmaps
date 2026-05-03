@@ -310,7 +310,7 @@ class MontageRenderer:
         self.curdir = Path.cwd()
         self.tool_dir = Path(__file__).resolve().parent
         self.auto_nested_index = 1
-        self.temp_root = Path(tempfile.mkdtemp(prefix="montage-next-"))
+        self.temp_root = Path(tempfile.mkdtemp(prefix="montage-"))
         self.intermediate_outputs: list[Path] = []
 
     def background_for(self, title: str | None, nested: bool) -> str:
