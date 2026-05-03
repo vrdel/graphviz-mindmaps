@@ -225,10 +225,10 @@ def normalize_item(item: Any) -> Any:
         return str(item["image"])
     if "join" in item:
         return [str(elem) for elem in ensure_list(item["join"], "join")]
-    if "montage" in item:
-        if not isinstance(item["montage"], dict):
-            raise ValueError("montage item must contain a mapping")
-        return normalize_spec(item["montage"])
+    if "submontage" in item:
+        if not isinstance(item["submontage"], dict):
+            raise ValueError("submontage item must contain a mapping")
+        return normalize_spec(item["submontage"])
 
     if any(key in item for key in ("rows", "entries", "title", "size")):
         return normalize_spec(item)

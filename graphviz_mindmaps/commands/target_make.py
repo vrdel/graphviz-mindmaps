@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 
-MONTAGE_SPEC_SUFFIXES = {".gmm", ".yaml", ".yml"}
+MONTAGE_SPEC_SUFFIXES = {".yaml", ".yml"}
 
 
 def find_target_makefile(target: str) -> Path | None:

@@ -1,5 +1,5 @@
 mm1 = mindmap-01.otl
-montage1 = montage.gmm
+montage1 = montage.yml
 wiki1 = Template.wiki
 montage_output1 = final_montage.jpg
 
@@ -8,7 +8,7 @@ step-$(montage1):
 	# montage -s 60 $(montage1) > /dev/null
 	vim -c ':Vimwiki2HTML' -c ':wq' '$(wiki1)' > /dev/null
 	galacomm.py -r my_whiteboard > /dev/null || galaview.sh $(montage_output1) &
-	# galacomm.py -r vimwiki_mindmaps > /dev/null || galaview.sh "`basename \"${PWD}\"`_`basename \"$(montage1)\" .gmm`".* &
+	# galacomm.py -r vimwiki_mindmaps > /dev/null || galaview.sh "`basename \"${PWD}\"`_`basename \"$(montage1)\" .yml`".* &
 
 step-$(mm1):
 	gvmm-exe.py gvmm -f $(mm1) > /dev/null

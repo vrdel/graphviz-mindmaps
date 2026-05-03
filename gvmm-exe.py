@@ -13,7 +13,6 @@ SUPPORTED_COMMANDS = (
     "create-mm",
     "target-make",
     "montage",
-    "montage-next",
     "montage-title",
 )
 
@@ -27,8 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  %(prog)s gvmm -f notes.otl\n"
             "  %(prog)s create-mm -m\n"
             "  %(prog)s target-make notes.otl\n"
-            "  %(prog)s montage montage.gmm\n"
-            "  %(prog)s montage-next -o output.jpg montage-next.yaml\n"
+            "  %(prog)s montage -o output.jpg montage.yml\n"
             "  %(prog)s montage-title -s s -t title image.jpg\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
