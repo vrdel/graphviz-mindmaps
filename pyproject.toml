@@ -21,4 +21,7 @@ gvmm = "graphviz_mindmaps.cli:main"
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["graphviz_mindmaps*"]
+include = ["graphviz_mindmaps*", "templates"]
+
+[tool.setuptools.package-data]
+templates = ["**/*"]
