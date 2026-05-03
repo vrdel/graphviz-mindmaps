@@ -72,13 +72,6 @@ def WriteImg(dotbuf, argholder, gvroot, title, notitle, tmpdir):
         ScaleImg(argholder, gvroot)
 
     if argholder.preview:
-        subprocess.call(
-            "FvwmCommand 'All (galapix:*%s*) Close'"
-            % argholder.jpgname.split("/")[1]
-            if "/" in argholder.jpgname
-            else argholder.jpgname,
-            shell=True,
-        )
         subprocess.Popen(["galaview.sh", gvroot + argholder.jpgname])
 
     tmpdir = CleanupTmpdir(tmpdir)
