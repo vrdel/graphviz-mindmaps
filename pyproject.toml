@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "graphviz-mindmaps"
+version = "0.1.0"
+description = "Graphviz-based mindmap renderer and related tooling"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+dependencies = ["Pillow"]
+
+[project.scripts]
+gvmm = "graphviz_mindmaps.cli:main"
+"create-mm" = "graphviz_mindmaps.commands.create_mm:main"
+"montage" = "graphviz_mindmaps.tools.montage_next:main"
+"montage-title" = "graphviz_mindmaps.tools.montage_title:main"
+"target-make" = "graphviz_mindmaps.commands.target_make:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["graphviz_mindmaps*", "templates"]
+
+[tool.setuptools.package-data]
+templates = ["**/*"]

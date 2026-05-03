@@ -1,1 +1,1 @@
-setlocal makeprg=gvmm-target-make.py
+setlocal makeprg=gvmm-exe.py target-make
