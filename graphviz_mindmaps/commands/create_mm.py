@@ -9,7 +9,6 @@ from pathlib import Path
 DEFAULT_OTL = "mindmap-01.otl"
 DEFAULT_MONTAGE = "montage.yml"
 DEFAULT_WIKI = "Template.wiki"
-DEFAULT_MAKEFILE = "Makefile"
 DEFAULT_JUSTFILE = "justfile"
 
 
@@ -29,8 +28,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help=f"filename of montage ({DEFAULT_MONTAGE})")
     parser.add_argument("-w", dest="wiki", default=DEFAULT_WIKI,
                         help=f"filename of vimwiki ({DEFAULT_WIKI})")
-    parser.add_argument("-f", dest="makefile", default=DEFAULT_MAKEFILE,
-                        help=f"filename of build file ({DEFAULT_MAKEFILE} for -s, {DEFAULT_JUSTFILE} for -m)")
+    parser.add_argument("-f", dest="makefile", default=DEFAULT_JUSTFILE,
+                        help=f"filename of build file ({DEFAULT_JUSTFILE})")
     parser.add_argument("-l", dest="scale", type=int, default=0,
                         help="scale final montage (60)")
     parser.add_argument("-h", "--help", action="help", help="usage")
@@ -47,58 +46,30 @@ def replace_in_file(path: Path, old: str, new: str) -> None:
     path.write_text(path.read_text().replace(old, new))
 
 
-def print_single_makefile_hint(otl_mindmap: str) -> None:
-    stem = Path(otl_mindmap).stem
-    print("\nAdd target in Makefile")
-    print("----")
-    print(f"mm1 = {otl_mindmap}")
-    print("$(mm1): step-$(mm1) step-$(montage1)")
-    print("step-$(mm1):")
-    print("\tgvmm -f $(mm1) > /dev/null")
-    print(".PHONY: $(mm1)...")
-    print("\nAdd to existing montage (.yml)")
-    print("----")
-    print("auto {")
-    print('\ttitle = "Foo bar"')
-    print("\texisting-01.jpg")
-    print(f"\t{stem}.jpg + existing-02.jpg")
-    print("}")
-
-
-def update_named_makefile(makefile: Path, wiki: str) -> None:
-    if not makefile.exists():
-        raise FileNotFoundError(f"{makefile} does not exist")
-    replace_in_file(makefile, DEFAULT_WIKI, wiki)
-
-
 def create_single(args: argparse.Namespace, template_dir: Path) -> None:
     print("Creating single otl mindmap...")
     otl_path = Path(args.otl_mindmap)
     wiki_path = Path(args.wiki)
-    makefile_path = Path(args.makefile)
+    justfile_path = Path(args.makefile)
     stem = otl_path.stem
 
     copy_file(template_dir / DEFAULT_OTL, otl_path)
     replace_in_file(otl_path, "mindmap-01", stem)
 
-    if args.makefile != DEFAULT_MAKEFILE:
-        copy_file(template_dir / DEFAULT_MAKEFILE, makefile_path)
-        replace_in_file(makefile_path, "mindmap-01", stem)
-    else:
-        print_single_makefile_hint(args.otl_mindmap)
+    copy_file(template_dir / DEFAULT_JUSTFILE, justfile_path)
+    replace_in_file(justfile_path, "mindmap-01", stem)
 
     if args.wiki != DEFAULT_WIKI:
         copy_file(template_dir / DEFAULT_WIKI, wiki_path)
         replace_in_file(wiki_path, "mindmap-01", stem)
-        update_named_makefile(makefile_path, args.wiki)
+        replace_in_file(justfile_path, DEFAULT_WIKI, args.wiki)
 
 
 def create_montage(args: argparse.Namespace, template_dir: Path) -> None:
     print("Creating montage otl mindmaps...")
     otl_path = Path(args.otl_mindmap)
     wiki_path = Path(args.wiki)
-    justfile_name = DEFAULT_JUSTFILE if args.makefile == DEFAULT_MAKEFILE else args.makefile
-    justfile_path = Path(justfile_name)
+    justfile_path = Path(args.makefile)
     montage_template = DEFAULT_MONTAGE
     montage_name = args.montage
     montage_path = Path(montage_name)

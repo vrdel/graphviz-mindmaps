@@ -1,0 +1,10 @@
+mm := "mindmap-01.otl"
+wiki := "Template.wiki"
+scale := "60"
+
+default: mindmap
+
+mindmap:
+    gvmm-exe.py gvmm -s {{scale}} -f {{mm}} > /dev/null
+    vim -c ':Vimwiki2HTML' -c ':wq' '{{wiki}}' > /dev/null
+    galacomm.py -r my_whiteboard > /dev/null || galaview.sh `basename {{mm}} .otl`.[jp]* &

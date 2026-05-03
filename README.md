@@ -6,7 +6,7 @@ The repo currently provides user-facing command-line tools:
 
 - `gvmm` renders `.otl` outline files into images or `.dot` output
 - `create-mm` creates mindmap project files from templates
-- `target-make` finds a justfile, Makefile, or YAML montage spec containing a target and runs it
+- `target-make` finds a justfile or YAML montage spec containing a target and runs it
 - `montage` builds image montages from YAML specs
 - `montage-title` adds a title bar to an image
 
@@ -35,7 +35,6 @@ Used in some workflows:
 
 - `just`
 - `galaview.sh`
-- `make`
 
 ## Entrypoints
 
@@ -64,7 +63,7 @@ create-mm -m -p notes.otl -g montage.yml -w Notes.wiki -f justfile
 create-mm -m -l 80
 ```
 
-`create-mm -s` creates a single mindmap starter. `create-mm -m` creates a montage project with `montage.yml`, `justfile`, `Template.wiki`, and `mindmap-01.otl`.
+`create-mm -s` creates a single mindmap starter with `justfile`, `Template.wiki`, and `mindmap-01.otl`. `create-mm -m` creates a montage project with `montage.yml`, `justfile`, `Template.wiki`, and `mindmap-01.otl`.
 
 Render one or more outline files with `gvmm`:
 
