@@ -28,8 +28,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help=f"filename of montage ({DEFAULT_MONTAGE})")
     parser.add_argument("-w", dest="wiki", default=DEFAULT_WIKI,
                         help=f"filename of vimwiki ({DEFAULT_WIKI})")
-    parser.add_argument("-f", dest="makefile", default=DEFAULT_JUSTFILE,
-                        help=f"filename of build file ({DEFAULT_JUSTFILE})")
+    parser.add_argument("-f", dest="justfile",
+                        help=f"filename of justfile ({DEFAULT_JUSTFILE})")
     parser.add_argument("-l", dest="scale", type=int, default=0,
                         help="scale final montage (60)")
     parser.add_argument("-h", "--help", action="help", help="usage")
@@ -50,26 +50,28 @@ def create_single(args: argparse.Namespace, template_dir: Path) -> None:
     print("Creating single otl mindmap...")
     otl_path = Path(args.otl_mindmap)
     wiki_path = Path(args.wiki)
-    justfile_path = Path(args.makefile)
+    justfile_path = Path(args.justfile) if args.justfile else None
     stem = otl_path.stem
 
     copy_file(template_dir / DEFAULT_OTL, otl_path)
     replace_in_file(otl_path, "mindmap-01", stem)
 
-    copy_file(template_dir / DEFAULT_JUSTFILE, justfile_path)
-    replace_in_file(justfile_path, "mindmap-01", stem)
+    if justfile_path:
+        copy_file(template_dir / DEFAULT_JUSTFILE, justfile_path)
+        replace_in_file(justfile_path, "mindmap-01", stem)
 
     if args.wiki != DEFAULT_WIKI:
         copy_file(template_dir / DEFAULT_WIKI, wiki_path)
         replace_in_file(wiki_path, "mindmap-01", stem)
-        replace_in_file(justfile_path, DEFAULT_WIKI, args.wiki)
+        if justfile_path:
+            replace_in_file(justfile_path, DEFAULT_WIKI, args.wiki)
 
 
 def create_montage(args: argparse.Namespace, template_dir: Path) -> None:
     print("Creating montage otl mindmaps...")
     otl_path = Path(args.otl_mindmap)
     wiki_path = Path(args.wiki)
-    justfile_path = Path(args.makefile)
+    justfile_path = Path(args.justfile or DEFAULT_JUSTFILE)
     montage_template = DEFAULT_MONTAGE
     montage_name = args.montage
     montage_path = Path(montage_name)

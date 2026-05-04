@@ -58,12 +58,13 @@ Create template projects:
 
 ```bash
 create-mm -s
+create-mm -s -f justfile
 create-mm -m
 create-mm -m -p notes.otl -g montage.yml -w Notes.wiki -f justfile
 create-mm -m -l 80
 ```
 
-`create-mm -s` creates a single mindmap starter with `justfile`, `Template.wiki`, and `mindmap-01.otl`. `create-mm -m` creates a montage project with `montage.yml`, `justfile`, `Template.wiki`, and `mindmap-01.otl`.
+`create-mm -s` creates a single mindmap starter with `mindmap-01.otl`; pass `-f justfile` to create a build file too. `create-mm -m` creates a montage project with `montage.yml`, `justfile`, `Template.wiki`, and `mindmap-01.otl`.
 
 Render one or more outline files with `gvmm`:
 
