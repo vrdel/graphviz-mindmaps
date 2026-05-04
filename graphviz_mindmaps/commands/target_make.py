@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 
-MINDMAP_SUFFIXES = {".otl"}
+JUST_TARGET_SUFFIXES = {".otl", ".yaml", ".yml"}
 
 
 def read_text(path: Path) -> str | None:
@@ -47,7 +47,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     target_name = argv[0]
-    justfile = find_target_justfile(target_name) if Path(target_name).suffix in MINDMAP_SUFFIXES else None
+    justfile = find_target_justfile(target_name) if Path(target_name).suffix in JUST_TARGET_SUFFIXES else None
     makefile = None if justfile is not None else find_target_makefile(target_name)
 
     if justfile is not None:
