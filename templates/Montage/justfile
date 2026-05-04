@@ -5,9 +5,13 @@ output := "final_montage.jpg"
 scale := "60"
 background := "#4b5262"
 
-default: build
+default: montage
 
-build: montage
+build target=mm:
+    gvmm-exe.py gvmm -f "{{target}}" > /dev/null
+    gvmm-exe.py montage -b "{{background}}" -s {{scale}} {{montage}} -o {{output}} > /dev/null
+    vim -c ':Vimwiki2HTML' -c ':wq' '{{wiki}}' > /dev/null
+    galacomm.py -r my_whiteboard > /dev/null || galaview.sh {{output}} &
 
 mindmap:
     gvmm-exe.py gvmm -f {{mm}} > /dev/null
