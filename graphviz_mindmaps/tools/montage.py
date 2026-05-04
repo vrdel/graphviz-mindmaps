@@ -230,7 +230,7 @@ def normalize_item(item: Any) -> Any:
             raise ValueError("submontage item must contain a mapping")
         return normalize_spec(item["submontage"])
 
-    if any(key in item for key in ("rows", "entries", "title", "size")):
+    if any(key in item for key in ("rows", "entries", "title", "size", "background")):
         return normalize_spec(item)
 
     raise ValueError(f"unsupported item mapping: {item!r}")
@@ -313,8 +313,12 @@ class MontageRenderer:
         self.temp_root = Path(tempfile.mkdtemp(prefix="montage-"))
         self.intermediate_outputs: list[Path] = []
 
-    def background_for(self, title: str | None, nested: bool) -> str:
-        return UNTITLED_NESTED_BACKGROUND if nested and not title else self.background
+    def background_for(self, spec: dict[str, Any], title: str | None, nested: bool, inherited_background: str) -> str:
+        if spec.get("background"):
+            return str(spec["background"])
+        if nested and not title:
+            return UNTITLED_NESTED_BACKGROUND
+        return inherited_background
 
     def resolve_output(self, spec: dict[str, Any], nested: bool) -> Path:
         if not nested:
@@ -367,7 +371,7 @@ class MontageRenderer:
                 images = [str(elem) for elem in item]
                 item_paths.append(self.render_image_group(images, background))
             elif isinstance(item, dict):
-                item_paths.append(self.render_spec(item, nested=True))
+                item_paths.append(self.render_spec(item, nested=True, inherited_background=background))
             else:
                 raise ValueError(f"unsupported row item: {item!r}")
 
@@ -388,14 +392,14 @@ class MontageRenderer:
         run_command(cmd)
         return tmp_path
 
-    def render_spec(self, spec: dict[str, Any], nested: bool = False) -> Path:
+    def render_spec(self, spec: dict[str, Any], nested: bool = False, inherited_background: str | None = None) -> Path:
         output_path = self.resolve_output(spec, nested=nested)
         if nested:
             self.intermediate_outputs.append(output_path)
         title = self.resolve_title(spec, output_path)
         size = self.resolve_size(spec, nested=nested)
         rows = ensure_list(spec.get("rows"), "rows")
-        background = self.background_for(title, nested=nested)
+        background = self.background_for(spec, title, nested=nested, inherited_background=inherited_background or self.background)
 
         row_paths: list[Path] = []
         for row in rows:

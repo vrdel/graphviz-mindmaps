@@ -6,5 +6,6 @@ entries:
   - join: [mindmap-01.jpg, mindmap-01.jpg]
   - submontage:
       title: joint submontage
+      background: "#efefef"
       entries:
         - join: [mindmap-01.jpg, mindmap-01.jpg]

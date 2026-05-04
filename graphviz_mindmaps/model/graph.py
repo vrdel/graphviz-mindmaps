@@ -251,15 +251,17 @@ class Tree:
 
             if fragments is None:
                 fragments = "<SEP>".join(self._label).split("</TD></TR><TR>")
-            indexes = [idx for idx, fragment in enumerate(fragments) if has_visible_content(fragment)]
 
             if self._verbatim or self._draw:
+                indexes = list(range(len(fragments)))
                 if indexes:
                     del indexes[0]
                 while indexes and not has_visible_content(fragments[indexes[0]]):
                     del indexes[0]
                 while indexes and not has_visible_content(fragments[indexes[-1]]):
                     indexes.pop()
+            else:
+                indexes = [idx for idx, fragment in enumerate(fragments) if has_visible_content(fragment)]
 
             return fragments, indexes
 
