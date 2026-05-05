@@ -57,6 +57,23 @@ from graphviz_mindmaps.render.label_html import (
 )
 
 
+def InsertImageRow(labelhtml, image_path):
+    open_row = (
+        "<TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"0\"><IMG SRC=\""
+        + image_path
+        + "\"/>"
+    )
+    if len(labelhtml) == 1 and "</TABLE>" in labelhtml[0]:
+        row = open_row + "</TD></TR>"
+        labelhtml[0] = labelhtml[0].replace("</TABLE>", row + "</TABLE>", 1)
+    else:
+        labelhtml.insert(len(labelhtml) - 1, "</TD></TR>" + open_row)
+
+
+def StripCodeDirective(attrline):
+    return re.sub(r"(?<=\s)code(?:[=: ]+[A-Za-z0-9_.+\-#]+)?", "", attrline, count=1)
+
+
 def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     tree = Tree(
         nodetype,
@@ -132,6 +149,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\" data=\"([^\"]*)\"/>", label)
             code_source = None
             code_language = None
+            code_image_path = None
             if code_match:
                 code_language = code_match.group(1)
                 code_source = base64.b64decode(code_match.group(2)).decode("utf-8")
@@ -143,13 +161,20 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             if code_source is not None:
                 if not tmpdir:
                     tmpdir.append(tempfile.mkdtemp())
-                image_path = RenderCodeImage(code_source, code_language, label, tmpdir)
-                labelhtml = [
-                    "<TABLE BORDER=\"0\" CELLBORDER=\"0\"><TR><TD CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\""
-                    + image_path
-                    + "\"/></TD></TR></TABLE>"
-                ]
-                ntype = "img"
+                code_image_path = RenderCodeImage(code_source, code_language, tmpdir)
+                try:
+                    labelhtml, ntype, label = BuildNodeLabelHtml(
+                        label,
+                        vrbt,
+                        draw,
+                        html_larrow1,
+                        html_rarrow1,
+                        html_larrow2,
+                        html_rarrow2,
+                        GenImgPath,
+                    )
+                except (IndexError, KeyError) as exc:
+                    print(exc, label)
             else:
                 try:
                     labelhtml, ntype, label = BuildNodeLabelHtml(
@@ -168,8 +193,9 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             state_obj = NodePrepState(ntype=ntype)
             fromnode, tonode, tabs = BuildNodeRefs(rootnodename, nodelevel, level)
 
-            if nextline.find("#") == -1 and state_obj.ntype != "img" and code_source is None:
-                nextline = TokenizeNodeAttributeLine(nextline)
+            if nextline.find("#") == -1 and state_obj.ntype != "img":
+                attrline = StripCodeDirective(nextline) if code_source is not None else nextline
+                nextline = TokenizeNodeAttributeLine(attrline)
                 ApplyNodeAttributeTokens(
                     nextline,
                     tonode,
@@ -233,7 +259,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     SkipPositive(state_obj.linefstyle, s=1)
 
             if not ntype:
-                ntype = "def"
+                ntype = "node" if code_source is not None else "def"
 
             edgeattrs = state_obj.edgeattrs()
             AppendNodeEdge(edge, tabs, fromnode, tonode, ntype, edgeattrs, edgetype)
@@ -258,6 +284,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 draw,
                 textleft,
             )
+            if code_image_path:
+                InsertImageRow(parentlist[level]._label, code_image_path)
 
             nodelevel[level - 1] += 1
             for index in range(level, len(nodelevel) - 1):

@@ -29,7 +29,7 @@ def _style_color(style, token_type, fallback):
     return fallback
 
 
-def RenderCodeImage(source, language, title, tmpdirs, style_name="default"):
+def RenderCodeImage(source, language, tmpdirs, style_name="default"):
     tmpdir = Path(tmpdirs[-1]) if tmpdirs else Path.cwd()
     code_dir = tmpdir / "code"
     code_dir.mkdir(parents=True, exist_ok=True)
@@ -45,9 +45,7 @@ def RenderCodeImage(source, language, title, tmpdirs, style_name="default"):
         style = get_style_by_name("default")
 
     font = _load_font(18)
-    title_font = _load_font(20)
     line_height = max(22, font.getbbox("Mg")[3] - font.getbbox("Mg")[1] + 8)
-    title_height = 34 if title else 0
     padding_x = 16
     padding_y = 14
 
@@ -72,20 +70,13 @@ def RenderCodeImage(source, language, title, tmpdirs, style_name="default"):
         max_width = max(max_width, x)
 
     width = max_width + padding_x * 2
-    if title:
-        title_width = title_font.getbbox(title)[2] - title_font.getbbox(title)[0]
-        width = max(width, title_width + padding_x * 2)
-    height = title_height + padding_y * 2 + line_height * len(token_lines)
+    height = padding_y * 2 + line_height * len(token_lines)
 
     background = "#f8f8f8"
     image = Image.new("RGB", (width, height), background)
     draw = ImageDraw.Draw(image)
 
-    if title:
-        draw.rectangle((0, 0, width, title_height), fill="#eeeeee")
-        draw.text((padding_x, 6), title, font=title_font, fill="#333333")
-
-    y = title_height + padding_y
+    y = padding_y
     for line_tokens in token_lines:
         x = padding_x
         for token_type, text in line_tokens:
@@ -96,7 +87,7 @@ def RenderCodeImage(source, language, title, tmpdirs, style_name="default"):
         y += line_height
 
     digest = hashlib.sha256(
-        "\0".join([title, language, source, style_name]).encode("utf-8")
+        "\0".join([language, source, style_name]).encode("utf-8")
     ).hexdigest()[:16]
     output = code_dir / ("code-%s.png" % digest)
     image.save(output)
