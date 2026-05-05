@@ -4,7 +4,7 @@ FONT_DIR = Path(__file__).with_name("assets") / "fontawesome"
 
 if __name__ != "__main__":
     symb = {
-        'smile': "&#x9787;",
+        'smile': "&#9787;",
         'glass': "&#xf000;",
         'music': "&#xf001;",
         'search': "&#xf002;",
