@@ -71,7 +71,8 @@ def InsertImageRow(labelhtml, image_path):
 
 
 def StripCodeDirective(attrline):
-    return re.sub(r"(?<=\s)code(?:[=: ]+[A-Za-z0-9_.+\-#]+)?", "", attrline, count=1)
+    attrline = re.sub(r"(?<=\s)code(?:[=: ]+[A-Za-z0-9_.+\-#]+)?", "", attrline, count=1)
+    return re.sub(r"(?<=\s)style=[A-Za-z0-9_.+\-#]+", "", attrline, count=1)
 
 
 def ExtractVerbatimFillToken(attrline):
@@ -153,13 +154,15 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
             match = re.search(r"(\t|#) (.*)", line)
             label = match.group(2)
-            code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\" data=\"([^\"]*)\"/>", label)
+            code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\"(?: style=\"([^\"]+)\")? data=\"([^\"]*)\"/>", label)
             code_source = None
             code_language = None
+            code_style = "default"
             code_image_path = None
             if code_match:
                 code_language = code_match.group(1)
-                code_source = base64.b64decode(code_match.group(2)).decode("utf-8")
+                code_style = code_match.group(2) or "default"
+                code_source = base64.b64decode(code_match.group(3)).decode("utf-8")
                 label = label[:code_match.start()].rstrip()
 
             ntype = ""
@@ -168,7 +171,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             if code_source is not None:
                 if not tmpdir:
                     tmpdir.append(tempfile.mkdtemp())
-                code_image_path = RenderCodeImage(code_source, code_language, tmpdir)
+                code_image_path = RenderCodeImage(code_source, code_language, tmpdir, code_style)
                 try:
                     labelhtml, ntype, label = BuildNodeLabelHtml(
                         label,

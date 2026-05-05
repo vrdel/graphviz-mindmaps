@@ -113,14 +113,15 @@ def _CollectVerbatimNodeLine(lines, node_line_index, apply_inline_backtick_bold)
     return vrbtnode, body_index
 
 
-def ParseCodeLanguage(line):
+def ParseCodeDirective(line):
     match = re.search(r"(?:^|\s)code(?:[=: ]+([A-Za-z0-9_.+\-#]+))?", line)
     if not match:
-        return None
-    return match.group(1) or "text"
+        return None, None
+    style_match = re.search(r"(?:^|\s)style=([A-Za-z0-9_.+\-#]+)", line)
+    return match.group(1) or "text", style_match.group(1) if style_match else None
 
 
-def _CollectCodeNodeLine(lines, node_line_index, language):
+def _CollectCodeNodeLine(lines, node_line_index, language, style_name=None):
     body_index = node_line_index + 2
     body_lines = []
 
@@ -137,7 +138,8 @@ def _CollectCodeNodeLine(lines, node_line_index, language):
 
     source = "\n".join(body_lines)
     encoded = base64.b64encode(source.encode("utf-8")).decode("ascii")
-    codenode = lines[node_line_index] + "<CODEBLOCK lang=\"%s\" data=\"%s\"/>" % (language, encoded)
+    style_attr = " style=\"%s\"" % style_name if style_name else ""
+    codenode = lines[node_line_index] + "<CODEBLOCK lang=\"%s\"%s data=\"%s\"/>" % (language, style_attr, encoded)
     return codenode, body_index
 
 
@@ -166,9 +168,9 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
                 linesbymm.append(worklines[scan_index])
                 if "# " not in worklines[scan_index + 1] and level > tabroot:
                     linesbymm.append(worklines[scan_index + 1])
-                    language = ParseCodeLanguage(worklines[scan_index + 1])
+                    language, style_name = ParseCodeDirective(worklines[scan_index + 1])
                     if language:
-                        codenode, next_index = _CollectCodeNodeLine(worklines, scan_index, language)
+                        codenode, next_index = _CollectCodeNodeLine(worklines, scan_index, language, style_name)
                         linesbymm[-2] = codenode
                         cursor = next_index - 1
                     elif "verbatim" in worklines[scan_index + 1] or \

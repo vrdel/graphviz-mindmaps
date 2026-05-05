@@ -81,7 +81,7 @@ Code blocks can be highlighted and rendered as image-backed Graphviz nodes:
 
 ```text
 # Python snippet
-    : code python
+    : code python style=monokai
     :
     : def hello(name):
     :     return f"hello {name}"
