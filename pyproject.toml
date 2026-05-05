@@ -24,4 +24,5 @@ include-package-data = true
 include = ["graphviz_mindmaps*", "templates"]
 
 [tool.setuptools.package-data]
+graphviz_mindmaps = ["assets/fontawesome/*"]
 templates = ["**/*"]

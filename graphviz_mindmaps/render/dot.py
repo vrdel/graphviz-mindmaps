@@ -2,6 +2,7 @@ import re
 import subprocess
 import tempfile
 
+from graphviz_mindmaps.fontawesome import FONT_DIR
 from graphviz_mindmaps.constants import (
     DEFAULT_BGCOLOR,
     MAXDEPTH,
@@ -92,7 +93,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 bgcolor = custom_bg
             break
 
-    dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=LR;\n\tranksep=0.1;\n\tbgcolor=\"%s\";\n\n\tnode[fontname=\"%s\" fontsize=%s fontcolor=\"%s\" color=\"#000000\" gradientangle=\"90\" penwidth=2.5];\n" % (bgcolor, font["comic"], fontsize["m"], fontcolor["def"])
+    dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=LR;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[fontname=\"%s\" fontsize=%s fontcolor=\"%s\" color=\"#000000\" gradientangle=\"90\" penwidth=2.5];\n" % (FONT_DIR, bgcolor, font["comic"], fontsize["m"], fontcolor["def"])
     dotbuf += "\tedge[arrowhead=none color=\"#8a8a8a\" minlen=3 style=tapered penwidth=6 dir=forward arrowtail=none fontname=\"%s\" fontsize=\"%s\" fontcolor=\"%s\"];\n\n" % (font["comicb"], fontsize["l"], fontcolor["b"])
     dotbuf += "// %s\n" % (match.group(2))
     dotbuf += "\tsubgraph cluster000 {\n\n"
