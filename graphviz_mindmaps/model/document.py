@@ -14,3 +14,4 @@ class RenderSession:
 @dataclass
 class RenderRuntime:
     fontawesome_symb: dict
+    default_bgcolor: str

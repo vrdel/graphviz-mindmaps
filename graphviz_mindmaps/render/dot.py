@@ -6,7 +6,6 @@ import tempfile
 from graphviz_mindmaps.fontawesome import FONT_DIR
 from graphviz_mindmaps.render.code_image import RenderCodeImage
 from graphviz_mindmaps.constants import (
-    DEFAULT_BGCOLOR,
     MAXDEPTH,
     edgetype,
     font,
@@ -112,7 +111,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     match = re.search(r"(\t|#) (.*)", lines[0])
     title = match.group(2)
 
-    bgcolor = DEFAULT_BGCOLOR
+    bgcolor = runtime.default_bgcolor
     for line in lines[1:]:
         if re.search(r"\t(:|\|)\s*fname", line):
             custom_bg = ParseInlineAttrLine("bgcolor", line)

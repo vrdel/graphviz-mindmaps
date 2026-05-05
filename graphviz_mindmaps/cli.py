@@ -3,12 +3,12 @@
 import argparse
 import sys
 
-from graphviz_mindmaps.constants import DEFAULT_BGCOLOR
 from graphviz_mindmaps import fontawesome
 from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
 from graphviz_mindmaps.render.dot import GenDot
 from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
+from graphviz_mindmaps.theme import ApplyTheme, ThemeNames
 
 
 def build_parser():
@@ -17,6 +17,7 @@ def build_parser():
     parser.add_argument("-f", dest="files", nargs="+", help="mindmap outliner files")
     parser.add_argument("-p", dest="preview", action="store_true", help="preview with galaview.sh")
     parser.add_argument("-s", dest="scale", nargs="?", const="specified", help="scale image for specified percentage")
+    parser.add_argument("--theme", choices=ThemeNames(), default="default", help="render theme")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-d", dest="dotname", nargs="?", const="specified", help="generate .dot file instead of image")
     group.add_argument("-i", dest="jpgname", nargs="?", const="specified", help="override image filename")
@@ -35,9 +36,11 @@ def read_input_lines(files):
     return linesall
 
 
-def build_runtime():
+def build_runtime(theme_name):
+    default_bgcolor = ApplyTheme(theme_name)
     return RenderRuntime(
         fontawesome_symb=fontawesome.symb,
+        default_bgcolor=default_bgcolor,
     )
 
 
@@ -45,15 +48,15 @@ def main():
     parser = build_parser()
     argholder = parser.parse_args()
 
+    runtime = build_runtime(argholder.theme)
     session = RenderSession(
         dotbuf="",
         title="",
         notitle=False,
-        bgcolor=DEFAULT_BGCOLOR,
+        bgcolor=runtime.default_bgcolor,
         tmpdir=[],
         gvroot="/home/daniel/my_notes/",
     )
-    runtime = build_runtime()
 
     linesall = read_input_lines(argholder.files)
     for linesbymm in ExtractMindmapBlocks(linesall, ApplyInlineBacktickBold):
