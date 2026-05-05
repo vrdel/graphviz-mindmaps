@@ -1,3 +1,4 @@
+import base64
 import os
 import re
 import unicodedata
@@ -112,6 +113,34 @@ def _CollectVerbatimNodeLine(lines, node_line_index, apply_inline_backtick_bold)
     return vrbtnode, body_index
 
 
+def ParseCodeLanguage(line):
+    match = re.search(r"(?:^|\s)code(?:[=: ]+([A-Za-z0-9_.+\-#]+))?", line)
+    if not match:
+        return None
+    return match.group(1) or "text"
+
+
+def _CollectCodeNodeLine(lines, node_line_index, language):
+    body_index = node_line_index + 2
+    body_lines = []
+
+    while body_index < len(lines) and '# ' not in lines[body_index] \
+            and not re.search(r"\t\s*[a-zA-Z0-9]\s*", lines[body_index]):
+        if "\t:" in lines[body_index]:
+            body_lines.append(lines[body_index].lstrip("\t:").rstrip())
+        elif "\t|" in lines[body_index]:
+            body_lines.append(lines[body_index].lstrip("\t|").rstrip())
+        elif "\t;" in lines[body_index]:
+            body_lines.append(lines[body_index].lstrip("\t;").rstrip())
+
+        body_index += 1
+
+    source = "\n".join(body_lines)
+    encoded = base64.b64encode(source.encode("utf-8")).decode("ascii")
+    codenode = lines[node_line_index] + "<CODEBLOCK lang=\"%s\" data=\"%s\"/>" % (language, encoded)
+    return codenode, body_index
+
+
 def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
     blocks = []
     worklines = list(linesall)
@@ -137,7 +166,12 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
                 linesbymm.append(worklines[scan_index])
                 if "# " not in worklines[scan_index + 1] and level > tabroot:
                     linesbymm.append(worklines[scan_index + 1])
-                    if "verbatim" in worklines[scan_index + 1] or \
+                    language = ParseCodeLanguage(worklines[scan_index + 1])
+                    if language:
+                        codenode, next_index = _CollectCodeNodeLine(worklines, scan_index, language)
+                        linesbymm[-2] = codenode
+                        cursor = next_index - 1
+                    elif "verbatim" in worklines[scan_index + 1] or \
                             "verbat" in worklines[scan_index + 1] or \
                             "draw" in worklines[scan_index + 1]:
                         vrbtnode, next_index = _CollectVerbatimNodeLine(worklines, scan_index, apply_inline_backtick_bold)

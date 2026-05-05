@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import sys
 
@@ -50,8 +51,8 @@ def ResolveOutputRoot(gvroot, jpgname, environ=None):
 def CleanupTmpdir(tmpdir):
     if len(tmpdir) > 0:
         for path in tmpdir:
-            os.remove("%s/doodle.png" % (path))
-            os.removedirs(path)
+            if os.path.isdir(path):
+                shutil.rmtree(path)
     return []
 
 

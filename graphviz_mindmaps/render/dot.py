@@ -1,8 +1,10 @@
+import base64
 import re
 import subprocess
 import tempfile
 
 from graphviz_mindmaps.fontawesome import FONT_DIR
+from graphviz_mindmaps.render.code_image import RenderCodeImage
 from graphviz_mindmaps.constants import (
     DEFAULT_BGCOLOR,
     MAXDEPTH,
@@ -127,28 +129,46 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
             match = re.search(r"(\t|#) (.*)", line)
             label = match.group(2)
+            code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\" data=\"([^\"]*)\"/>", label)
+            code_source = None
+            code_language = None
+            if code_match:
+                code_language = code_match.group(1)
+                code_source = base64.b64decode(code_match.group(2)).decode("utf-8")
+                label = label[:code_match.start()].rstrip()
 
             ntype = ""
             vrbt, draw, textleft = ResolveNodeRenderFlags(nextline)
 
-            try:
-                labelhtml, ntype, label = BuildNodeLabelHtml(
-                    label,
-                    vrbt,
-                    draw,
-                    html_larrow1,
-                    html_rarrow1,
-                    html_larrow2,
-                    html_rarrow2,
-                    GenImgPath,
-                )
-            except (IndexError, KeyError) as exc:
-                print(exc, label)
+            if code_source is not None:
+                if not tmpdir:
+                    tmpdir.append(tempfile.mkdtemp())
+                image_path = RenderCodeImage(code_source, code_language, label, tmpdir)
+                labelhtml = [
+                    "<TABLE BORDER=\"0\" CELLBORDER=\"0\"><TR><TD CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\""
+                    + image_path
+                    + "\"/></TD></TR></TABLE>"
+                ]
+                ntype = "img"
+            else:
+                try:
+                    labelhtml, ntype, label = BuildNodeLabelHtml(
+                        label,
+                        vrbt,
+                        draw,
+                        html_larrow1,
+                        html_rarrow1,
+                        html_larrow2,
+                        html_rarrow2,
+                        GenImgPath,
+                    )
+                except (IndexError, KeyError) as exc:
+                    print(exc, label)
 
             state_obj = NodePrepState(ntype=ntype)
             fromnode, tonode, tabs = BuildNodeRefs(rootnodename, nodelevel, level)
 
-            if nextline.find("#") == -1 and state_obj.ntype != "img":
+            if nextline.find("#") == -1 and state_obj.ntype != "img" and code_source is None:
                 nextline = TokenizeNodeAttributeLine(nextline)
                 ApplyNodeAttributeTokens(
                     nextline,

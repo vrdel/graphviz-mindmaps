@@ -15,6 +15,7 @@ The repo currently provides user-facing command-line tools:
 The Python package depends on:
 
 - `Pillow`
+- `Pygments`
 
 Install with:
 
@@ -74,6 +75,16 @@ gvmm -f notes-1.otl notes-2.otl
 gvmm -f notes.otl -i output.jpg
 gvmm -f notes.otl -d output.dot
 gvmm -f notes.otl -s 80
+```
+
+Code blocks can be highlighted and rendered as image-backed Graphviz nodes:
+
+```text
+# Python snippet
+    : code python
+    :
+    : def hello(name):
+    :     return f"hello {name}"
 ```
 
 Build a montage from a YAML file:
