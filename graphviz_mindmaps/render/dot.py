@@ -1,8 +1,10 @@
+import base64
 import re
 import subprocess
 import tempfile
 
 from graphviz_mindmaps.fontawesome import FONT_DIR
+from graphviz_mindmaps.render.code_image import RenderCodeImage
 from graphviz_mindmaps.constants import (
     DEFAULT_BGCOLOR,
     MAXDEPTH,
@@ -53,6 +55,31 @@ from graphviz_mindmaps.render.label_html import (
     PostAttrProcLabel,
     PreAttrProcLabel,
 )
+
+
+def InsertImageRow(labelhtml, image_path):
+    open_row = (
+        "<TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"0\"><IMG SRC=\""
+        + image_path
+        + "\"/>"
+    )
+    if len(labelhtml) == 1 and "</TABLE>" in labelhtml[0]:
+        row = open_row + "</TD></TR>"
+        labelhtml[0] = labelhtml[0].replace("</TABLE>", row + "</TABLE>", 1)
+    else:
+        labelhtml.insert(len(labelhtml) - 1, "</TD></TR>" + open_row)
+
+
+def StripCodeDirective(attrline):
+    attrline = re.sub(r"(?<=\s)code(?:[=: ]+[A-Za-z0-9_.+\-#]+)?", "", attrline, count=1)
+    return re.sub(r"(?<=\s)style=[A-Za-z0-9_.+\-#]+", "", attrline, count=1)
+
+
+def ExtractVerbatimFillToken(attrline):
+    for token in attrline.split():
+        if ResolveVerbatimFillColorToken(token, vrbtcolors):
+            return token
+    return None
 
 
 def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
@@ -127,29 +154,63 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
             match = re.search(r"(\t|#) (.*)", line)
             label = match.group(2)
+            code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\"(?: style=\"([^\"]+)\")? data=\"([^\"]*)\"/>", label)
+            code_source = None
+            code_language = None
+            code_style = "default"
+            code_image_path = None
+            if code_match:
+                code_language = code_match.group(1)
+                code_style = code_match.group(2) or "default"
+                code_source = base64.b64decode(code_match.group(3)).decode("utf-8")
+                label = label[:code_match.start()].rstrip()
 
             ntype = ""
             vrbt, draw, textleft = ResolveNodeRenderFlags(nextline)
 
-            try:
-                labelhtml, ntype, label = BuildNodeLabelHtml(
-                    label,
-                    vrbt,
-                    draw,
-                    html_larrow1,
-                    html_rarrow1,
-                    html_larrow2,
-                    html_rarrow2,
-                    GenImgPath,
-                )
-            except (IndexError, KeyError) as exc:
-                print(exc, label)
+            if code_source is not None:
+                if not tmpdir:
+                    tmpdir.append(tempfile.mkdtemp())
+                code_image_path = RenderCodeImage(code_source, code_language, tmpdir, code_style)
+                try:
+                    labelhtml, ntype, label = BuildNodeLabelHtml(
+                        label,
+                        vrbt,
+                        draw,
+                        html_larrow1,
+                        html_rarrow1,
+                        html_larrow2,
+                        html_rarrow2,
+                        GenImgPath,
+                    )
+                except (IndexError, KeyError) as exc:
+                    print(exc, label)
+            else:
+                try:
+                    labelhtml, ntype, label = BuildNodeLabelHtml(
+                        label,
+                        vrbt,
+                        draw,
+                        html_larrow1,
+                        html_rarrow1,
+                        html_larrow2,
+                        html_rarrow2,
+                        GenImgPath,
+                    )
+                except (IndexError, KeyError) as exc:
+                    print(exc, label)
 
             state_obj = NodePrepState(ntype=ntype)
             fromnode, tonode, tabs = BuildNodeRefs(rootnodename, nodelevel, level)
+            verbatim_fill_token = None
 
             if nextline.find("#") == -1 and state_obj.ntype != "img":
-                nextline = TokenizeNodeAttributeLine(nextline)
+                attrline = StripCodeDirective(nextline) if code_source is not None else nextline
+                if vrbt or draw:
+                    verbatim_fill_token = ExtractVerbatimFillToken(attrline)
+                    if verbatim_fill_token:
+                        attrline = re.sub(r"(?<!\S)%s(?!\S)" % re.escape(verbatim_fill_token), "", attrline, count=1)
+                nextline = TokenizeNodeAttributeLine(attrline)
                 ApplyNodeAttributeTokens(
                     nextline,
                     tonode,
@@ -166,6 +227,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     subprocess,
                     bgcolor,
                 )
+                if verbatim_fill_token and state_obj.ntype in {"", "def"}:
+                    state_obj.ntype = verbatim_fill_token
 
             InsertSymbolRows(labelhtml, state_obj.symblist, state_obj.symbcolor, state_obj.symbsize, runtime.fontawesome_symb, fontcolor)
 
@@ -213,7 +276,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     SkipPositive(state_obj.linefstyle, s=1)
 
             if not ntype:
-                ntype = "def"
+                ntype = "node" if code_source is not None else "def"
 
             edgeattrs = state_obj.edgeattrs()
             AppendNodeEdge(edge, tabs, fromnode, tonode, ntype, edgeattrs, edgetype)
@@ -238,6 +301,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 draw,
                 textleft,
             )
+            if code_image_path:
+                InsertImageRow(parentlist[level]._label, code_image_path)
 
             nodelevel[level - 1] += 1
             for index in range(level, len(nodelevel) - 1):
