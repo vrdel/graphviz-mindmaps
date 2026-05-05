@@ -74,6 +74,13 @@ def StripCodeDirective(attrline):
     return re.sub(r"(?<=\s)code(?:[=: ]+[A-Za-z0-9_.+\-#]+)?", "", attrline, count=1)
 
 
+def ExtractVerbatimFillToken(attrline):
+    for token in attrline.split():
+        if ResolveVerbatimFillColorToken(token, vrbtcolors):
+            return token
+    return None
+
+
 def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     tree = Tree(
         nodetype,
@@ -192,9 +199,14 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
             state_obj = NodePrepState(ntype=ntype)
             fromnode, tonode, tabs = BuildNodeRefs(rootnodename, nodelevel, level)
+            verbatim_fill_token = None
 
             if nextline.find("#") == -1 and state_obj.ntype != "img":
                 attrline = StripCodeDirective(nextline) if code_source is not None else nextline
+                if vrbt or draw:
+                    verbatim_fill_token = ExtractVerbatimFillToken(attrline)
+                    if verbatim_fill_token:
+                        attrline = re.sub(r"(?<!\S)%s(?!\S)" % re.escape(verbatim_fill_token), "", attrline, count=1)
                 nextline = TokenizeNodeAttributeLine(attrline)
                 ApplyNodeAttributeTokens(
                     nextline,
@@ -212,6 +224,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     subprocess,
                     bgcolor,
                 )
+                if verbatim_fill_token and state_obj.ntype in {"", "def"}:
+                    state_obj.ntype = verbatim_fill_token
 
             InsertSymbolRows(labelhtml, state_obj.symblist, state_obj.symbcolor, state_obj.symbsize, runtime.fontawesome_symb, fontcolor)
 

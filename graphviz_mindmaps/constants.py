@@ -43,7 +43,7 @@ vrbtcolors = {
     "cyello": "#fcfddf",
     "corang": "#fdecdf",
     "cpink": "#fddff3",
-    "cwhite": "#ffffff",
+    "cwhite": "#fdfdfd",
     "def": "#dfeafd",
 }
 
