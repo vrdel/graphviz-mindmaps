@@ -75,7 +75,11 @@ gvmm -f notes-1.otl notes-2.otl
 gvmm -f notes.otl -i output.jpg
 gvmm -f notes.otl -d output.dot
 gvmm -f notes.otl -s 80
+gvmm -f notes.otl --theme nord
+gvmm -f notes.otl --theme gruvbox
 ```
+
+Supported themes are `default`, `nord`, `papercolor`, `papercolor-dark`, `monokai`, `gruvbox`, and `solarized`.
 
 Code blocks can be highlighted and rendered as image-backed Graphviz nodes:
 
