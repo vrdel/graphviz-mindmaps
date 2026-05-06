@@ -299,6 +299,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 vrbt,
                 draw,
                 textleft,
+                state_obj.fontname,
             )
             if code_image_path:
                 InsertImageRow(parentlist[level]._label, code_image_path)

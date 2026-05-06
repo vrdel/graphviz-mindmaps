@@ -6,6 +6,7 @@ from graphviz_mindmaps.constants import (
     edgecolors,
     edgeends,
     edgestyles,
+    font,
     fontcolor,
     fontstyle,
     linecolors,
@@ -304,9 +305,19 @@ def ApplyNodeAttributeTokens(
     bgcolor,
 ):
     dood_count = 0
+    fontnames = {
+        "fontcomic": font["comic"],
+        "fontmono": font["mono"],
+        "fontdefault": font["comic"],
+        "fontsans": "Dejavu Sans",
+        "fontserif": "Dejavu Serif",
+    }
 
     for token in tokens:
         if token == "textleft":
+            continue
+        if token in fontnames:
+            state.fontname = fontnames[token]
             continue
 
         resolved_ntype = resolve_color_node_type_token(token)

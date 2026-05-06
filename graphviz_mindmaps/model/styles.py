@@ -22,6 +22,7 @@ class NodePrepState:
     symbcolor: list = field(default_factory=list)
     symbsize: list = field(default_factory=list)
     symblist: list = field(default_factory=list)
+    fontname: str | None = None
 
     def edgeattrs(self):
         edgeattrs = ""
