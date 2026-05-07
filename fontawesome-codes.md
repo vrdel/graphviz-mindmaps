@@ -2,6 +2,8 @@
 
 Generated from Font Awesome 4.7.0 Free. The package also ships `graphviz_mindmaps/assets/fontawesome/FontAwesome.otf`.
 
+Rendered icon catalog: [fontawesome-codes.html](fontawesome-codes.html)
+
 ```
 'smile': "&#x9787;",
 'glass': "&#xf000;",
