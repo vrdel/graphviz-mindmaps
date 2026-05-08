@@ -69,6 +69,8 @@
 					: impog
 				# impob
 					: impob
+				# impoy
+					: impoy
 			# draw
 				: draw
 				:

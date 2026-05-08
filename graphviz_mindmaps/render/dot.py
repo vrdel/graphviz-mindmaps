@@ -282,7 +282,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 SkipUnscopedWords(state_obj.wordcolor, s=2)
                 SkipUnscopedWords(state_obj.wordfstyle, s=2)
 
-            if ntype in {"title", "quest", "date", "impor", "impog", "impob"} or (ntype != "img" and "FontAwesome" in labelhtml[1]):
+            if ntype in {"title", "quest", "date", "impor", "impog", "impob", "impoy"} or (ntype != "img" and "FontAwesome" in labelhtml[1]):
                 if state_obj.wordcolor:
                     SkipPositiveLineScopedWords(state_obj.wordcolor, lsinw=1)
                 if state_obj.wordfsize:

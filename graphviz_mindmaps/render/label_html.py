@@ -213,7 +213,7 @@ def PreAttrProcLabel(label, ntype, resolve_base_node_type_token, symbol_map, fon
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + symbol_map["reply"] + "</FONT></TD></TR><TR><TD>")
     elif btype == "saying":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"15\">" + symbol_map["quote-left"] + "  " + symbol_map["quote-right"] + "</FONT></TD></TR><TR><TD>")
-    elif btype == "impor" or btype == "impog" or btype == "impob":
+    elif btype == "impor" or btype == "impog" or btype == "impob" or btype == "impoy":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + symbol_map["warning"] + "</FONT></TD></TR><TR><TD>")
     elif btype == "todo":
         label.insert(1, "<FONT FACE=\"FontAwesome\" COLOR=\"#B32727\" POINT-SIZE=\"25\">" + symbol_map["list-ol"] + "</FONT></TD></TR><TR><TD>")

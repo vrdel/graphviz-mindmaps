@@ -244,6 +244,8 @@
 					: impog
 				# impob
 					: impob
+				# impoy
+					: impoy
 			# draw
 				: draw l2w[2-4]r l3w2g l4w2c
 				:
