@@ -25,6 +25,36 @@ def is_justfile(path: Path) -> bool:
     return path.name in JUSTFILE_NAMES or path.suffix in JUSTFILE_SUFFIXES
 
 
+def read_text(path: Path) -> str | None:
+    try:
+        return path.read_text()
+    except OSError:
+        return None
+
+
+def find_related_justfile(source: Path) -> Path | None:
+    if source.suffix.lower() not in MINDMAP_SUFFIXES | MONTAGE_SUFFIXES:
+        return None
+
+    needles = {source.name, str(source)}
+    for pattern in ("justfile", "Justfile", "*.just"):
+        for path in sorted(source.parent.glob(pattern)):
+            if not path.is_file():
+                continue
+            contents = read_text(path)
+            if contents is None:
+                continue
+            if any(needle in contents for needle in needles):
+                return path
+    return None
+
+
+def resolve_collection_source(source: Path) -> Path:
+    if is_justfile(source):
+        return source
+    return find_related_justfile(source) or source
+
+
 def resolve_reference(base: Path, value: str) -> Path:
     path = Path(value).expanduser()
     if path.is_absolute():
@@ -123,7 +153,7 @@ def collect_path(path: Path, files: dict[Path, Path]) -> None:
 
 def collect_related_files(source: Path) -> list[Path]:
     files: dict[Path, Path] = {}
-    collect_path(source, files)
+    collect_path(resolve_collection_source(source), files)
     return sorted(files)
 
 

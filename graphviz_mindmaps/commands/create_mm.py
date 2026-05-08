@@ -8,6 +8,7 @@ from pathlib import Path
 
 DEFAULT_OTL = "mindmap-01.otl"
 DEFAULT_MONTAGE = "montage.yml"
+DEFAULT_OUTPUT = "final_montage.jpg"
 DEFAULT_WIKI = "Template.wiki"
 DEFAULT_JUSTFILE = "justfile"
 
@@ -26,6 +27,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help=f"filename of otl mindmap ({DEFAULT_OTL})")
     parser.add_argument("-g", dest="montage", default=DEFAULT_MONTAGE,
                         help=f"filename of montage ({DEFAULT_MONTAGE})")
+    parser.add_argument("-o", dest="output",
+                        help=f"filename of final montage image ({DEFAULT_OUTPUT})")
     parser.add_argument("-w", dest="wiki", default=DEFAULT_WIKI,
                         help=f"filename of vimwiki ({DEFAULT_WIKI})")
     parser.add_argument("-f", dest="justfile",
@@ -93,6 +96,8 @@ def create_montage(args: argparse.Namespace, template_dir: Path) -> None:
 
     if args.scale > 0:
         replace_in_file(justfile_path, 'scale := "60"', f'scale := "{args.scale}"')
+    if args.output:
+        replace_in_file(justfile_path, DEFAULT_OUTPUT, args.output)
 
 
 def main(argv: list[str] | None = None) -> int:
