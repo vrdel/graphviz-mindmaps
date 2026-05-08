@@ -81,6 +81,29 @@ def ExtractVerbatimFillToken(attrline):
     return None
 
 
+def ResolveLeafNodeType(lines):
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        leaf_type = ParseInlineAttrLine("leaf", line)
+        if not leaf_type:
+            continue
+        resolved = ResolveColorNodeTypeToken(leaf_type, nodetype)
+        if not resolved:
+            raise ValueError("unknown leaf node type: %s" % leaf_type)
+        return resolved
+    return "def"
+
+
+def IsOutlineLeaf(lines, index, level, tabnum):
+    for candidate in lines[index + 1:]:
+        if not re.search(r"(\t#) (.*)", candidate):
+            continue
+        next_level = candidate[:candidate.find("#")].count("\t") - tabnum
+        return next_level <= level
+    return True
+
+
 def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     tree = Tree(
         nodetype,
@@ -128,12 +151,13 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
     dotname = "%s.dot" % (match.group(2))
     jpgname = "%s.jpg" % (match.group(2))
+    leaf_ntype = ResolveLeafNodeType(lines)
 
     edge, arrlines = [], []
     arrend = {}
     nodelevel = [1] * MAXDEPTH
 
-    for line in lines[1:]:
+    for line_index, line in enumerate(lines[1:], start=1):
         if re.search(r"\t(:|\|)\s*fname", line):
             jpgname, should_hide_title = ParseFnameLine("fname", line)
             jpgname = jpgname.strip()
@@ -232,6 +256,14 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             InsertSymbolRows(labelhtml, state_obj.symblist, state_obj.symbcolor, state_obj.symbsize, runtime.fontawesome_symb, fontcolor)
 
             ntype = state_obj.ntype
+            if not ntype:
+                if code_source is not None:
+                    ntype = "node"
+                elif IsOutlineLeaf(lines, line_index, level, tabnum):
+                    ntype = leaf_ntype
+                else:
+                    ntype = "def"
+                state_obj.ntype = ntype
             PreAttrProcLabel(labelhtml, ntype, ResolveBaseNodeTypeToken, runtime.fontawesome_symb, fontcolor)
 
             if vrbt or draw:
@@ -273,9 +305,6 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     SkipPositive(state_obj.linefsize, s=1)
                 if state_obj.linefstyle and not state_obj.linefstyle[0][0] == 0:
                     SkipPositive(state_obj.linefstyle, s=1)
-
-            if not ntype:
-                ntype = "node" if code_source is not None else "def"
 
             edgeattrs = state_obj.edgeattrs()
             AppendNodeEdge(edge, tabs, fromnode, tonode, ntype, edgeattrs, edgetype)
