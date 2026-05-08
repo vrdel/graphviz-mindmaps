@@ -11,6 +11,8 @@ DEFAULT_PYENV_ENV = "graphviz-mindmap"
 SUPPORTED_COMMANDS = (
     "gvmm",
     "create-mm",
+    "copy-mm",
+    "move-mm",
     "target-make",
     "montage",
     "montage-title",
@@ -25,6 +27,9 @@ def build_parser() -> argparse.ArgumentParser:
             "examples:\n"
             "  %(prog)s gvmm -f notes.otl\n"
             "  %(prog)s create-mm -m\n"
+            "  %(prog)s copy-mm justfile archive/\n"
+            "  %(prog)s copy-mm montage.yml archive/\n"
+            "  %(prog)s move-mm notes.otl archive/\n"
             "  %(prog)s target-make notes.otl\n"
             "  %(prog)s montage -o output.jpg montage.yml\n"
             "  %(prog)s montage-title -s s -t title image.jpg\n"

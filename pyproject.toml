@@ -13,6 +13,8 @@ dependencies = ["Pillow", "Pygments"]
 [project.scripts]
 gvmm = "graphviz_mindmaps.cli:main"
 "create-mm" = "graphviz_mindmaps.commands.create_mm:main"
+"copy-mm" = "graphviz_mindmaps.commands.copy_mm:main"
+"move-mm" = "graphviz_mindmaps.commands.move_mm:main"
 "montage" = "graphviz_mindmaps.tools.montage:main"
 "montage-title" = "graphviz_mindmaps.tools.montage_title:main"
 "target-make" = "graphviz_mindmaps.commands.target_make:main"
