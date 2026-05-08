@@ -15,7 +15,8 @@ DEFAULT_FONT = "graphviz_mindmaps/assets/fontawesome/FontAwesome.otf"
 def parse_items(source: pathlib.Path) -> list[tuple[str, int, str]]:
     text = source.read_text()
     matches = re.findall(r"\s*'([^']+)':\s*\"&#(?:x)?([0-9a-fA-F]+);\",", text)
-    return [(name, *parse_code(raw)) for name, raw in matches]
+    items = [(name, *parse_code(raw)) for name, raw in matches]
+    return sorted(items, key=lambda item: item[0].lower())
 
 
 def parse_code(raw: str) -> tuple[int, str]:
