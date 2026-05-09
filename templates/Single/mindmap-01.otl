@@ -290,7 +290,7 @@
 				: commen
 			# notice dashed border
 				: w2r
-		# start subgrapha s title
+		# start subgraph with title
 		# ---
 		# sggtstart"title"
 			: sggtstart"title"
@@ -298,10 +298,20 @@
 				: w2r underl
 		# something in between
 			: commen
-		# end subgrapha
+		# end subgraphs
 		# ---
 		# sggtend"title"
 			: sggtend node
+		# sgcs'this is title'
+			: sgcs'this is a title'
+			# notice solid border
+				: w2r
+			# sgw
+				: sgw
+				# subgraph within subgraph
+				# ---
+				# no title
+					:
 	# node text
 		:
 		# implication
@@ -399,6 +409,16 @@
 					: line3
 					:  : l1mr l2mg l3my
 					:
+		# fonts
+			:
+			# commen fontserif
+				: commen fontserif
+				# commen fontsans
+					: commen fontsans
+			# commen it fontserif
+				: commen it fontserif
+				# commen ld fontsans
+					: commen ld fontsans
 	# fontawesome icons
 		:
 		# symb=smile:glass:music:search

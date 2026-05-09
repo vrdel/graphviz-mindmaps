@@ -4,7 +4,7 @@ montage := "montage.yml"
 wiki := "Template.wiki"
 output := "final_montage.jpg"
 scale := "60"
-background := "#4b5262"
+background := "#efefef"
 
 build target:
     case "{{target}}" in \
