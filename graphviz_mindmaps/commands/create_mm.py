@@ -9,6 +9,7 @@ from pathlib import Path
 DEFAULT_OTL = "mindmap-01.otl"
 DEFAULT_MONTAGE = "montage.yml"
 DEFAULT_OUTPUT = "final_montage.jpg"
+DEFAULT_WIKI_OUTPUT = "Montage_montage.jpg"
 DEFAULT_WIKI = "Template.wiki"
 DEFAULT_JUSTFILE = "justfile"
 
@@ -98,6 +99,7 @@ def create_montage(args: argparse.Namespace, template_dir: Path) -> None:
         replace_in_file(justfile_path, 'scale := "60"', f'scale := "{args.scale}"')
     if args.output:
         replace_in_file(justfile_path, DEFAULT_OUTPUT, args.output)
+        replace_in_file(wiki_path, DEFAULT_WIKI_OUTPUT, args.output)
 
 
 def main(argv: list[str] | None = None) -> int:
