@@ -127,7 +127,7 @@ def _apply_palette(palette):
         "verbatim": _component(constants.vrbtcolors["def"], border=border, fontname=constants.font["mono"]),
         "commen": "shape=note fontname=\"%s\" fontsize=\"%s\" margin=\"0.2\" style=\"radial\" fillcolor=\"%s\" color=\"%s\" fontcolor=\"%s\"" % (constants.font["comic"], constants.fontsize["l"], palette["yellow_bg"], border, fg),
         "term": "shape=note fontname=\"%s\" gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15\" fillcolor=\"%s\" color=\"%s\" fontcolor=\"%s\"" % (constants.font["mono"], panel, border, fg),
-        "check": "shape=rarrow margin=\"0.20\" style=\"filled\" fillcolor=\"%s\" fontcolor=\"%s\" color=\"%s\"" % (blue, fg, blue),
+        "check": "shape=rarrow margin=\"0.20\" style=\"filled\" fillcolor=\"%s\" fontcolor=\"%s\" color=\"%s\"" % (panel, fg, blue),
         "todo": "shape=box margin=\"0.20\" style=\"filled, diagonals\" fillcolor=\"%s\" fontcolor=\"%s\" color=\"%s\"" % (palette["yellow_bg"], fg, yellow),
         "decisi": _node(palette["orange_bg"], border=orange, shape="diamond", fontcolor=fg),
         "saying": _node(palette["cyan_bg"], border=cyan, shape="egg", style="radial", fontcolor=fg, margin="0.0,0.15"),
