@@ -122,7 +122,7 @@ edgecolors = {
 }
 
 edgestyles = {"s": "solid", "d": "dashed", "t": "dotted", "l": "bold"}
-edgeends = {"a": "empty", "m": "odiamond", "o": "odot", "v": "open", "x": "obox"}
+edgeends = {"a": "normal", "m": "odiamond", "o": "odot", "v": "open", "x": "obox"}
 arrcolors = {"d": "#5a5a5a", "r": "#AD3E39", "g": "#45A135", "b": "#395BAD", "y": "#A6A037", "c": "#39ACAD", "p": "#A837A0"}
 
 html_rarrow1 = "<FONT FACE=\"FontAwesome\" POINT-SIZE=\"13\" COLOR=\"#6E1B31\">&#xf061;</FONT>"
