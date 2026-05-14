@@ -5,6 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 from pygments import lex
 from pygments.lexers import get_lexer_by_name
 from pygments.styles import get_style_by_name
+from pygments.token import Token
 from pygments.util import ClassNotFound
 
 
@@ -20,12 +21,22 @@ def _load_font(size):
 
 
 def _style_color(style, token_type, fallback):
-    while token_type is not None:
-        style_def = style.style_for_token(token_type)
+    while token_type not in {None, Token}:
+        try:
+            style_def = style.style_for_token(token_type)
+        except KeyError:
+            token_type = token_type.parent
+            continue
         color = style_def.get("color")
         if color:
             return "#" + color
         token_type = token_type.parent
+    try:
+        color = style.style_for_token(Token).get("color")
+        if color:
+            return "#" + color
+    except KeyError:
+        pass
     return fallback
 
 
