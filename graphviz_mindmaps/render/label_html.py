@@ -51,6 +51,27 @@ def ConvertLinebreakMarkers(text):
     return protected
 
 
+def EscapeResidualHtmlAngles(text):
+    protected_tags = {}
+
+    def protect_tag(match):
+        key = "__GVMM_HTML_%d__" % len(protected_tags)
+        protected_tags[key] = match.group(0)
+        return key
+
+    protected = re.sub(
+        r"</?(?:B|I|U|FONT)(?:\s+[^<>]*)?/?>|<BR/>|<TAB>|<WHITESP>",
+        protect_tag,
+        text,
+    )
+    protected = protected.replace("<", "&lt;").replace(">", "&gt;")
+
+    for key, value in protected_tags.items():
+        protected = protected.replace(key, value)
+
+    return protected
+
+
 def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larrow2, html_rarrow2, img_path_resolver):
     ntype = ""
 
@@ -109,6 +130,8 @@ def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larro
                 )
 
         token_index += 1
+
+    labelhtml = [EscapeResidualHtmlAngles(token) for token in labelhtml]
 
     labelhtml.insert(0, "<TABLE CELLBORDER=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>")
     i = 1
