@@ -259,7 +259,7 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
     m = re.search('((arr[0-9]+)?([rgbycp])?(t[0-9]+)?(start|end)([\'\"].*[\'\"])?)?', k)
     if m.group(1):
         if m.group(5) == "start":
-            penwidth = 5 if not m.group(4) else int(m.group(4)[1:])
+            penwidth = 3 if not m.group(4) else int(m.group(4)[1:])
             arrcolor = arrcolors["d"] if not m.group(3) else arrcolors[m.group(3)]
             arrlabel = "label=<<FONT COLOR=\"%s\">%s</FONT>> " % (fontcolor['r'], m.group(6).strip().strip("\'\"")) if m.group(6) else ""
             arrlines.append([m.group(2)[3:], [tonode], "[minlen=\"0.1\" maxlen=\"0.1\" dir=\"forward\" arrowtail=\"none\" arrowhead=\"vee\" arrowsize=\"2\" style=\"dashed\" constraint=\"false\" color=\"%s\" arrowsize=\"%f\" penwidth=\"%i\" %s]" % (arrcolor, math.sqrt(penwidth / 2), penwidth, arrlabel.replace(';', '<BR/>'))])
