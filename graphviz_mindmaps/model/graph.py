@@ -65,7 +65,7 @@ import re
 
 class Tree:
     class Node:
-        def __init__(self, tree, nodename, label=None, tabs="", ntype=None, parent=None, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linedate=None, verbatim=False, draw=False, fontname=None):
+        def __init__(self, tree, nodename, label=None, tabs="", ntype=None, parent=None, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, verbatim=False, draw=False, fontname=None):
             self._tree = tree
             self._ntype = ntype
             self._nodename = nodename
@@ -77,6 +77,7 @@ class Tree:
             self._linecolor = linecolor if linecolor is not None else []
             self._linefsize = linefsize if linefsize is not None else []
             self._linefstyle = linefstyle if linefstyle is not None else []
+            self._linefont = linefont if linefont is not None else []
             self._wordfsize = wordfsize if wordfsize is not None else []
             self._wordfstyle = wordfstyle if wordfstyle is not None else []
             self._linedate = linedate if linedate is not None else []
@@ -160,6 +161,9 @@ class Tree:
         def linefstyle(self):
             for value in self._linefstyle:
                 self._lineattr("<TD>", "<TD><", [value], "</%s>" % (value[1]))
+
+        def linefont(self):
+            self._lineattr("<TD>", "<TD><FONT FACE=", self._linefont, "</FONT>")
 
         def colorifylines(self):
             for value in self._linecolor:
@@ -424,25 +428,26 @@ class Tree:
         self._addchild(tabs + "}", p)
         return c
 
-    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=None, lc=None, ws=None, ls=None, wf=None, lf=None, ld=None, vrbt=False, draw=False, fontname=None):
-        c = self.Node(self, nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, ld, vrbt, draw, fontname)
+    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=None, lc=None, ws=None, ls=None, wf=None, lf=None, lfont=None, ld=None, vrbt=False, draw=False, fontname=None):
+        c = self.Node(self, nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, lfont, ld, vrbt, draw, fontname)
         c._parent = p
         p._child.insert(0, c)
         return c
 
-    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None):
+    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None):
         sgattr = ""
         if sgcolor and sgcolor[0] == "s":
             self._addchild_rev("", ["}"], tabs, "sgwrap", p)
         self._addchild_rev("", ["}"], tabs, "sgwrap", p)
         if sgtitle:
             self._addchild_rev("", ["label = <<TABLE CELLBORDER=\"0\" CELLPADDING=\"3\" CELLSPACING=\"3\" BORDER=\"0\"><TR><TD BGCOLOR=\"#E9ED5F\" COLOR=\"#000000\"><U>%s</U></TD></TR></TABLE>>" % (sgtitle)], tabs, "sgwrap", p)
-        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, linedate, vrbt, draw, fontname)
+        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, linefont, linedate, vrbt, draw, fontname)
         c.wordfsize()
         c.wordfstyle()
         c.linefsize()
         c.colorifywords()
         c.linefstyle()
+        c.linefont()
         c.colorifylines()
         c.linedate()
 

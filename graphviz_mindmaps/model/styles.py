@@ -10,6 +10,7 @@ class NodePrepState:
     linecolor: list = field(default_factory=list)
     linefsize: list = field(default_factory=list)
     linefstyle: list = field(default_factory=list)
+    linefont: list = field(default_factory=list)
     linedate: list = field(default_factory=list)
     sgcolor: list = field(default_factory=list)
     sgtitle: list = field(default_factory=list)

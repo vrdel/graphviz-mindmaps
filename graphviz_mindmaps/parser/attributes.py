@@ -13,6 +13,13 @@ from graphviz_mindmaps.constants import (
     subgraphcolors,
 )
 
+fontface = {
+    "fd": font["comic"],
+    "fm": font["mono"],
+    "fa": "Dejavu Sans",
+    "fe": "Dejavu Serif",
+}
+
 
 def ResolveColorNodeTypeToken(token, nodetype):
     if token in nodetype:
@@ -98,12 +105,14 @@ def ResolveSymbolNames(spec, symbol_map):
 
 
 def ParseAttributeLine(k, tonode, bgcolor, *args):
-    wordcolor, wordfsize, wordfstyle, \
-            linecolor, linefsize, linefstyle, \
-            arrlines, arrend, \
-            sgcolor, sgtitle, sgstyle, \
-            edgecolor, edgestyle, edgend, edgethick, edglabel, \
-            symbcolor, symbsize, linedate = args
+    (
+        wordcolor, wordfsize, wordfstyle,
+        linecolor, linefsize, linefstyle, linefont,
+        arrlines, arrend,
+        sgcolor, sgtitle, sgstyle,
+        edgecolor, edgestyle, edgend, edgethick, edglabel,
+        symbcolor, symbsize, linedate,
+    ) = args
 
     def ParseIdxSpec(spec, prefix):
         idx = []
@@ -186,6 +195,48 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
                     linecolor.append([li, linecolors[m.group(2)[1:]], False])
                 else:
                     linecolor.append([li, fontcolor[m.group(2)], True])
+
+    m = re.search(
+        r'^((?:E?l)(?:[0-9]+|\[[0-9,\-]+\]))'
+        r'((?:(?:f[maed])|(?:f[0-9]+)|(?:ld|ul|st|it))+)$',
+        k,
+    )
+    if m and m.group(1):
+        suffix = m.group(2)
+        if re.search(r"f[maed]", suffix):
+            lprefix = "El" if m.group(1).startswith("El") else "l"
+            lineidx = ParseIdxSpec(m.group(1), lprefix)
+            parsed_font = None
+            parsed_size = None
+            parsed_styles = []
+            while suffix:
+                if suffix[:2] in fontface:
+                    parsed_font = suffix[:2]
+                    suffix = suffix[2:]
+                    continue
+                size_match = re.match(r"f([0-9]+)", suffix)
+                if size_match:
+                    parsed_size = size_match.group(1)
+                    suffix = suffix[len(size_match.group(0)):]
+                    continue
+                if suffix[:2] in fontstyle:
+                    parsed_styles.append(suffix[:2])
+                    suffix = suffix[2:]
+                    continue
+                break
+            for li in lineidx:
+                if parsed_font:
+                    entry = [li, fontface[parsed_font]]
+                    if entry not in linefont:
+                        linefont.append(entry)
+                if parsed_size:
+                    entry = [li, parsed_size]
+                    if entry not in linefsize:
+                        linefsize.append(entry)
+                for style_token in parsed_styles:
+                    entry = [li, fontstyle[style_token]]
+                    if entry not in linefstyle:
+                        linefstyle.append(entry)
 
     m = re.search(r'((?:E?l)(?:[0-9]+|\[[0-9,\-]+\]))date', k)
     if m and m.group(1):
@@ -288,6 +339,30 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
             edglabel.append("label=<<FONT COLOR=\"%s\">%s</FONT>>" % (fontcolor['r'], m.group(6).strip().strip("\"").replace(';', '<BR/>')))
 
 
+def NormalizeAttributeTokens(tokens):
+    normalized = []
+    index = 0
+    linefont_pattern = re.compile(
+        r'^((?:E?l)(?:[0-9]+|\[[0-9,\-]+\]))'
+        r'((?:(?:f[maed])|(?:ld|ul|st|it))+)$'
+    )
+
+    while index < len(tokens):
+        token = tokens[index]
+        if (
+            index + 1 < len(tokens)
+            and linefont_pattern.match(token)
+            and re.match(r"^f[0-9]+$", tokens[index + 1])
+        ):
+            normalized.append(token + tokens[index + 1])
+            index += 2
+            continue
+        normalized.append(token)
+        index += 1
+
+    return normalized
+
+
 def ApplyNodeAttributeTokens(
     tokens,
     tonode,
@@ -313,7 +388,7 @@ def ApplyNodeAttributeTokens(
         "fontserif": "Dejavu Serif",
     }
 
-    for token in tokens:
+    for token in NormalizeAttributeTokens(tokens):
         if token == "textleft":
             continue
         if token in fontnames:
@@ -334,6 +409,7 @@ def ApplyNodeAttributeTokens(
                 state.linecolor,
                 state.linefsize,
                 state.linefstyle,
+                state.linefont,
                 arrlines,
                 arrend,
                 state.sgcolor,
@@ -368,7 +444,7 @@ def ApplyNodeAttributeTokens(
             doodlist = tokval[1].split(":")
             if len(doodlist) > 1:
                 tmpdir.append(tempfile_module.mkdtemp())
-                exestring = "montage %s -geometry +3+0                                         -tile %dx -background Transparent %s/doodle.png" % (
+                exestring = "montage %s -geometry +3+0 -tile %dx -background Transparent %s/doodle.png" % (
                     " ".join(doodlist),
                     len(doodlist),
                     tmpdir[-1],
@@ -376,14 +452,14 @@ def ApplyNodeAttributeTokens(
                 if subprocess_module.call(exestring, shell=True) == 0:
                     labelhtml.insert(
                         len(labelhtml) - 1,
-                        "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"10\"                                            BORDER=\"0\"><IMG SRC=\""
+                        "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"10\" BORDER=\"0\"><IMG SRC=\""
                         + "%s/doodle.png" % (tmpdir[-1])
                         + "\"/>",
                     )
             else:
                 labelhtml.insert(
                     len(labelhtml) - 1,
-                    "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"10\"                                        BORDER=\"0\"><IMG SRC=\""
+                    "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"10\" BORDER=\"0\"><IMG SRC=\""
                     + gen_img_path(tokval[1])
                     + "\"/>",
                 )

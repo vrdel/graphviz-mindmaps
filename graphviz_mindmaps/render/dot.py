@@ -308,6 +308,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     SkipPositive(state_obj.linefsize, s=1)
                 if state_obj.linefstyle and not state_obj.linefstyle[0][0] == 0:
                     SkipPositive(state_obj.linefstyle, s=1)
+                if state_obj.linefont and not state_obj.linefont[0][0] == 0:
+                    SkipPositive(state_obj.linefont, s=1)
 
             if ntype == "term" or ntype == "link":
                 if state_obj.linecolor and not state_obj.linecolor[0][0] == 0:
@@ -316,6 +318,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     SkipPositive(state_obj.linefsize, s=1)
                 if state_obj.linefstyle and not state_obj.linefstyle[0][0] == 0:
                     SkipPositive(state_obj.linefstyle, s=1)
+                if state_obj.linefont and not state_obj.linefont[0][0] == 0:
+                    SkipPositive(state_obj.linefont, s=1)
 
             edgeattrs = state_obj.edgeattrs()
             AppendNodeEdge(edge, tabs, fromnode, tonode, ntype, edgeattrs, edgetype)
@@ -332,6 +336,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 state_obj.linefsize,
                 state_obj.wordfstyle,
                 state_obj.linefstyle,
+                state_obj.linefont,
                 state_obj.linedate,
                 state_obj.sgcolor_value(),
                 state_obj.sgtitle_value(),
