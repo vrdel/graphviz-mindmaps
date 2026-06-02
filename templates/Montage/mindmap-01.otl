@@ -419,6 +419,23 @@
 				: commen it fontserif
 				# commen ld fontsans
 					: commen ld fontsans
+			# line font faces
+				:
+				# l1fm
+				# l2fa
+				# l3fe
+					: node l1fm l2fa l3fe
+					# l1itfe f18
+					# line 2 serif italic size 18
+					# line 3 serif italic size 18
+						: node l[1-3]itfe f18
+				# verbatim line font faces
+					: verbatim l1fm l2fa l3fef18
+					:
+					: l1fm
+					: l2fa
+					: l3fef18
+					:
 	# fontawesome icons
 		:
 		# symb=smile:glass:music:search
