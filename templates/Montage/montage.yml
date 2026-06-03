@@ -3,9 +3,9 @@ entries:
   - image: mindmap-01.jpg
   - image: mindmap-01.jpg
   - new_row: true
-  - join: [mindmap-01.jpg, mindmap-01.jpg]
+  - column: [mindmap-01.jpg, mindmap-01.jpg]
   - submontage:
       title: joint submontage
       background: "#efefef"
       entries:
-        - join: [mindmap-01.jpg, mindmap-01.jpg]
+        - column: [mindmap-01.jpg, mindmap-01.jpg]
