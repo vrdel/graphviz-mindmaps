@@ -8,9 +8,21 @@ def BuildNodeRefs(rootnodename, nodelevel, level):
     return fromnode, tonode, tabs
 
 
+def ResolveEdgeType(ntype, edgetype):
+    if ntype in edgetype:
+        return edgetype[ntype]
+
+    match = re.match(r"^([a-z]+)-?[0-9]+$", ntype)
+    if match:
+        return edgetype.get(match.group(1))
+
+    return None
+
+
 def AppendNodeEdge(edge, tabs, fromnode, tonode, ntype, edgeattrs, edgetype):
-    if ntype in edgetype and not edgeattrs:
-        edge.append("%s%s:e -> %s:w[%s];\n" % (tabs, fromnode, tonode, edgetype[ntype]))
+    resolved_edgetype = ResolveEdgeType(ntype, edgetype)
+    if resolved_edgetype and not edgeattrs:
+        edge.append("%s%s:e -> %s:w[%s];\n" % (tabs, fromnode, tonode, resolved_edgetype))
     elif edgeattrs:
         edge.append("%s%s:e -> %s:w[%s];\n" % (tabs, fromnode, tonode, edgeattrs))
     else:
