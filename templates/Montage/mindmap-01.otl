@@ -421,9 +421,9 @@
 					: commen ld fontsans
 			# line font faces
 				:
-				# l1fm
-				# l2fa
-				# l3fe
+				# l1fm - font mono
+				# l2fa - font sans
+				# l3fe - font serif
 					: node l1fm l2fa l3fe
 					# l1itfe f18
 					# line 2 serif italic size 18
@@ -432,9 +432,9 @@
 				# verbatim line font faces
 					: verbatim l1fm l2fa l3fef18
 					:
-					: l1fm
-					: l2fa
-					: l3fef18
+					: l1fm - font mono
+					: l2fa - font sans
+					: l3fef18 - font serif
 					:
 	# fontawesome icons
 		:
