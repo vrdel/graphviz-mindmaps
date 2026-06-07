@@ -7,7 +7,7 @@ import subprocess
 
 
 DEFAULT_PYENV_ROOT = os.path.expanduser("~/.pyenv")
-DEFAULT_PYENV_ENV = "graphviz-mindmap"
+DEFAULT_PYENV_ENV = "graphviz-mindmaps"
 SUPPORTED_COMMANDS = (
     "gvmm",
     "create-mm",
