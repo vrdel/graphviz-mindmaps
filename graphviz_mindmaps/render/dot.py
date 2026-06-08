@@ -35,6 +35,8 @@ from graphviz_mindmaps.model.styles import (
 )
 from graphviz_mindmaps.parser.attributes import (
     ApplyNodeAttributeTokens,
+    IMAGE_NODE_TRANSFORMS,
+    RenderTransformedImage,
     ResolveBaseNodeTypeToken,
     ResolveColorNodeTypeToken,
     ResolveSymbolNames,
@@ -137,6 +139,18 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     bgcolor = session.bgcolor
     tmpdir = session.tmpdir
 
+    def ResolveImagePath(image, image_key="img"):
+        if image_key in IMAGE_NODE_TRANSFORMS:
+            return RenderTransformedImage(
+                image,
+                image_key,
+                GenImgPath,
+                tmpdir,
+                tempfile,
+                subprocess,
+            )
+        return GenImgPath(image)
+
     jpgname, dotname = "", ""
 
     tabnum = lines[0].count("\t")
@@ -215,7 +229,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                         html_rarrow1,
                         html_larrow2,
                         html_rarrow2,
-                        GenImgPath,
+                        ResolveImagePath,
                     )
                 except (IndexError, KeyError) as exc:
                     print(exc, label)
@@ -229,7 +243,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                         html_rarrow1,
                         html_larrow2,
                         html_rarrow2,
-                        GenImgPath,
+                        ResolveImagePath,
                     )
                 except (IndexError, KeyError) as exc:
                     print(exc, label)

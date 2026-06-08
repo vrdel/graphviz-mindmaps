@@ -157,6 +157,8 @@ move-mm montage.yml archive/
 
 When the source is a justfile, `copy-mm` and `move-mm` include referenced `.otl`, `.yml/.yaml`, wiki, output, and image files. When the source is an individual `.otl` or montage YAML file, the tools first look for a related `justfile`, `Justfile`, or `*.just` in the same directory and then move the same complete bundle. If no related justfile exists, `.otl` sources include their `fname=` output and `img=` attachments; montage YAML sources include referenced images and sibling `.otl` files where present.
 
+Image nodes and attached images support temporary transforms with `imgneg=`, `imggr=`, and `imgneggr=`. The original image is preserved.
+
 Add a title bar to an image:
 
 ```bash

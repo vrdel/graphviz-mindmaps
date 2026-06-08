@@ -138,7 +138,7 @@ def collect_mindmap(path: Path, files: dict[Path, Path]) -> None:
         return
     add_existing(path, files)
     text = path.read_text()
-    for match in re.finditer(r"""(?<!\S)(?:img|fname)=("[^"]+"|'[^']+'|[^\s]+)""", text):
+    for match in re.finditer(r"""(?<!\S)(?:img|imgneg|imggr|imgneggr|fname)=("[^"]+"|'[^']+'|[^\s]+)""", text):
         value = unquote(match.group(1))
         add_existing(resolve_reference(path, value), files)
 

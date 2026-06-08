@@ -1,4 +1,5 @@
 import math
+import os
 import re
 
 from graphviz_mindmaps.constants import (
@@ -19,6 +20,29 @@ fontface = {
     "fa": "Dejavu Sans",
     "fe": "Dejavu Serif",
 }
+
+IMAGE_NODE_TRANSFORMS = {
+    "imgneg": ["-negate"],
+    "imggr": ["-type", "Grayscale"],
+    "imgneggr": ["-negate", "-type", "Grayscale"],
+}
+
+
+def RenderTransformedImage(image, transform_key, gen_img_path, tmpdir, tempfile_module, subprocess_module):
+    if not tmpdir:
+        tmpdir.append(tempfile_module.mkdtemp())
+
+    source = gen_img_path(image)
+    suffix = os.path.splitext(source)[1] or ".jpg"
+    output = os.path.join(
+        tmpdir[-1],
+        "%s-%s%s" % (transform_key, next(tempfile_module._get_candidate_names()), suffix),
+    )
+    subprocess_module.run(
+        ["gm", "convert", source, *IMAGE_NODE_TRANSFORMS[transform_key], output],
+        check=True,
+    )
+    return output
 
 
 def ResolveColorNodeTypeToken(token, nodetype):
@@ -430,11 +454,21 @@ def ApplyNodeAttributeTokens(
 
         match = re.match(r"([\W\w]*)(?:=)(.*)", token)
         tokval = [match.group(1), match.group(2)]
-        if tokval[0] == "img":
+        if tokval[0] == "img" or tokval[0] in IMAGE_NODE_TRANSFORMS:
+            image_path = gen_img_path(tokval[1].strip())
+            if tokval[0] in IMAGE_NODE_TRANSFORMS:
+                image_path = RenderTransformedImage(
+                    tokval[1].strip(),
+                    tokval[0],
+                    gen_img_path,
+                    tmpdir,
+                    tempfile_module,
+                    subprocess_module,
+                )
             labelhtml.insert(
                 len(labelhtml) - 1,
                 "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\""
-                + gen_img_path(tokval[1].strip())
+                + image_path
                 + "\"/>",
             )
             state.ntype = "imgil"
