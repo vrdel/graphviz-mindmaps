@@ -16,6 +16,11 @@ from typing import Any
 TITLE_BACKGROUND = "#a0a0a0"
 UNTITLED_NESTED_BACKGROUND = "#efefef"
 DEFAULT_BACKGROUND = "#a0a0a0"
+IMAGE_TRANSFORMS = {
+    "image_negate": ["-negate"],
+    "image_gray": ["-type", "Grayscale"],
+    "image_negate_gray": ["-negate", "-type", "Grayscale"],
+}
 
 
 def strip_comment(line: str) -> str:
@@ -223,6 +228,9 @@ def normalize_item(item: Any) -> Any:
 
     if "image" in item:
         return str(item["image"])
+    for transform_key in IMAGE_TRANSFORMS:
+        if transform_key in item:
+            return {transform_key: str(item[transform_key])}
     join_key = "join" if "join" in item else "column" if "column" in item else None
     if join_key:
         return [str(elem) for elem in ensure_list(item[join_key], join_key)]
@@ -362,6 +370,17 @@ class MontageRenderer:
         run_command(cmd)
         return tmp_path
 
+    def render_transformed_image(self, image: str, transform_key: str) -> Path:
+        suffix = Path(image).suffix or ".jpg"
+        tmp_path = self.temp_root / f"{transform_key}-{next(tempfile._get_candidate_names())}{suffix}"
+        run_command([
+            "gm", "convert",
+            str(self.curdir / image),
+            *IMAGE_TRANSFORMS[transform_key],
+            str(tmp_path),
+        ])
+        return tmp_path
+
     def render_row(self, row: list[Any], background: str) -> Path:
         item_paths: list[Path] = []
 
@@ -372,7 +391,11 @@ class MontageRenderer:
                 images = [str(elem) for elem in item]
                 item_paths.append(self.render_image_group(images, background))
             elif isinstance(item, dict):
-                item_paths.append(self.render_spec(item, nested=True, inherited_background=background))
+                transform_key = next((key for key in IMAGE_TRANSFORMS if key in item), None)
+                if transform_key:
+                    item_paths.append(self.render_transformed_image(str(item[transform_key]), transform_key))
+                else:
+                    item_paths.append(self.render_spec(item, nested=True, inherited_background=background))
             else:
                 raise ValueError(f"unsupported row item: {item!r}")
 

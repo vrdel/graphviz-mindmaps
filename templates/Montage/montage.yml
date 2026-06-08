@@ -1,7 +1,10 @@
 title: simple montage
 entries:
   - image: mindmap-01.jpg
-  - image: mindmap-01.jpg
+  - image_gray: mindmap-01.jpg
+  # - image_negate: mindmap-01.jpg
+  # - image_gray: mindmap-01.jpg
+  # - image_negate_gray: mindmap-01.jpg
   - new_row: true
   - column: [mindmap-01.jpg, mindmap-01.jpg]
   - submontage:

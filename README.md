@@ -123,6 +123,9 @@ Montage YAML supports image entries, joined image groups, row breaks, and nested
 title: simple montage
 entries:
   - image: mindmap-01.jpg
+  - image_negate: mindmap-02.jpg
+  - image_gray: mindmap-03.jpg
+  - image_negate_gray: mindmap-04.jpg
   - join: [mindmap-01.jpg, mindmap-02.jpg]
   - new_row: true
   - submontage:

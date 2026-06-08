@@ -6,7 +6,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from graphviz_mindmaps.tools.montage import normalize_spec, parse_yaml_like
+from graphviz_mindmaps.tools.montage import IMAGE_TRANSFORMS, normalize_spec, parse_yaml_like
 
 
 MINDMAP_SUFFIXES = {".otl"}
@@ -104,6 +104,10 @@ def collect_montage_images(spec: object) -> list[str]:
             images.extend(collect_montage_images(item))
         return images
     if isinstance(spec, dict):
+        for transform_key in IMAGE_TRANSFORMS:
+            if transform_key in spec:
+                images.append(str(spec[transform_key]))
+                return images
         for row in spec.get("rows", []):
             images.extend(collect_montage_images(row))
     return images
