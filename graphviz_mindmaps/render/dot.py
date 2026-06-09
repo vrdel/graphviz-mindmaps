@@ -147,7 +147,6 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 GenImgPath,
                 tmpdir,
                 tempfile,
-                subprocess,
             )
         return GenImgPath(image)
 

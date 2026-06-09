@@ -13,6 +13,7 @@ from graphviz_mindmaps.constants import (
     linecolors,
     subgraphcolors,
 )
+from graphviz_mindmaps.render.image_transform import TransformImage
 
 fontface = {
     "fd": font["comic"],
@@ -22,13 +23,13 @@ fontface = {
 }
 
 IMAGE_NODE_TRANSFORMS = {
-    "imgneg": ["-negate"],
-    "imggr": ["-type", "Grayscale"],
-    "imgneggr": ["-negate", "-type", "Grayscale"],
+    "imgneg": {"negate": True},
+    "imggr": {"grayscale": True},
+    "imgneggr": {"negate": True, "grayscale": True},
 }
 
 
-def RenderTransformedImage(image, transform_key, gen_img_path, tmpdir, tempfile_module, subprocess_module):
+def RenderTransformedImage(image, transform_key, gen_img_path, tmpdir, tempfile_module):
     if not tmpdir:
         tmpdir.append(tempfile_module.mkdtemp())
 
@@ -38,10 +39,7 @@ def RenderTransformedImage(image, transform_key, gen_img_path, tmpdir, tempfile_
         tmpdir[-1],
         "%s-%s%s" % (transform_key, next(tempfile_module._get_candidate_names()), suffix),
     )
-    subprocess_module.run(
-        ["gm", "convert", source, *IMAGE_NODE_TRANSFORMS[transform_key], output],
-        check=True,
-    )
+    TransformImage(source, output, **IMAGE_NODE_TRANSFORMS[transform_key])
     return output
 
 
@@ -463,7 +461,6 @@ def ApplyNodeAttributeTokens(
                     gen_img_path,
                     tmpdir,
                     tempfile_module,
-                    subprocess_module,
                 )
             labelhtml.insert(
                 len(labelhtml) - 1,
