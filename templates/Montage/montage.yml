@@ -2,7 +2,7 @@ title: simple montage
 entries:
   - image: mindmap-01.jpg
   - image_gray: mindmap-01.jpg
-  # - image_negate: mindmap-01.jpg
+  # - image_negate: mindmap-01.jpg|50
   # - image_gray: mindmap-01.jpg
   # - image_negate_gray: mindmap-01.jpg
   - new_row: true

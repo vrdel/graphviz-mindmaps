@@ -78,8 +78,8 @@ def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larro
     if not vrbt and not draw and ("`" in label or "*" in label):
         label = ApplyInlineBacktickBold(label)
 
-    if re.match(r"img(?:neggr|neg|gr)?[ ]*=", label):
-        match = re.match(r"(img(?:neggr|neg|gr)?)(?:[  ]*=[  ]*)(.*)", label)
+    if re.match(r"img(?:neggr|neg|gr)?[ ]*[=:]", label):
+        match = re.match(r"(img(?:neggr|neg|gr)?)(?:[  ]*[=:][  ]*)(.*)", label)
         if match:
             splittedstr = [match.group(1), match.group(2)]
             labelhtml = [

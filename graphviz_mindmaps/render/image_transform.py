@@ -3,7 +3,27 @@ from pathlib import Path
 from PIL import Image, ImageOps
 
 
-def TransformImage(source: str | Path, output: str | Path, negate: bool = False, grayscale: bool = False) -> None:
+def ParseImageTransformSpec(spec: str) -> tuple[str, float | None]:
+    image, separator, scale = spec.rpartition("|")
+    if not separator:
+        return spec, None
+
+    try:
+        scale_percent = float(scale)
+    except ValueError as exc:
+        raise ValueError(f"invalid image scale percentage: {scale!r}") from exc
+    if scale_percent <= 0:
+        raise ValueError("image scale percentage must be greater than zero")
+    return image, scale_percent
+
+
+def TransformImage(
+    source: str | Path,
+    output: str | Path,
+    negate: bool = False,
+    grayscale: bool = False,
+    scale_percent: float | None = None,
+) -> None:
     source = Path(source)
     output = Path(output)
 
@@ -17,6 +37,13 @@ def TransformImage(source: str | Path, output: str | Path, negate: bool = False,
             transformed = ImageOps.invert(transformed)
         if grayscale:
             transformed = ImageOps.grayscale(transformed)
+
+        if scale_percent is not None:
+            width = max(1, round(transformed.width * scale_percent / 100))
+            height = max(1, round(transformed.height * scale_percent / 100))
+            transformed = transformed.resize((width, height), Image.Resampling.LANCZOS)
+            if alpha is not None:
+                alpha = alpha.resize((width, height), Image.Resampling.LANCZOS)
 
         if alpha is not None and output.suffix.lower() not in {".jpg", ".jpeg"}:
             transformed.putalpha(alpha)

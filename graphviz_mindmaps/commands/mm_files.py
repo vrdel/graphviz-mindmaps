@@ -6,6 +6,7 @@ import shutil
 import sys
 from pathlib import Path
 
+from graphviz_mindmaps.render.image_transform import ParseImageTransformSpec
 from graphviz_mindmaps.tools.montage import IMAGE_TRANSFORMS, normalize_spec, parse_yaml_like
 
 
@@ -106,7 +107,8 @@ def collect_montage_images(spec: object) -> list[str]:
     if isinstance(spec, dict):
         for transform_key in IMAGE_TRANSFORMS:
             if transform_key in spec:
-                images.append(str(spec[transform_key]))
+                image, _ = ParseImageTransformSpec(str(spec[transform_key]))
+                images.append(image)
                 return images
         for row in spec.get("rows", []):
             images.extend(collect_montage_images(row))
@@ -138,7 +140,11 @@ def collect_mindmap(path: Path, files: dict[Path, Path]) -> None:
         return
     add_existing(path, files)
     text = path.read_text()
-    for match in re.finditer(r"""(?<!\S)(?:img|imgneg|imggr|imgneggr|fname)=("[^"]+"|'[^']+'|[^\s]+)""", text):
+    for match in re.finditer(r"""(?<!\S)(?:img|imgneg|imggr|imgneggr)[=:]("[^"]+"|'[^']+'|[^\s]+)""", text):
+        value = unquote(match.group(1))
+        image, _ = ParseImageTransformSpec(value)
+        add_existing(resolve_reference(path, image), files)
+    for match in re.finditer(r"""(?<!\S)fname=("[^"]+"|'[^']+'|[^\s]+)""", text):
         value = unquote(match.group(1))
         add_existing(resolve_reference(path, value), files)
 

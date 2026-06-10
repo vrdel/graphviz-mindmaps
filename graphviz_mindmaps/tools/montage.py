@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from graphviz_mindmaps.render.image_transform import TransformImage
+from graphviz_mindmaps.render.image_transform import ParseImageTransformSpec, TransformImage
 
 
 TITLE_BACKGROUND = "#a0a0a0"
@@ -373,9 +373,15 @@ class MontageRenderer:
         return tmp_path
 
     def render_transformed_image(self, image: str, transform_key: str) -> Path:
+        image, scale_percent = ParseImageTransformSpec(image)
         suffix = Path(image).suffix or ".jpg"
         tmp_path = self.temp_root / f"{transform_key}-{next(tempfile._get_candidate_names())}{suffix}"
-        TransformImage(self.curdir / image, tmp_path, **IMAGE_TRANSFORMS[transform_key])
+        TransformImage(
+            self.curdir / image,
+            tmp_path,
+            scale_percent=scale_percent,
+            **IMAGE_TRANSFORMS[transform_key],
+        )
         return tmp_path
 
     def render_row(self, row: list[Any], background: str) -> Path:

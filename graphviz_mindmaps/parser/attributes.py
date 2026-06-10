@@ -13,7 +13,7 @@ from graphviz_mindmaps.constants import (
     linecolors,
     subgraphcolors,
 )
-from graphviz_mindmaps.render.image_transform import TransformImage
+from graphviz_mindmaps.render.image_transform import ParseImageTransformSpec, TransformImage
 
 fontface = {
     "fd": font["comic"],
@@ -33,13 +33,19 @@ def RenderTransformedImage(image, transform_key, gen_img_path, tmpdir, tempfile_
     if not tmpdir:
         tmpdir.append(tempfile_module.mkdtemp())
 
+    image, scale_percent = ParseImageTransformSpec(image)
     source = gen_img_path(image)
     suffix = os.path.splitext(source)[1] or ".jpg"
     output = os.path.join(
         tmpdir[-1],
         "%s-%s%s" % (transform_key, next(tempfile_module._get_candidate_names()), suffix),
     )
-    TransformImage(source, output, **IMAGE_NODE_TRANSFORMS[transform_key])
+    TransformImage(
+        source,
+        output,
+        scale_percent=scale_percent,
+        **IMAGE_NODE_TRANSFORMS[transform_key],
+    )
     return output
 
 
@@ -447,17 +453,14 @@ def ApplyNodeAttributeTokens(
                 state.linedate,
             )
 
-        if token.find("=") <= 0:
-            continue
-
-        match = re.match(r"([\W\w]*)(?:=)(.*)", token)
-        tokval = [match.group(1), match.group(2)]
-        if tokval[0] == "img" or tokval[0] in IMAGE_NODE_TRANSFORMS:
-            image_path = gen_img_path(tokval[1].strip())
-            if tokval[0] in IMAGE_NODE_TRANSFORMS:
+        image_match = re.match(r"^(img(?:neggr|neg|gr)?)[=:](.+)$", token)
+        if image_match:
+            image_key, image_spec = image_match.groups()
+            image_path = gen_img_path(image_spec.strip())
+            if image_key in IMAGE_NODE_TRANSFORMS:
                 image_path = RenderTransformedImage(
-                    tokval[1].strip(),
-                    tokval[0],
+                    image_spec.strip(),
+                    image_key,
                     gen_img_path,
                     tmpdir,
                     tempfile_module,
@@ -469,7 +472,14 @@ def ApplyNodeAttributeTokens(
                 + "\"/>",
             )
             state.ntype = "imgil"
-        elif tokval[0] == "symb" and state.ntype != "imgil":
+            continue
+
+        if token.find("=") <= 0:
+            continue
+
+        match = re.match(r"([\W\w]*)(?:=)(.*)", token)
+        tokval = [match.group(1), match.group(2)]
+        if tokval[0] == "symb" and state.ntype != "imgil":
             state.symblist = resolve_symbol_names(tokval[1], symbol_map)
         elif tokval[0] == "dood":
             doodlist = tokval[1].split(":")
