@@ -20,8 +20,10 @@ UNTITLED_NESTED_BACKGROUND = "#efefef"
 DEFAULT_BACKGROUND = "#a0a0a0"
 IMAGE_TRANSFORMS = {
     "image_negate": {"negate": True},
+    "image_negate_contrast": {"negate": True, "contrast": True},
     "image_gray": {"grayscale": True},
     "image_negate_gray": {"negate": True, "grayscale": True},
+    "image_negate_gray_contrast": {"negate": True, "grayscale": True, "contrast": True},
 }
 
 

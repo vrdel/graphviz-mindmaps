@@ -140,7 +140,7 @@ def collect_mindmap(path: Path, files: dict[Path, Path]) -> None:
         return
     add_existing(path, files)
     text = path.read_text()
-    for match in re.finditer(r"""(?<!\S)(?:img|imgneg|imggr|imgneggr)[=:]("[^"]+"|'[^']+'|[^\s]+)""", text):
+    for match in re.finditer(r"""(?<!\S)(?:img|imgneg|imgnegcn|imggr|imgneggr|imgneggrcn)[=:]("[^"]+"|'[^']+'|[^\s]+)""", text):
         value = unquote(match.group(1))
         image, _ = ParseImageTransformSpec(value)
         add_existing(resolve_reference(path, image), files)
