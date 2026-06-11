@@ -14,7 +14,7 @@ fontcolor = {
 }
 
 linecolors = {
-    "r": "#FF8080",
+    "r": "#FF9999",
     "g": "#8BFF80",
     "b": "#80CAFF",
     "y": "#FFF180",
