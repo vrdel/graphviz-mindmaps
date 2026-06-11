@@ -23,11 +23,17 @@ fontface = {
 }
 
 IMAGE_NODE_TRANSFORMS = {
-    "imgneg": {"negate": True},
-    "imgnegcn": {"negate": True, "contrast": True},
-    "imggr": {"grayscale": True},
-    "imgneggr": {"negate": True, "grayscale": True},
-    "imgneggrcn": {"negate": True, "grayscale": True, "contrast": True},
+    "img_neg": {"negate": True},
+    "img_neg_cn": {"negate": True, "contrast": True},
+    "img_gr": {"grayscale": True},
+    "img_neg_gr": {"negate": True, "grayscale": True},
+    "img_neg_gr_cn": {"negate": True, "grayscale": True, "contrast": True},
+    "img_sk": {"sketch": True},
+    "img_neg_sk": {"negate": True, "sketch": True},
+    "img_neg_cn_sk": {"negate": True, "contrast": True, "sketch": True},
+    "img_gr_sk": {"grayscale": True, "sketch": True},
+    "img_neg_gr_sk": {"negate": True, "grayscale": True, "sketch": True},
+    "img_neg_gr_cn_sk": {"negate": True, "grayscale": True, "contrast": True, "sketch": True},
 }
 
 
@@ -455,7 +461,10 @@ def ApplyNodeAttributeTokens(
                 state.linedate,
             )
 
-        image_match = re.match(r"^(img(?:neggrcn|neggr|negcn|neg|gr)?)[=:](.+)$", token)
+        image_match = re.match(
+            r"^(img(?:_neg_gr_cn_sk|_neg_gr_sk|_neg_cn_sk|_neg_sk|_gr_sk|_sk|_neg_gr_cn|_neg_gr|_neg_cn|_neg|_gr)?)[=:](.+)$",
+            token,
+        )
         if image_match:
             image_key, image_spec = image_match.groups()
             image_path = gen_img_path(image_spec.strip())

@@ -24,6 +24,17 @@ IMAGE_TRANSFORMS = {
     "image_gray": {"grayscale": True},
     "image_negate_gray": {"negate": True, "grayscale": True},
     "image_negate_gray_contrast": {"negate": True, "grayscale": True, "contrast": True},
+    "image_sketch": {"sketch": True},
+    "image_negate_sketch": {"negate": True, "sketch": True},
+    "image_negate_contrast_sketch": {"negate": True, "contrast": True, "sketch": True},
+    "image_gray_sketch": {"grayscale": True, "sketch": True},
+    "image_negate_gray_sketch": {"negate": True, "grayscale": True, "sketch": True},
+    "image_negate_gray_contrast_sketch": {
+        "negate": True,
+        "grayscale": True,
+        "contrast": True,
+        "sketch": True,
+    },
 }
 
 

@@ -128,6 +128,9 @@ entries:
   - image_gray: mindmap-03.jpg
   - image_negate_gray: mindmap-04.jpg
   - image_negate_gray_contrast: mindmap-04.jpg
+  - image_sketch: mindmap-03.jpg
+  - image_negate_sketch: mindmap-04.jpg
+  - image_negate_gray_contrast_sketch: mindmap-04.jpg|50
   - join: [mindmap-01.jpg, mindmap-02.jpg]
   - new_row: true
   - submontage:
@@ -159,7 +162,7 @@ move-mm montage.yml archive/
 
 When the source is a justfile, `copy-mm` and `move-mm` include referenced `.otl`, `.yml/.yaml`, wiki, output, and image files. When the source is an individual `.otl` or montage YAML file, the tools first look for a related `justfile`, `Justfile`, or `*.just` in the same directory and then move the same complete bundle. If no related justfile exists, `.otl` sources include their `fname=` output and `img=` attachments; montage YAML sources include referenced images and sibling `.otl` files where present.
 
-Image nodes and attached images support temporary transforms with `imgneg=`, `imgnegcn=`, `imggr=`, `imgneggr=`, and `imgneggrcn=`. `cn` applies automatic contrast after the preceding transforms. Append `|percent` to proportionally scale a transformed image, for example `imgneggrcn:photo.png|20`. The original image is preserved.
+Image nodes and attached images support temporary transforms with `img_neg=`, `img_neg_cn=`, `img_gr=`, `img_neg_gr=`, and `img_neg_gr_cn=`. Add the final `sk` stage for a grayscale contour sketch, for example `img_sk=`, `img_neg_sk=`, or `img_neg_gr_cn_sk=`. `cn` applies automatic contrast after the preceding transforms. Append `|percent` to proportionally scale a transformed image, for example `img_neg_gr_cn_sk:photo.png|20`. The original image is preserved.
 
 Add a title bar to an image:
 

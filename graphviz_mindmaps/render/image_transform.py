@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageFilter, ImageOps
 
 
 def ParseImageTransformSpec(spec: str) -> tuple[str, float | None]:
@@ -23,6 +23,7 @@ def TransformImage(
     negate: bool = False,
     grayscale: bool = False,
     contrast: bool = False,
+    sketch: bool = False,
     scale_percent: float | None = None,
 ) -> None:
     source = Path(source)
@@ -36,10 +37,12 @@ def TransformImage(
 
         if negate:
             transformed = ImageOps.invert(transformed)
-        if grayscale:
+        if grayscale or sketch:
             transformed = ImageOps.grayscale(transformed)
         if contrast:
             transformed = ImageOps.autocontrast(transformed, cutoff=2)
+        if sketch:
+            transformed = transformed.filter(ImageFilter.CONTOUR)
 
         if scale_percent is not None:
             width = max(1, round(transformed.width * scale_percent / 100))

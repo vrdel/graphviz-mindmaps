@@ -7,6 +7,9 @@ entries:
   # - image_gray: mindmap-01.jpg
   # - image_negate_gray: mindmap-01.jpg
   # - image_negate_gray_contrast: mindmap-01.jpg
+  # - image_sketch: mindmap-01.jpg
+  # - image_negate_sketch: mindmap-01.jpg
+  # - image_negate_gray_contrast_sketch: mindmap-01.jpg|50
   - new_row: true
   - column: [mindmap-01.jpg, mindmap-01.jpg]
   - submontage:
