@@ -258,7 +258,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             fromnode, tonode, tabs = BuildNodeRefs(rootnodename, nodelevel, level)
             verbatim_fill_token = None
 
-            if nextline.find("#") == -1 and state_obj.ntype != "img":
+            if not re.search(r"(\t#) (.*)", nextline) and state_obj.ntype != "img":
                 attrline = StripCodeDirective(nextline) if code_source is not None else nextline
                 if vrbt or draw:
                     verbatim_fill_token = ExtractVerbatimFillToken(attrline)
@@ -365,6 +365,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 draw,
                 textleft,
                 state_obj.fontname,
+                state_obj.bgcolor,
+                state_obj.fgcolor,
             )
             if code_image_path:
                 InsertImageRow(parentlist[level]._label, code_image_path)

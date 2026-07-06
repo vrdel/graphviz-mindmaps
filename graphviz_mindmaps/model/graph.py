@@ -45,7 +45,11 @@ def EmitTreeNodes(tree, nodetype, fontsize):
                 )
                 chunks.append(rendered)
             else:
-                rendered = node.element().replace(nodetype["def"], nodetype["node"]) + "\n"
+                original_ntype = ntype
+                if ntype == "def":
+                    node.setype("node")
+                rendered = node.element() + "\n"
+                node.setype(original_ntype)
                 if ntype not in ["img", "imgil"]:
                     rendered = rendered.replace("shape=box", "shape=box margin=\"0.2,0.2\"")
                 chunks.append(rendered)
@@ -77,7 +81,7 @@ import re
 
 class Tree:
     class Node:
-        def __init__(self, tree, nodename, label=None, tabs="", ntype=None, parent=None, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, verbatim=False, draw=False, fontname=None):
+        def __init__(self, tree, nodename, label=None, tabs="", ntype=None, parent=None, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, verbatim=False, draw=False, fontname=None, bgcolor=None, fgcolor=None):
             self._tree = tree
             self._ntype = ntype
             self._nodename = nodename
@@ -96,6 +100,8 @@ class Tree:
             self._verbatim = verbatim
             self._draw = draw
             self._fontname = fontname
+            self._bgcolor = bgcolor
+            self._fgcolor = fgcolor
 
         def _apply_fontname(self, attrs):
             if not self._fontname:
@@ -104,31 +110,52 @@ class Tree:
                 return re.sub(r'fontname="[^"]*"', 'fontname="%s"' % self._fontname, attrs, count=1)
             return attrs + ' fontname="%s"' % self._fontname
 
+        def _apply_bgcolor(self, attrs):
+            if not self._bgcolor:
+                return attrs
+            if "fillcolor=" in attrs:
+                return re.sub(r'fillcolor="[^"]*"', 'fillcolor="%s"' % self._bgcolor, attrs, count=1)
+            if "style=" not in attrs:
+                attrs += ' style="filled"'
+            return attrs + ' fillcolor="%s"' % self._bgcolor
+
+        def _apply_fgcolor(self, attrs):
+            if not self._fgcolor:
+                return attrs
+            if "fontcolor=" in attrs:
+                return re.sub(r'fontcolor="[^"]*"', 'fontcolor="%s"' % self._fgcolor, attrs, count=1)
+            return attrs + ' fontcolor="%s"' % self._fgcolor
+
+        def _apply_node_overrides(self, attrs):
+            attrs = self._apply_fontname(attrs)
+            attrs = self._apply_bgcolor(attrs)
+            return self._apply_fgcolor(attrs)
+
         def element(self):
             if "sgwrap" in self._ntype:
                 return self._tabs + "".join(self._label)
             elif self._verbatim:
                 if self._ntype == "def":
-                    attrs = self._apply_fontname(self._tree.nodetype["verbatim"])
+                    attrs = self._apply_node_overrides(self._tree.nodetype["verbatim"])
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, "".join(self._label))
                 else:
                     fillcolor = self._tree.resolve_verbatim_fill_color_token(self._ntype, self._tree.vrbtcolors)
                     if not fillcolor:
                         fillcolor = self._tree.vrbtcolors["def"]
-                    attrs = self._apply_fontname(self._tree.nodetype["verbatim"].replace(self._tree.vrbtcolors["def"], fillcolor))
+                    attrs = self._apply_node_overrides(self._tree.nodetype["verbatim"].replace(self._tree.vrbtcolors["def"], fillcolor))
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, "".join(self._label))
             elif self._draw:
                 if self._ntype == "def":
-                    attrs = self._apply_fontname(self._tree.nodetype["draw"])
+                    attrs = self._apply_node_overrides(self._tree.nodetype["draw"])
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, "".join(self._label))
                 else:
                     fillcolor = self._tree.resolve_verbatim_fill_color_token(self._ntype, self._tree.vrbtcolors)
                     if not fillcolor:
                         fillcolor = self._tree.vrbtcolors["cwhite"]
-                    attrs = self._apply_fontname(self._tree.nodetype["draw"].replace(self._tree.vrbtcolors["cwhite"], fillcolor))
+                    attrs = self._apply_node_overrides(self._tree.nodetype["draw"].replace(self._tree.vrbtcolors["cwhite"], fillcolor))
                     return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, "".join(self._label))
             else:
-                attrs = self._apply_fontname(self._tree.nodetype[self._ntype])
+                attrs = self._apply_node_overrides(self._tree.nodetype[self._ntype])
                 return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, "".join(self._label))
 
         def parent(self):
@@ -440,20 +467,20 @@ class Tree:
         self._addchild(tabs + "}", p)
         return c
 
-    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=None, lc=None, ws=None, ls=None, wf=None, lf=None, lfont=None, ld=None, vrbt=False, draw=False, fontname=None):
-        c = self.Node(self, nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, lfont, ld, vrbt, draw, fontname)
+    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=None, lc=None, ws=None, ls=None, wf=None, lf=None, lfont=None, ld=None, vrbt=False, draw=False, fontname=None, bgcolor=None, fgcolor=None):
+        c = self.Node(self, nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, lfont, ld, vrbt, draw, fontname, bgcolor, fgcolor)
         c._parent = p
         p._child.insert(0, c)
         return c
 
-    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None):
+    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None, bgcolor=None, fgcolor=None):
         sgattr = ""
         if sgcolor and sgcolor[0] == "s":
             self._addchild_rev("", ["}"], tabs, "sgwrap", p)
         self._addchild_rev("", ["}"], tabs, "sgwrap", p)
         if sgtitle:
             self._addchild_rev("", ["label = <<TABLE CELLBORDER=\"0\" CELLPADDING=\"3\" CELLSPACING=\"3\" BORDER=\"0\"><TR><TD BGCOLOR=\"#E9ED5F\" COLOR=\"#000000\"><U>%s</U></TD></TR></TABLE>>" % (sgtitle)], tabs, "sgwrap", p)
-        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, linefont, linedate, vrbt, draw, fontname)
+        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, linefont, linedate, vrbt, draw, fontname, bgcolor, fgcolor)
         c.wordfsize()
         c.wordfstyle()
         c.linefsize()
