@@ -107,6 +107,19 @@ def ResolveRootPenwidth(lines):
     return "1.2"
 
 
+def ResolveRootBgcolor(lines, default_bgcolor):
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        bgcolor = ParseInlineAttrLine("bgcolor", line)
+        if bgcolor:
+            return bgcolor
+        bg = ParseInlineAttrLine("bg", line)
+        if bg:
+            return bg
+    return default_bgcolor
+
+
 def IsOutlineLeaf(lines, index, level, tabnum):
     for candidate in lines[index + 1:]:
         if not re.search(r"(\t#) (.*)", candidate):
@@ -157,14 +170,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     match = re.search(r"(\t|#) (.*)", lines[0])
     title = match.group(2)
 
-    bgcolor = runtime.default_bgcolor
+    bgcolor = ResolveRootBgcolor(lines, runtime.default_bgcolor)
     penwidth = ResolveRootPenwidth(lines)
-    for line in lines[1:]:
-        if re.search(r"\t(:|\|)\s*fname", line):
-            custom_bg = ParseInlineAttrLine("bgcolor", line)
-            if custom_bg:
-                bgcolor = custom_bg
-            break
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=LR;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[fontname=\"%s\" fontsize=%s fontcolor=\"%s\" color=\"#000000\" gradientangle=\"90\" penwidth=%s];\n" % (FONT_DIR, bgcolor, font["comic"], fontsize["m"], fontcolor["def"], penwidth)
     dotbuf += "\tedge[arrowhead=none color=\"#8a8a8a\" minlen=3 style=tapered penwidth=6 dir=forward arrowtail=none fontname=\"%s\" fontsize=\"%s\" fontcolor=\"%s\"];\n\n" % (font["comicb"], fontsize["l"], fontcolor["b"])
