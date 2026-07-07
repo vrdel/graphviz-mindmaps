@@ -120,6 +120,24 @@ def ResolveRootBgcolor(lines, default_bgcolor):
     return default_bgcolor
 
 
+def ResolveRootSubgraphs(lines):
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        subgraphs = ParseInlineAttrLine("subgraphs", line)
+        if subgraphs:
+            value = subgraphs.lower()
+            if value in {"false", "no", "off"}:
+                return 0
+            if value in {"true", "yes", "on"}:
+                return None
+            if re.match(r"^[0-9]+$", value):
+                return int(value)
+            if re.match(r"^[0-9]+(?:,[0-9]+)+$", value):
+                return max(int(part) for part in value.split(","))
+    return None
+
+
 def IsOutlineLeaf(lines, index, level, tabnum):
     for candidate in lines[index + 1:]:
         if not re.search(r"(\t#) (.*)", candidate):
@@ -172,6 +190,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
     bgcolor = ResolveRootBgcolor(lines, runtime.default_bgcolor)
     penwidth = ResolveRootPenwidth(lines)
+    tree.subgraph_depth = ResolveRootSubgraphs(lines)
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=LR;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[fontname=\"%s\" fontsize=%s fontcolor=\"%s\" color=\"#000000\" gradientangle=\"90\" penwidth=%s];\n" % (FONT_DIR, bgcolor, font["comic"], fontsize["m"], fontcolor["def"], penwidth)
     dotbuf += "\tedge[arrowhead=none color=\"#8a8a8a\" minlen=3 style=tapered penwidth=6 dir=forward arrowtail=none fontname=\"%s\" fontsize=\"%s\" fontcolor=\"%s\"];\n\n" % (font["comicb"], fontsize["l"], fontcolor["b"])
@@ -367,6 +386,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 state_obj.fontname,
                 state_obj.bgcolor,
                 state_obj.fgcolor,
+                state_obj.child_subgraphs,
             )
             if code_image_path:
                 InsertImageRow(parentlist[level]._label, code_image_path)
@@ -377,7 +397,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
     dotbuf += EmitTreeNodes(tree, nodetype, fontsize)
     dotbuf += "\n\n"
-    dotbuf += "".join(FinalizeEdges(edge, arrlines, arrend))
+    dotbuf += "".join(FinalizeEdges(edge, arrlines, arrend, tree.subgraph_depth))
     dotbuf += "\t}\n}"
 
     if argholder.dotname and argholder.dotname == "specified":

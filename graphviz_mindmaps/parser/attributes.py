@@ -431,13 +431,15 @@ def ApplyNodeAttributeTokens(
             state.fontname = fontnames[token]
             continue
         keyval_match = re.match(r"([^=]+)=(.*)", token)
-        if keyval_match and keyval_match.group(1) in {"bg", "bgcolor", "fg", "fgcolor"}:
+        if keyval_match and keyval_match.group(1) in {"bg", "bgcolor", "fg", "fgcolor", "subgraph"}:
             key = keyval_match.group(1)
             value = keyval_match.group(2).strip().strip("\"'")
             if key in {"bg", "bgcolor"}:
                 state.bgcolor = value
-            else:
+            elif key in {"fg", "fgcolor"}:
                 state.fgcolor = value
+            else:
+                state.child_subgraphs = value.lower() not in {"0", "false", "no", "off"}
             continue
 
         resolved_ntype = resolve_color_node_type_token(token)
@@ -503,6 +505,8 @@ def ApplyNodeAttributeTokens(
             state.bgcolor = tokval[1].strip().strip("\"'")
         elif tokval[0] in {"fg", "fgcolor"}:
             state.fgcolor = tokval[1].strip().strip("\"'")
+        elif tokval[0] == "subgraph":
+            state.child_subgraphs = tokval[1].strip().strip("\"'").lower() not in {"0", "false", "no", "off"}
         elif tokval[0] == "symb" and state.ntype != "imgil":
             state.symblist = resolve_symbol_names(tokval[1], symbol_map)
         elif tokval[0] == "dood":

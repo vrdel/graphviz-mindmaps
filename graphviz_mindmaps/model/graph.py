@@ -59,20 +59,23 @@ def EmitTreeNodes(tree, nodetype, fontsize):
     return "".join(chunks)
 
 
-def FinalizeEdges(edge, arrlines, arrend):
+def FinalizeEdges(edge, arrlines, arrend, subgraph_depth=None):
     finalized = list(edge)
     for arrline in arrlines:
         arrline[1].append(arrend[arrline[0]])
+        attrs = arrline[2]
+        if subgraph_depth is None:
+            attrs = attrs.replace(
+                "[",
+                "[ltail=\"%s\" lhead=\"%s\" "
+                % (arrline[1][0].replace("node", "cluster"), arrline[1][1].replace("node", "cluster")),
+            )
         finalized.append(
             "%s -> %s %s;\n"
             % (
                 arrline[1][0],
                 arrline[1][1],
-                arrline[2].replace(
-                    "[",
-                    "[ltail=\"%s\" lhead=\"%s\" "
-                    % (arrline[1][0].replace("node", "cluster"), arrline[1][1].replace("node", "cluster")),
-                ),
+                attrs,
             )
         )
     return list(reversed(finalized))
@@ -81,7 +84,7 @@ import re
 
 class Tree:
     class Node:
-        def __init__(self, tree, nodename, label=None, tabs="", ntype=None, parent=None, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, verbatim=False, draw=False, fontname=None, bgcolor=None, fgcolor=None):
+        def __init__(self, tree, nodename, label=None, tabs="", ntype=None, parent=None, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, verbatim=False, draw=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None):
             self._tree = tree
             self._ntype = ntype
             self._nodename = nodename
@@ -102,6 +105,7 @@ class Tree:
             self._fontname = fontname
             self._bgcolor = bgcolor
             self._fgcolor = fgcolor
+            self._child_subgraphs = child_subgraphs
 
         def _apply_fontname(self, attrs):
             if not self._fontname:
@@ -439,7 +443,7 @@ class Tree:
                     self._label = "".join(self._label)
                     self._label = self._label.split("<SEP>")
 
-    def __init__(self, nodetype, vrbtcolors, fontcolor, font, fontsize, fontawesome_symb, resolve_verbatim_fill_color_token, post_attr_proc_label):
+    def __init__(self, nodetype, vrbtcolors, fontcolor, font, fontsize, fontawesome_symb, resolve_verbatim_fill_color_token, post_attr_proc_label, subgraph_depth=None):
         self.root = None
         self.size = 0
         self.nodetype = nodetype
@@ -450,6 +454,15 @@ class Tree:
         self.fontawesome_symb = fontawesome_symb
         self.resolve_verbatim_fill_color_token = resolve_verbatim_fill_color_token
         self.post_attr_proc_label = post_attr_proc_label
+        self.subgraph_depth = subgraph_depth
+
+    def _subgraphs_enabled_for_tabs(self, tabs, parent=None):
+        if parent is not None and getattr(parent, "_child_subgraphs", None) is False:
+            return False
+        if self.subgraph_depth is None:
+            return True
+        node_depth = max(0, tabs.count("\t") - 1)
+        return node_depth <= self.subgraph_depth
 
     def addroot(self, e):
         self.root = self.Node(self, e, ntype="root")
@@ -467,20 +480,24 @@ class Tree:
         self._addchild(tabs + "}", p)
         return c
 
-    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=None, lc=None, ws=None, ls=None, wf=None, lf=None, lfont=None, ld=None, vrbt=False, draw=False, fontname=None, bgcolor=None, fgcolor=None):
-        c = self.Node(self, nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, lfont, ld, vrbt, draw, fontname, bgcolor, fgcolor)
+    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=None, lc=None, ws=None, ls=None, wf=None, lf=None, lfont=None, ld=None, vrbt=False, draw=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None):
+        if child_subgraphs is None and getattr(p, "_child_subgraphs", None) is False:
+            child_subgraphs = False
+        c = self.Node(self, nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, lfont, ld, vrbt, draw, fontname, bgcolor, fgcolor, child_subgraphs)
         c._parent = p
         p._child.insert(0, c)
         return c
 
-    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None, bgcolor=None, fgcolor=None):
+    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None):
         sgattr = ""
-        if sgcolor and sgcolor[0] == "s":
+        enable_subgraphs = self._subgraphs_enabled_for_tabs(tabs, p)
+        if enable_subgraphs and sgcolor and sgcolor[0] == "s":
             self._addchild_rev("", ["}"], tabs, "sgwrap", p)
-        self._addchild_rev("", ["}"], tabs, "sgwrap", p)
-        if sgtitle:
+        if enable_subgraphs:
+            self._addchild_rev("", ["}"], tabs, "sgwrap", p)
+        if enable_subgraphs and sgtitle:
             self._addchild_rev("", ["label = <<TABLE CELLBORDER=\"0\" CELLPADDING=\"3\" CELLSPACING=\"3\" BORDER=\"0\"><TR><TD BGCOLOR=\"#E9ED5F\" COLOR=\"#000000\"><U>%s</U></TD></TR></TABLE>>" % (sgtitle)], tabs, "sgwrap", p)
-        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, linefont, linedate, vrbt, draw, fontname, bgcolor, fgcolor)
+        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, linefont, linedate, vrbt, draw, fontname, bgcolor, fgcolor, child_subgraphs)
         c.wordfsize()
         c.wordfstyle()
         c.linefsize()
@@ -492,15 +509,16 @@ class Tree:
 
         self.post_attr_proc_label(c._label, ntype, vrbt, draw, textleft)
 
-        if sgcolor and sgcolor[0] == "#":
+        if enable_subgraphs and sgcolor and sgcolor[0] == "#":
             sgattr = "style = \"%s rounded\";\n" % (sgstyle + "," if sgstyle else "") + tabs + "\t" + "color = \"%s\";\n" % (sgcolor if not sgstyle else "#000000") + tabs + "\t" + "bgcolor = \"%s\"" % (sgcolor)
         else:
             sgattr = "style = invis;"
 
-        if sgtitle:
+        if enable_subgraphs and sgtitle:
             self._addchild_rev("", ["fontname = \"%s\";\n" % (self.font["balsamiq"]) + tabs + "\t" + "fontsize = \"%s\";\n" % (self.fontsize["xxl"])], tabs, "sgwrap", p)
-        self._addchild_rev("", ["subgraph cluster%s {\n" % nodename.replace("node", "") + tabs + "\t" + sgattr], tabs, "sgwrap", p)
-        if sgcolor and sgcolor[0] == "e":
+        if enable_subgraphs:
+            self._addchild_rev("", ["subgraph cluster%s {\n" % nodename.replace("node", "") + tabs + "\t" + sgattr], tabs, "sgwrap", p)
+        if enable_subgraphs and sgcolor and sgcolor[0] == "e":
             sgattr = "style = \"%s rounded\";\n" % (sgstyle + "," if sgstyle else "") + tabs + "\t" + "color = \"%s\";\n" % (sgcolor[1:] if not sgstyle else "#000000") + tabs + "\t" + "bgcolor = \"%s\";" % (sgcolor[1:])
             self._addchild_rev("", ["subgraph cluster%s {\n" % nodename.replace("node", "colored") + tabs + "\t" + sgattr], tabs, "sgwrap", p)
 
