@@ -162,6 +162,16 @@ def ResolveRootOrientation(lines):
     return "LR"
 
 
+def ResolveRootSgmargin(lines):
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        sgmargin = ParseInlineAttrLine("sgmargin", line)
+        if sgmargin:
+            return sgmargin
+    return "8"
+
+
 def IsOutlineLeaf(lines, index, level, tabnum):
     for candidate in lines[index + 1:]:
         if not re.search(r"(\t#) (.*)", candidate):
@@ -216,6 +226,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     penwidth = ResolveRootPenwidth(lines)
     rankdir = ResolveRootOrientation(lines)
     tree.subgraph_depth = ResolveRootSubgraphs(lines)
+    tree.default_sgmargin = ResolveRootSgmargin(lines)
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[fontname=\"%s\" fontsize=%s fontcolor=\"%s\" color=\"#000000\" gradientangle=\"90\" penwidth=%s];\n" % (rankdir, FONT_DIR, bgcolor, font["comic"], fontsize["m"], fontcolor["def"], penwidth)
     dotbuf += "\tedge[arrowhead=none color=\"#8a8a8a\" minlen=3 style=tapered penwidth=6 dir=forward arrowtail=none fontname=\"%s\" fontsize=\"%s\" fontcolor=\"%s\"];\n\n" % (font["comicb"], fontsize["l"], fontcolor["b"])
@@ -412,6 +423,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 state_obj.bgcolor,
                 state_obj.fgcolor,
                 state_obj.child_subgraphs,
+                state_obj.sgmargin,
             )
             if code_image_path:
                 InsertImageRow(parentlist[level]._label, code_image_path)

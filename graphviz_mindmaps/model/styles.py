@@ -15,6 +15,7 @@ class NodePrepState:
     sgcolor: list = field(default_factory=list)
     sgtitle: list = field(default_factory=list)
     sgstyle: list = field(default_factory=list)
+    sgmargin: str | None = None
     edgecolor: list = field(default_factory=list)
     edgestyle: list = field(default_factory=list)
     edgend: list = field(default_factory=list)

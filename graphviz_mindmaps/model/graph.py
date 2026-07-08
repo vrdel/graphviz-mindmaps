@@ -443,7 +443,7 @@ class Tree:
                     self._label = "".join(self._label)
                     self._label = self._label.split("<SEP>")
 
-    def __init__(self, nodetype, vrbtcolors, fontcolor, font, fontsize, fontawesome_symb, resolve_verbatim_fill_color_token, post_attr_proc_label, subgraph_depth=None):
+    def __init__(self, nodetype, vrbtcolors, fontcolor, font, fontsize, fontawesome_symb, resolve_verbatim_fill_color_token, post_attr_proc_label, subgraph_depth=None, default_sgmargin="8"):
         self.root = None
         self.size = 0
         self.nodetype = nodetype
@@ -455,6 +455,7 @@ class Tree:
         self.resolve_verbatim_fill_color_token = resolve_verbatim_fill_color_token
         self.post_attr_proc_label = post_attr_proc_label
         self.subgraph_depth = subgraph_depth
+        self.default_sgmargin = default_sgmargin
 
     def _subgraphs_enabled_for_tabs(self, tabs, parent=None):
         if parent is not None and getattr(parent, "_child_subgraphs", None) is False:
@@ -488,9 +489,11 @@ class Tree:
         p._child.insert(0, c)
         return c
 
-    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None):
+    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None, sgmargin=None):
         sgattr = ""
         enable_subgraphs = self._subgraphs_enabled_for_tabs(tabs, p)
+        sgmargin = sgmargin if sgmargin is not None else self.default_sgmargin
+        margin_attr = tabs + "\t" + "margin = \"%s\";\n" % sgmargin if sgmargin else ""
         if enable_subgraphs and sgcolor and sgcolor[0] == "s":
             self._addchild_rev("", ["}"], tabs, "sgwrap", p)
         if enable_subgraphs:
@@ -510,16 +513,16 @@ class Tree:
         self.post_attr_proc_label(c._label, ntype, vrbt, draw, textleft)
 
         if enable_subgraphs and sgcolor and sgcolor[0] == "#":
-            sgattr = "style = \"%s rounded\";\n" % (sgstyle + "," if sgstyle else "") + tabs + "\t" + "color = \"%s\";\n" % (sgcolor if not sgstyle else "#000000") + tabs + "\t" + "bgcolor = \"%s\"" % (sgcolor)
+            sgattr = margin_attr + "style = \"%s rounded\";\n" % (sgstyle + "," if sgstyle else "") + tabs + "\t" + "color = \"%s\";\n" % (sgcolor if not sgstyle else "#000000") + tabs + "\t" + "bgcolor = \"%s\"" % (sgcolor)
         else:
-            sgattr = "style = invis;"
+            sgattr = margin_attr + "style = invis;"
 
         if enable_subgraphs and sgtitle:
             self._addchild_rev("", ["fontname = \"%s\";\n" % (self.font["balsamiq"]) + tabs + "\t" + "fontsize = \"%s\";\n" % (self.fontsize["xxl"])], tabs, "sgwrap", p)
         if enable_subgraphs:
             self._addchild_rev("", ["subgraph cluster%s {\n" % nodename.replace("node", "") + tabs + "\t" + sgattr], tabs, "sgwrap", p)
         if enable_subgraphs and sgcolor and sgcolor[0] == "e":
-            sgattr = "style = \"%s rounded\";\n" % (sgstyle + "," if sgstyle else "") + tabs + "\t" + "color = \"%s\";\n" % (sgcolor[1:] if not sgstyle else "#000000") + tabs + "\t" + "bgcolor = \"%s\";" % (sgcolor[1:])
+            sgattr = margin_attr + "style = \"%s rounded\";\n" % (sgstyle + "," if sgstyle else "") + tabs + "\t" + "color = \"%s\";\n" % (sgcolor[1:] if not sgstyle else "#000000") + tabs + "\t" + "bgcolor = \"%s\";" % (sgcolor[1:])
             self._addchild_rev("", ["subgraph cluster%s {\n" % nodename.replace("node", "colored") + tabs + "\t" + sgattr], tabs, "sgwrap", p)
 
         return c
