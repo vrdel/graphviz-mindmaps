@@ -138,6 +138,30 @@ def ResolveRootSubgraphs(lines):
     return None
 
 
+def ResolveRootOrientation(lines):
+    orientations = {
+        "lr": "LR",
+        "left-right": "LR",
+        "left_to_right": "LR",
+        "tb": "TB",
+        "top-bottom": "TB",
+        "top_to_bottom": "TB",
+        "bt": "BT",
+        "bottom-top": "BT",
+        "bottom_to_top": "BT",
+        "rl": "RL",
+        "right-left": "RL",
+        "right_to_left": "RL",
+    }
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        orientation = ParseInlineAttrLine("orientation", line)
+        if orientation:
+            return orientations.get(orientation.lower(), "LR")
+    return "LR"
+
+
 def IsOutlineLeaf(lines, index, level, tabnum):
     for candidate in lines[index + 1:]:
         if not re.search(r"(\t#) (.*)", candidate):
@@ -190,9 +214,10 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
     bgcolor = ResolveRootBgcolor(lines, runtime.default_bgcolor)
     penwidth = ResolveRootPenwidth(lines)
+    rankdir = ResolveRootOrientation(lines)
     tree.subgraph_depth = ResolveRootSubgraphs(lines)
 
-    dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=LR;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[fontname=\"%s\" fontsize=%s fontcolor=\"%s\" color=\"#000000\" gradientangle=\"90\" penwidth=%s];\n" % (FONT_DIR, bgcolor, font["comic"], fontsize["m"], fontcolor["def"], penwidth)
+    dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[fontname=\"%s\" fontsize=%s fontcolor=\"%s\" color=\"#000000\" gradientangle=\"90\" penwidth=%s];\n" % (rankdir, FONT_DIR, bgcolor, font["comic"], fontsize["m"], fontcolor["def"], penwidth)
     dotbuf += "\tedge[arrowhead=none color=\"#8a8a8a\" minlen=3 style=tapered penwidth=6 dir=forward arrowtail=none fontname=\"%s\" fontsize=\"%s\" fontcolor=\"%s\"];\n\n" % (font["comicb"], fontsize["l"], fontcolor["b"])
     dotbuf += "// %s\n" % (match.group(2))
     dotbuf += "\tsubgraph cluster000 {\n\n"
