@@ -427,6 +427,9 @@ def ApplyNodeAttributeTokens(
     for token in NormalizeAttributeTokens(tokens):
         if token == "textleft":
             continue
+        if token == "sgno":
+            state.child_subgraphs = False
+            continue
         if token in fontnames:
             state.fontname = fontnames[token]
             continue

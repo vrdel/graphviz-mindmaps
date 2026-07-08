@@ -124,6 +124,8 @@ def ResolveRootSubgraphs(lines):
     for line in lines[1:]:
         if re.search(r"(\t#) (.*)", line):
             break
+        if re.search(r"(?<!\S)sgno(?!\S)", line):
+            return 0
         subgraphs = ParseInlineAttrLine("subgraphs", line)
         if subgraphs:
             value = subgraphs.lower()
