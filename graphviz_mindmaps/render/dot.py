@@ -171,6 +171,9 @@ def ResolveRootSgmargin(lines):
         sgmargin = ParseInlineAttrLine("sgmargin", line)
         if sgmargin:
             return sgmargin
+        sgm = ParseInlineAttrLine("sgm", line)
+        if sgm:
+            return sgm
     return "8"
 
 
