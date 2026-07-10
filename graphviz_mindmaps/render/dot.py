@@ -194,6 +194,24 @@ def ResolveRootNodeDefaults(lines):
     return defaults
 
 
+def ResolveRootEdgeDefaults(lines):
+    defaults = {}
+    keymap = {
+        "global_edge_color": "color",
+        "global_ec": "color",
+        "global_edge_style": "style",
+        "global_es": "style",
+    }
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        for key, dotkey in keymap.items():
+            value = ParseInlineAttrLine(key, line)
+            if value:
+                defaults[dotkey] = value
+    return defaults
+
+
 def IsOutlineLeaf(lines, index, level, tabnum):
     for candidate in lines[index + 1:]:
         if not re.search(r"(\t#) (.*)", candidate):
@@ -250,6 +268,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     tree.subgraph_depth = ResolveRootSubgraphs(lines)
     tree.default_sgmargin = ResolveRootSgmargin(lines)
     root_node_defaults = ResolveRootNodeDefaults(lines)
+    root_edge_defaults = ResolveRootEdgeDefaults(lines)
     node_default_attrs = {
         "fontname": font["comic"],
         "fontsize": fontsize["m"],
@@ -263,9 +282,23 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     tree.default_borderwidth = root_node_defaults.get("penwidth")
     tree.default_borderstyle = root_node_defaults.get("style")
     node_default_attr = " ".join('%s="%s"' % (key, value) for key, value in node_default_attrs.items())
+    edge_default_attrs = {
+        "arrowhead": "none",
+        "color": "#8a8a8a",
+        "minlen": "3",
+        "style": "tapered",
+        "penwidth": "6",
+        "dir": "forward",
+        "arrowtail": "none",
+        "fontname": font["comicb"],
+        "fontsize": fontsize["l"],
+        "fontcolor": fontcolor["b"],
+    }
+    edge_default_attrs.update(root_edge_defaults)
+    edge_default_attr = " ".join('%s="%s"' % (key, value) for key, value in edge_default_attrs.items())
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
-    dotbuf += "\tedge[arrowhead=none color=\"#8a8a8a\" minlen=3 style=tapered penwidth=6 dir=forward arrowtail=none fontname=\"%s\" fontsize=\"%s\" fontcolor=\"%s\"];\n\n" % (font["comicb"], fontsize["l"], fontcolor["b"])
+    dotbuf += "\tedge[%s];\n\n" % edge_default_attr
     dotbuf += "// %s\n" % (match.group(2))
     dotbuf += "\tsubgraph cluster000 {\n\n"
     dotbuf += "\t\tstyle=radial;\n\t\tordering=out;\n\t\tfillcolor=\"%s\";\n\t\tcolor=\"%s\";\n\n" % (bgcolor, bgcolor)
