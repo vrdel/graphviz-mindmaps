@@ -27,6 +27,9 @@ class NodePrepState:
     fontname: str | None = None
     bgcolor: str | None = None
     fgcolor: str | None = None
+    bordercolor: str | None = None
+    borderwidth: str | None = None
+    borderstyle: str | None = None
     child_subgraphs: bool | None = None
 
     def edgeattrs(self):

@@ -434,13 +434,19 @@ def ApplyNodeAttributeTokens(
             state.fontname = fontnames[token]
             continue
         keyval_match = re.match(r"([^=]+)=(.*)", token)
-        if keyval_match and keyval_match.group(1) in {"bg", "bgcolor", "fg", "fgcolor", "subgraph", "sgmargin", "sgm"}:
+        if keyval_match and keyval_match.group(1) in {"bg", "bgcolor", "fg", "fgcolor", "bc", "bw", "bs", "subgraph", "sgmargin", "sgm"}:
             key = keyval_match.group(1)
             value = keyval_match.group(2).strip().strip("\"'")
             if key in {"bg", "bgcolor"}:
                 state.bgcolor = value
             elif key in {"fg", "fgcolor"}:
                 state.fgcolor = value
+            elif key == "bc":
+                state.bordercolor = value
+            elif key == "bw":
+                state.borderwidth = value
+            elif key == "bs":
+                state.borderstyle = value
             elif key == "subgraph":
                 state.child_subgraphs = value.lower() not in {"0", "false", "no", "off"}
             else:
@@ -510,6 +516,12 @@ def ApplyNodeAttributeTokens(
             state.bgcolor = tokval[1].strip().strip("\"'")
         elif tokval[0] in {"fg", "fgcolor"}:
             state.fgcolor = tokval[1].strip().strip("\"'")
+        elif tokval[0] == "bc":
+            state.bordercolor = tokval[1].strip().strip("\"'")
+        elif tokval[0] == "bw":
+            state.borderwidth = tokval[1].strip().strip("\"'")
+        elif tokval[0] == "bs":
+            state.borderstyle = tokval[1].strip().strip("\"'")
         elif tokval[0] == "subgraph":
             state.child_subgraphs = tokval[1].strip().strip("\"'").lower() not in {"0", "false", "no", "off"}
         elif tokval[0] in {"sgmargin", "sgm"}:

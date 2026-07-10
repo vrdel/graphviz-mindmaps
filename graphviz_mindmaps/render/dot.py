@@ -177,6 +177,23 @@ def ResolveRootSgmargin(lines):
     return "8"
 
 
+def ResolveRootNodeDefaults(lines):
+    defaults = {}
+    keymap = {
+        "global_bc": "color",
+        "global_bw": "penwidth",
+        "global_bs": "style",
+    }
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        for key, dotkey in keymap.items():
+            value = ParseInlineAttrLine(key, line)
+            if value:
+                defaults[dotkey] = value
+    return defaults
+
+
 def IsOutlineLeaf(lines, index, level, tabnum):
     for candidate in lines[index + 1:]:
         if not re.search(r"(\t#) (.*)", candidate):
@@ -232,8 +249,22 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     rankdir = ResolveRootOrientation(lines)
     tree.subgraph_depth = ResolveRootSubgraphs(lines)
     tree.default_sgmargin = ResolveRootSgmargin(lines)
+    root_node_defaults = ResolveRootNodeDefaults(lines)
+    node_default_attrs = {
+        "fontname": font["comic"],
+        "fontsize": fontsize["m"],
+        "fontcolor": fontcolor["def"],
+        "color": "#000000",
+        "gradientangle": "90",
+        "penwidth": penwidth,
+    }
+    node_default_attrs.update(root_node_defaults)
+    tree.default_bordercolor = root_node_defaults.get("color")
+    tree.default_borderwidth = root_node_defaults.get("penwidth")
+    tree.default_borderstyle = root_node_defaults.get("style")
+    node_default_attr = " ".join('%s="%s"' % (key, value) for key, value in node_default_attrs.items())
 
-    dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[fontname=\"%s\" fontsize=%s fontcolor=\"%s\" color=\"#000000\" gradientangle=\"90\" penwidth=%s];\n" % (rankdir, FONT_DIR, bgcolor, font["comic"], fontsize["m"], fontcolor["def"], penwidth)
+    dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
     dotbuf += "\tedge[arrowhead=none color=\"#8a8a8a\" minlen=3 style=tapered penwidth=6 dir=forward arrowtail=none fontname=\"%s\" fontsize=\"%s\" fontcolor=\"%s\"];\n\n" % (font["comicb"], fontsize["l"], fontcolor["b"])
     dotbuf += "// %s\n" % (match.group(2))
     dotbuf += "\tsubgraph cluster000 {\n\n"
@@ -429,6 +460,9 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 state_obj.fgcolor,
                 state_obj.child_subgraphs,
                 state_obj.sgmargin,
+                state_obj.bordercolor,
+                state_obj.borderwidth,
+                state_obj.borderstyle,
             )
             if code_image_path:
                 InsertImageRow(parentlist[level]._label, code_image_path)

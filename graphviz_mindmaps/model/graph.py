@@ -84,7 +84,7 @@ import re
 
 class Tree:
     class Node:
-        def __init__(self, tree, nodename, label=None, tabs="", ntype=None, parent=None, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, verbatim=False, draw=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None):
+        def __init__(self, tree, nodename, label=None, tabs="", ntype=None, parent=None, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, verbatim=False, draw=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None, bordercolor=None, borderwidth=None, borderstyle=None):
             self._tree = tree
             self._ntype = ntype
             self._nodename = nodename
@@ -106,6 +106,9 @@ class Tree:
             self._bgcolor = bgcolor
             self._fgcolor = fgcolor
             self._child_subgraphs = child_subgraphs
+            self._bordercolor = bordercolor
+            self._borderwidth = borderwidth
+            self._borderstyle = borderstyle
 
         def _apply_fontname(self, attrs):
             if not self._fontname:
@@ -130,10 +133,42 @@ class Tree:
                 return re.sub(r'fontcolor="[^"]*"', 'fontcolor="%s"' % self._fgcolor, attrs, count=1)
             return attrs + ' fontcolor="%s"' % self._fgcolor
 
+        def _apply_bordercolor(self, attrs):
+            bordercolor = self._bordercolor or self._tree.default_bordercolor
+            if not bordercolor:
+                return attrs
+            if re.search(r'(?<!fill)color=', attrs):
+                return re.sub(r'(?<!fill)color="[^"]*"', 'color="%s"' % bordercolor, attrs, count=1)
+            return attrs + ' color="%s"' % bordercolor
+
+        def _apply_borderwidth(self, attrs):
+            borderwidth = self._borderwidth or self._tree.default_borderwidth
+            if not borderwidth:
+                return attrs
+            if "penwidth=" in attrs:
+                return re.sub(r'penwidth="?[^"\s]*"?', 'penwidth="%s"' % borderwidth, attrs, count=1)
+            return attrs + ' penwidth="%s"' % borderwidth
+
+        def _apply_borderstyle(self, attrs):
+            borderstyle = self._borderstyle or self._tree.default_borderstyle
+            if not borderstyle:
+                return attrs
+            if "style=" in attrs:
+                match = re.search(r'style="([^"]*)"', attrs)
+                if match:
+                    styles = [style.strip() for style in match.group(1).split(",") if style.strip()]
+                    styles = [style for style in styles if style not in {"solid", "dashed", "dotted"}]
+                    styles.append(borderstyle)
+                    return attrs[:match.start()] + 'style="%s"' % ",".join(styles) + attrs[match.end():]
+            return attrs + ' style="%s"' % borderstyle
+
         def _apply_node_overrides(self, attrs):
             attrs = self._apply_fontname(attrs)
             attrs = self._apply_bgcolor(attrs)
-            return self._apply_fgcolor(attrs)
+            attrs = self._apply_fgcolor(attrs)
+            attrs = self._apply_bordercolor(attrs)
+            attrs = self._apply_borderwidth(attrs)
+            return self._apply_borderstyle(attrs)
 
         def element(self):
             if "sgwrap" in self._ntype:
@@ -456,6 +491,9 @@ class Tree:
         self.post_attr_proc_label = post_attr_proc_label
         self.subgraph_depth = subgraph_depth
         self.default_sgmargin = default_sgmargin
+        self.default_bordercolor = None
+        self.default_borderwidth = None
+        self.default_borderstyle = None
 
     def _subgraphs_enabled_for_tabs(self, tabs, parent=None):
         if parent is not None and getattr(parent, "_child_subgraphs", None) is False:
@@ -481,15 +519,15 @@ class Tree:
         self._addchild(tabs + "}", p)
         return c
 
-    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=None, lc=None, ws=None, ls=None, wf=None, lf=None, lfont=None, ld=None, vrbt=False, draw=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None):
+    def _addchild_rev(self, nodename, label, tabs, ntype, p, wc=None, lc=None, ws=None, ls=None, wf=None, lf=None, lfont=None, ld=None, vrbt=False, draw=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None, bordercolor=None, borderwidth=None, borderstyle=None):
         if child_subgraphs is None and getattr(p, "_child_subgraphs", None) is False:
             child_subgraphs = False
-        c = self.Node(self, nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, lfont, ld, vrbt, draw, fontname, bgcolor, fgcolor, child_subgraphs)
+        c = self.Node(self, nodename, label, tabs, ntype, p, wc, lc, ws, ls, wf, lf, lfont, ld, vrbt, draw, fontname, bgcolor, fgcolor, child_subgraphs, bordercolor, borderwidth, borderstyle)
         c._parent = p
         p._child.insert(0, c)
         return c
 
-    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None, sgmargin=None):
+    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None, sgmargin=None, bordercolor=None, borderwidth=None, borderstyle=None):
         sgattr = ""
         enable_subgraphs = self._subgraphs_enabled_for_tabs(tabs, p)
         sgmargin = sgmargin if sgmargin is not None else self.default_sgmargin
@@ -500,7 +538,7 @@ class Tree:
             self._addchild_rev("", ["}"], tabs, "sgwrap", p)
         if enable_subgraphs and sgtitle:
             self._addchild_rev("", ["label = <<TABLE CELLBORDER=\"0\" CELLPADDING=\"3\" CELLSPACING=\"3\" BORDER=\"0\"><TR><TD BGCOLOR=\"#E9ED5F\" COLOR=\"#000000\"><U>%s</U></TD></TR></TABLE>>" % (sgtitle)], tabs, "sgwrap", p)
-        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, linefont, linedate, vrbt, draw, fontname, bgcolor, fgcolor, child_subgraphs)
+        c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, linefont, linedate, vrbt, draw, fontname, bgcolor, fgcolor, child_subgraphs, bordercolor, borderwidth, borderstyle)
         c.wordfsize()
         c.wordfstyle()
         c.linefsize()
