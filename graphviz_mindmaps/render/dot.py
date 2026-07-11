@@ -104,7 +104,7 @@ def ResolveRootPenwidth(lines):
         penwidth = ParseInlineAttrLine("penwidth", line)
         if penwidth:
             return penwidth
-    return "1.2"
+    return "0"
 
 
 def ResolveRootBgcolor(lines, default_bgcolor):
