@@ -10,6 +10,16 @@
 {{{otl
 # mindmap-01
 	: fname=mindmap-01.jpg notitle
+	: orientation=LR sgm=8 global_bw=0 global_ec="#8a8a8a" global_es=tapered leaf=def
+	# root defaults
+		:
+		# root attribute line
+			: verbatim
+			:
+			: : orientation=LR sgm=8 global_bw=0
+			: : global_bc="#6a6a6a" global_bs=rounded
+			: : global_ec="#8a8a8a" global_es=tapered leaf=def
+			:
 	# edge ends
 		:
 		# edgra
@@ -38,6 +48,13 @@
 				: cyello
 			# cpink
 				: cpink
+			# custom fill, text, and border
+				: node bg="#f6fff6" fg="#245c2d" bc="#45A135" bw=2 bs=dashed
+				# bg/bgcolor, fg/fgcolor, bc, bw, bs
+					: verbatim
+					:
+					: : node bg="#f6fff6" fg="#245c2d" bc="#45A135" bw=2 bs=dashed
+					:
 		# types
 		# ---
 		# edgd
@@ -90,6 +107,15 @@
 				:           |
 				:         -----
 				:
+			# image transforms
+				: img_sk=mindmap-01.jpg|20
+				# img_neg, img_gr, img_neg_gr_cn, img_sk
+					: verbatim
+					:
+					: : img_neg=mindmap-01.jpg|20
+					: : img_gr=mindmap-01.jpg|20
+					: : img_neg_gr_cn_sk=mindmap-01.jpg|20
+					:
 		# multiline
 		# ---
 		# line1; line2
@@ -133,6 +159,20 @@
 		# ---
 		# sggtend"title"
 			: sggtend node
+		# subgraph controls
+			:
+			# sgno disables child subgraphs below this node
+				: node sgno
+				# no child subgraph
+					: commen
+			# subgraph=off is the key/value form
+				: node subgraph=off
+				# no child subgraph
+					: commen
+			# sgmargin and sgm set subgraph margin
+				: sgcs'subgraph margin' sgm=18
+				# margin alias
+					: commen sgmargin=18
 	# node text
 		:
 		# implication

@@ -1,5 +1,21 @@
 # mindmap-01
 	: fname=mindmap-01.jpg notitle
+	: orientation=LR sgm=8 global_bw=0 global_ec="#8a8a8a" global_es=tapered leaf=def
+	# root defaults
+		:
+		# root attribute line
+			: verbatim
+			:
+			: : fname=mindmap-01.jpg notitle
+			: : orientation=LR sgm=8 global_bw=0
+			: : global_ec="#8a8a8a" global_es=tapered leaf=def
+			:
+		# other root node defaults
+			: verbatim
+			:
+			: : global_bc="#6a6a6a" global_bs=rounded
+			: : global_edge_color="#8a8a8a" global_edge_style=tapered
+			:
 	# edge ends
 		:
 		# edgra
@@ -154,6 +170,13 @@
 				: cgrey l1t
 				# cblack l1t
 					: cblack l1t
+			# custom fill, text, and border
+				: node bg="#f6fff6" fg="#245c2d" bc="#45A135" bw=2 bs=dashed
+				# bg/bgcolor, fg/fgcolor, bc, bw, bs
+					: verbatim
+					:
+					: : node bg="#f6fff6" fg="#245c2d" bc="#45A135" bw=2 bs=dashed
+					:
 			# verbatim cgreen
 				: verbatim cgreen
 				:
@@ -259,6 +282,15 @@
 				:           |
 				:         -----
 				:
+			# image transforms
+				: img_sk=wkcp-pi-260712-090647.png|60
+				# img_neg, img_gr, img_neg_gr_cn, img_sk
+					: verbatim
+					:
+					: : img_neg=mindmap-01.jpg|20
+					: : img_gr=mindmap-01.jpg|20
+					: : img_neg_gr_cn_sk=mindmap-01.jpg|20
+					:
 		# multiline
 		# ---
 		# line1; line2
@@ -312,6 +344,20 @@
 				# ---
 				# no title
 					:
+		# subgraph controls
+			:
+			# sgno disables child subgraphs below this node
+				: node sgno
+				# no child subgraph
+					: commen
+			# subgraph=off is the key/value form
+				: node subgraph=off
+				# no child subgraph
+					: commen
+			# sgmargin and sgm set subgraph margin
+				: sgcs'subgraph margin' sgm=18
+				# margin alias
+					: commen sgmargin=18
 	# node text
 		:
 		# implication
