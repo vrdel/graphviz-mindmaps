@@ -2,11 +2,13 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 
 from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
 MONTAGE_TITLE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tools", "montage_title.py")
+CAIRO_BITMAP_LIMIT_ERROR = "too large for cairo-renderer bitmaps"
 
 
 def WriteDot(dotbuf, dotfile):
@@ -56,11 +58,73 @@ def CleanupTmpdir(tmpdir):
     return []
 
 
+def _format_command_error(command, result):
+    stderr = result.stderr.decode(errors="replace") if result.stderr else ""
+    stdout = result.stdout.decode(errors="replace") if result.stdout else ""
+    message = stderr.strip() or stdout.strip() or "no output"
+    return "%s failed with exit code %s: %s" % (" ".join(command), result.returncode, message)
+
+
+def _render_dot(dotbuf, output_path, output_format):
+    command = ["dot", "-T%s" % output_format, "-o", output_path]
+    return subprocess.run(command, input=dotbuf.encode(), capture_output=True)
+
+
+def _save_png_as_output(png_path, output_path):
+    suffix = os.path.splitext(output_path)[1].lower()
+    if suffix == ".png":
+        shutil.copyfile(png_path, output_path)
+        return
+
+    with Image.open(png_path) as image:
+        if suffix in {".jpg", ".jpeg"}:
+            image.convert("RGB").save(output_path)
+        else:
+            image.save(output_path)
+
+
+def _render_via_svg_fallback(dotbuf, output_path, tmpdir):
+    converter = shutil.which("rsvg-convert")
+    if not converter:
+        raise RuntimeError(
+            "dot hit the cairo bitmap size limit and rsvg-convert is not installed; "
+            "install librsvg/rsvg-convert or render with -d to keep DOT output"
+        )
+
+    temp_root = tempfile.mkdtemp(prefix="gvmm-svg-fallback-")
+    tmpdir.append(temp_root)
+    svg_path = os.path.join(temp_root, "graph.svg")
+    png_path = os.path.join(temp_root, "graph.png")
+
+    svg_result = _render_dot(dotbuf, svg_path, "svg")
+    if svg_result.returncode != 0:
+        raise RuntimeError(_format_command_error(["dot", "-Tsvg", "-o", svg_path], svg_result))
+
+    command = [converter, "-o", png_path, svg_path]
+    convert_result = subprocess.run(command, capture_output=True)
+    if convert_result.returncode != 0:
+        raise RuntimeError(_format_command_error(command, convert_result))
+
+    _save_png_as_output(png_path, output_path)
+
+
+def RenderDotImage(dotbuf, output_path, tmpdir):
+    result = _render_dot(dotbuf, output_path, "jpg")
+    if result.returncode == 0:
+        return
+
+    stderr = result.stderr.decode(errors="replace") if result.stderr else ""
+    if CAIRO_BITMAP_LIMIT_ERROR in stderr:
+        _render_via_svg_fallback(dotbuf, output_path, tmpdir)
+        return
+
+    raise RuntimeError(_format_command_error(["dot", "-Tjpg", "-o", output_path], result))
+
+
 def WriteImg(dotbuf, argholder, gvroot, title, notitle, tmpdir):
     gvroot, argholder.jpgname = ResolveOutputRoot(gvroot, argholder.jpgname)
 
-    proc = subprocess.Popen(["dot", "-Tjpg", "-o", gvroot + argholder.jpgname], stdin=subprocess.PIPE)
-    proc.communicate(dotbuf.encode())
+    RenderDotImage(dotbuf, gvroot + argholder.jpgname, tmpdir)
 
     ShaveImage(gvroot + argholder.jpgname, shave_x=2, shave_y=2)
 
