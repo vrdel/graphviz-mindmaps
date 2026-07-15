@@ -70,6 +70,13 @@ def _render_dot(dotbuf, output_path, output_format):
     return subprocess.run(command, input=dotbuf.encode(), capture_output=True)
 
 
+def _output_format_for_path(output_path):
+    suffix = os.path.splitext(output_path)[1].lower()
+    if suffix == ".png":
+        return "png"
+    return "jpg"
+
+
 def _save_png_as_output(png_path, output_path):
     suffix = os.path.splitext(output_path)[1].lower()
     if suffix == ".png":
@@ -84,11 +91,11 @@ def _save_png_as_output(png_path, output_path):
 
 
 def _render_via_svg_fallback(dotbuf, output_path, tmpdir):
-    converter = shutil.which("rsvg-convert")
+    converter = shutil.which("inkscape")
     if not converter:
         raise RuntimeError(
-            "dot hit the cairo bitmap size limit and rsvg-convert is not installed; "
-            "install librsvg/rsvg-convert or render with -d to keep DOT output"
+            "dot hit the cairo bitmap size limit and inkscape is not installed; "
+            "install inkscape or render with -d to keep DOT output"
         )
 
     temp_root = tempfile.mkdtemp(prefix="gvmm-svg-fallback-")
@@ -100,7 +107,7 @@ def _render_via_svg_fallback(dotbuf, output_path, tmpdir):
     if svg_result.returncode != 0:
         raise RuntimeError(_format_command_error(["dot", "-Tsvg", "-o", svg_path], svg_result))
 
-    command = [converter, "-o", png_path, svg_path]
+    command = [converter, svg_path, "--export-type=png", "--export-filename", png_path]
     convert_result = subprocess.run(command, capture_output=True)
     if convert_result.returncode != 0:
         raise RuntimeError(_format_command_error(command, convert_result))
@@ -109,7 +116,8 @@ def _render_via_svg_fallback(dotbuf, output_path, tmpdir):
 
 
 def RenderDotImage(dotbuf, output_path, tmpdir):
-    result = _render_dot(dotbuf, output_path, "jpg")
+    output_format = _output_format_for_path(output_path)
+    result = _render_dot(dotbuf, output_path, output_format)
     if result.returncode == 0:
         return
 
@@ -118,7 +126,7 @@ def RenderDotImage(dotbuf, output_path, tmpdir):
         _render_via_svg_fallback(dotbuf, output_path, tmpdir)
         return
 
-    raise RuntimeError(_format_command_error(["dot", "-Tjpg", "-o", output_path], result))
+    raise RuntimeError(_format_command_error(["dot", "-T%s" % output_format, "-o", output_path], result))
 
 
 def WriteImg(dotbuf, argholder, gvroot, title, notitle, tmpdir):

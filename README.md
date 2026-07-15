@@ -38,7 +38,7 @@ Used in some workflows:
 
 - `just`
 - `galaview.sh`
-- `rsvg-convert` from librsvg, used as a fallback when Graphviz's cairo bitmap renderer cannot render very large graphs directly
+- `inkscape`, used as a fallback when Graphviz's cairo bitmap renderer cannot render very large graphs directly
 
 ## Entrypoints
 
