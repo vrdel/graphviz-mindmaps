@@ -118,12 +118,12 @@ def _render_via_svg_fallback(dotbuf, output_path, tmpdir):
 def RenderDotImage(dotbuf, output_path, tmpdir):
     output_format = _output_format_for_path(output_path)
     result = _render_dot(dotbuf, output_path, output_format)
-    if result.returncode == 0:
-        return
-
     stderr = result.stderr.decode(errors="replace") if result.stderr else ""
     if CAIRO_BITMAP_LIMIT_ERROR in stderr:
         _render_via_svg_fallback(dotbuf, output_path, tmpdir)
+        return
+
+    if result.returncode == 0:
         return
 
     raise RuntimeError(_format_command_error(["dot", "-T%s" % output_format, "-o", output_path], result))
