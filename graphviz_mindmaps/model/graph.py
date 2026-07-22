@@ -137,8 +137,8 @@ class Tree:
             bordercolor = self._bordercolor or self._tree.default_bordercolor
             if not bordercolor:
                 return attrs
-            if re.search(r'(?<!fill)color=', attrs):
-                return re.sub(r'(?<!fill)color="[^"]*"', 'color="%s"' % bordercolor, attrs, count=1)
+            if re.search(r'(^|\s)color=', attrs):
+                return re.sub(r'(^|\s)color="?[^"\s]*"?', r'\1color="%s"' % bordercolor, attrs, count=1)
             return attrs + ' color="%s"' % bordercolor
 
         def _apply_borderwidth(self, attrs):
