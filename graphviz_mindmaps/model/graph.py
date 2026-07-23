@@ -258,19 +258,13 @@ class Tree:
             self._label = self._label.split("</TD></TR><TR>")
 
             for value in self._linedate:
-                if self._verbatim or self._draw:
-                    _, scoped_indexes = self._scoped_line_fragment_indexes(self._label)
-                    if not scoped_indexes:
-                        continue
-                    li = self._resolve_line_sel(int(value[0]), len(scoped_indexes))
-                    if li < 1 or li > len(scoped_indexes):
-                        continue
-                    target_idx = scoped_indexes[li - 1]
-                else:
-                    li = self._resolve_line_sel(int(value[0]), len(self._label))
-                    if li < 1 or li > len(self._label):
-                        continue
-                    target_idx = li - 1
+                _, scoped_indexes = self._scoped_line_fragment_indexes(self._label)
+                if not scoped_indexes:
+                    continue
+                li = self._resolve_line_sel(int(value[0]), len(scoped_indexes))
+                if li < 1 or li > len(scoped_indexes):
+                    continue
+                target_idx = scoped_indexes[li - 1]
 
                 deco = "<TD><FONT COLOR=\"%s\"><I><FONT FACE=\"FontAwesome\" POINT-SIZE=\"18\">%s</FONT>&nbsp;" % (self._tree.fontcolor["b"], self._tree.fontawesome_symb["calendar"])
                 self._label[target_idx] = self._label[target_idx].replace("<TD>", deco, 1)
@@ -452,19 +446,13 @@ class Tree:
                     self._label = "<SEP>".join(self._label)
                     self._label = self._label.split("</TD></TR><TR>")
                     for item in value:
-                        if self._verbatim or self._draw:
-                            _, scoped_indexes = self._scoped_line_fragment_indexes(self._label)
-                            if not scoped_indexes:
-                                continue
-                            li = self._resolve_line_sel(int(item[0]), len(scoped_indexes))
-                            if li < 1 or li > len(scoped_indexes):
-                                continue
-                            target_idx = scoped_indexes[li - 1]
-                        else:
-                            li = self._resolve_line_sel(int(item[0]), len(self._label))
-                            if li < 1 or li > len(self._label):
-                                continue
-                            target_idx = li - 1
+                        _, scoped_indexes = self._scoped_line_fragment_indexes(self._label)
+                        if not scoped_indexes:
+                            continue
+                        li = self._resolve_line_sel(int(item[0]), len(scoped_indexes))
+                        if li < 1 or li > len(scoped_indexes):
+                            continue
+                        target_idx = scoped_indexes[li - 1]
                         self._label[target_idx] = replace_td(
                             self._label[target_idx],
                             "%s\"%s\">" % (tsattr, item[1]) if item[1] not in {"U", "B", "S", "I"} else "%s%s>" % (tsattr, item[1]),
