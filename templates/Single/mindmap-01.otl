@@ -182,6 +182,19 @@
 				:
 				: verbatim cgreen
 				:
+			# verbatim header and body lines
+			# header word1, header word2 in line1
+			# header word1 in line2
+				: verbatim cyello hl1r Ehl1it Ehl1w2b l1r
+				:
+				: body word1, word2 in line1
+				: body word1 word2 word3 in line2
+				:
+			# verbatim default header style
+				: verbatim cyello
+				:
+				: body keeps old first header bold underline
+				:
 				# verbatim cred
 					: verbatim cred
 					:
@@ -481,6 +494,14 @@
 					: l1fm - font mono
 					: l2fa - font sans
 					: l3fef18 - font serif
+					:
+				# verbatim header/body line attributes
+				# header line 1
+				# header line 2
+					: verbatim hl1r Ehl1it Ehl1w2b l1r
+					:
+					: body line 1
+					: body line 2
 					:
 	# fontawesome icons
 		:
