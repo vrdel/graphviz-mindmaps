@@ -92,9 +92,12 @@ def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larro
 
     labelhtml = label.split()
     token_index = 0
+    in_verbatim_header = bool(vrbt or draw)
     for token in list(labelhtml):
-        if not vrbt and not draw and token.find(";") > 0:
+        if (not vrbt and not draw or in_verbatim_header) and token.find(";") > 0:
             labelhtml[token_index] = ConvertLinebreakMarkers(token)
+        if "__GVMM_BODY_BOUNDARY__" in token:
+            in_verbatim_header = False
 
         if token.find(">") == 0 and len(token) == 1:
             labelhtml[token_index] = token.replace(">", "&gt;")
@@ -201,12 +204,6 @@ def PostAttrProcLabel(label, ntype, vrbt, draw, textleft=False):
                 label[index] = label[index].replace("<TD", "<TD BGCOLOR=\"#18A828\"")
             elif index > 1:
                 label[index] = label[index].replace("<TD", "<TD ALIGN=\"left\"")
-    if vrbt or draw:
-        label[1] = "<B><U><FONT>" + label[1]
-        for index, _ in enumerate(label):
-            if index >= 1 and "</TD>" in label[index]:
-                label[index] = label[index].replace("</TD>", "</FONT></U></B></TD>")
-                break
     if ntype == "list" or textleft:
         for index in range(len(label)):
             label[index] = label[index].replace("<TD", "<TD ALIGN=\"left\"")

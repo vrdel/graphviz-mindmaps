@@ -91,8 +91,8 @@ def _EscapeVerbatimBodyLine(text, apply_inline_backtick_bold):
     return text + "<BR/> "
 
 
-def _CollectVerbatimNodeLine(lines, node_line_index, apply_inline_backtick_bold):
-    body_index = node_line_index + 2
+def _CollectVerbatimNodeLine(lines, node_line_index, apply_inline_backtick_bold, header_line=None, attr_line_index=None):
+    body_index = (attr_line_index if attr_line_index is not None else node_line_index + 1) + 1
     body_lines = []
 
     while body_index < len(lines) and '# ' not in lines[body_index] \
@@ -109,7 +109,7 @@ def _CollectVerbatimNodeLine(lines, node_line_index, apply_inline_backtick_bold)
         body_index += 1
 
     vrbtnode = "".join(body_lines).strip("<BR/>")
-    vrbtnode = lines[node_line_index] + "<BR/>" + vrbtnode
+    vrbtnode = (header_line or lines[node_line_index]) + "<BR/> __GVMM_BODY_BOUNDARY__<BR/> " + vrbtnode
     return vrbtnode, body_index
 
 
@@ -188,6 +188,18 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
                     else:
                         if "# " not in worklines[cursor]:
                             linesbymm.append(worklines[cursor])
+                            if "verbatim" in worklines[cursor] or \
+                                    "verbat" in worklines[cursor] or \
+                                    "draw" in worklines[cursor]:
+                                vrbtnode, next_index = _CollectVerbatimNodeLine(
+                                    worklines,
+                                    scan_index,
+                                    apply_inline_backtick_bold,
+                                    header_line=linesbymm[-2],
+                                    attr_line_index=cursor,
+                                )
+                                linesbymm[-2] = vrbtnode
+                                cursor = next_index - 1
             scan_index += 1
         else:
             cursor = scan_index - 2

@@ -1,8 +1,21 @@
 import unittest
 
 from graphviz_mindmaps import fontawesome
-from graphviz_mindmaps.constants import font, fontcolor, fontsize, nodetype, vrbtcolors
+from graphviz_mindmaps.constants import (
+    font,
+    fontcolor,
+    fontsize,
+    html_larrow1,
+    html_larrow2,
+    html_rarrow1,
+    html_rarrow2,
+    nodetype,
+    vrbtcolors,
+)
 from graphviz_mindmaps.model.graph import Tree
+from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
+from graphviz_mindmaps.render.label_html import BuildNodeLabelHtml
+from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
 from graphviz_mindmaps.render.label_html import PostAttrProcLabel
 
 
@@ -222,6 +235,127 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertIn("&nbsp;Thu 23-07-2026", rendered)
         self.assertIn('<IMG SRC="wkcp-pi-260723-122029.png"/>', rendered)
         self.assertNotIn(fontawesome.symb["calendar"] + '&nbsp;<IMG SRC=', rendered)
+
+    def test_verbatim_header_attributes_target_header_lines(self):
+        tree = self._tree(PostAttrProcLabel)
+        root = tree.addroot("node1")
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            "header word1, header word2 in line1; header word1 in line2<BR/> __GVMM_BODY_BOUNDARY__<BR/> body word1, word2 in line1<BR/> body word1 word2 word3 in line3",
+            True,
+            False,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+
+        node = tree.addchild_rev(
+            "node101",
+            "\t\t",
+            "cyello",
+            labelhtml,
+            root,
+            wordcolor=[[2, fontcolor["b"], {"lineskip": -1, "header": True}]],
+            linecolor=[
+                [1, fontcolor["r"], True, {"header": True}],
+                [1, fontcolor["r"], True],
+            ],
+            linefstyle=[[-1, "I", {"header": True}]],
+            vrbt=True,
+        )
+        rendered = "".join(node._label)
+
+        self.assertIn("header&nbsp;word1,&nbsp;header&nbsp;word2&nbsp;in&nbsp;line1", rendered)
+        self.assertIn("body&nbsp;word1,&nbsp;word2&nbsp;in&nbsp;line1", rendered)
+        self.assertNotIn("__GVMM_BODY_BOUNDARY__", rendered)
+        self.assertIn(
+            '<B><FONT COLOR="%s">header&nbsp;word1,&nbsp;header&nbsp;word2&nbsp;in&nbsp;line1</FONT></B>' % fontcolor["r"],
+            rendered,
+        )
+        self.assertNotIn("<U><FONT>header", rendered)
+        self.assertIn("<I>header&nbsp;", rendered)
+        self.assertIn('<B><FONT COLOR="%s">word1</FONT></B>' % fontcolor["b"], rendered)
+        self.assertIn(
+            '<B><FONT COLOR="%s">body&nbsp;word1,&nbsp;word2&nbsp;in&nbsp;line1</FONT></B>' % fontcolor["r"],
+            rendered,
+        )
+
+    def test_verbatim_header_gets_legacy_style_when_first_header_has_no_attrs(self):
+        tree = self._tree(PostAttrProcLabel)
+        root = tree.addroot("node1")
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            "Emir<BR/> __GVMM_BODY_BOUNDARY__<BR/> mislim da ce to ivan odjebat<BR/> a mislim mozemo probat 6 mjeseci",
+            True,
+            False,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+
+        node = tree.addchild_rev(
+            "node101",
+            "\t\t",
+            "cyello",
+            labelhtml,
+            root,
+            vrbt=True,
+        )
+        rendered = "".join(node._label)
+
+        self.assertIn("<B><U><FONT>Emir</FONT></U></B>", rendered)
+        self.assertIn("mislim&nbsp;da&nbsp;ce&nbsp;to&nbsp;ivan&nbsp;odjebat", rendered)
+
+    def test_verbatim_header_legacy_style_is_suppressed_by_first_header_attr(self):
+        tree = self._tree(PostAttrProcLabel)
+        root = tree.addroot("node1")
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            "Emir<BR/> __GVMM_BODY_BOUNDARY__<BR/> mislim da ce to ivan odjebat",
+            True,
+            False,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+
+        node = tree.addchild_rev(
+            "node101",
+            "\t\t",
+            "cyello",
+            labelhtml,
+            root,
+            linecolor=[[1, fontcolor["r"], True, {"header": True}]],
+            vrbt=True,
+        )
+        rendered = "".join(node._label)
+
+        self.assertIn('<B><FONT COLOR="%s">Emir</FONT></B>' % fontcolor["r"], rendered)
+        self.assertNotIn("<U><FONT>Emir", rendered)
+
+    def test_verbatim_collection_preserves_multiple_header_lines_and_body_boundary(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# header word1, header word2 in line1",
+                "\t# header word1 in line2",
+                "\t\t: verbatim cyello hl1r Ehl1it Ehl1w2b l1r",
+                "\t\t: ",
+                "\t\t: body word1, word2 in line1",
+                "\t\t: body word1 word2 word3 in line3",
+                "\t\t: ",
+            ],
+            ApplyInlineBacktickBold,
+        )
+
+        self.assertEqual(1, len(blocks))
+        self.assertIn("header word1, header word2 in line1; header word1 in line2", blocks[0][2])
+        self.assertIn("__GVMM_BODY_BOUNDARY__", blocks[0][2])
+        self.assertIn("body<WHITESP>word1,<WHITESP>word2", blocks[0][2])
 
 
 if __name__ == "__main__":

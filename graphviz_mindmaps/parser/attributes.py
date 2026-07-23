@@ -196,6 +196,30 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
 
         return idx
 
+    def ParseLineIdxSpec(spec):
+        header = False
+        for prefix in ("Ehl", "hl", "Eh", "h", "El", "l"):
+            if spec.startswith(prefix):
+                header = "h" in prefix
+                return ParseIdxSpec(spec, prefix), header
+        return [], False
+
+    def HeaderMeta(header):
+        return {"header": True} if header else None
+
+    def LineMeta(header):
+        return {"header": True} if header else None
+
+    def WordLineMeta(li, header):
+        if not li and not header:
+            return None
+        meta = {}
+        if li:
+            meta["lineskip"] = li
+        if header:
+            meta["header"] = True
+        return meta
+
     m = re.search('(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
     if m.group(1):
         if m.group(1)[0] == "m":
@@ -216,32 +240,44 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
         for si in range(0, len(m.group(3)), 2):
             linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
 
-    m = re.search(r'((?:E?l)(?:[0-9]+|\[[0-9,\-]+\]))?(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
+    line_selector = r'(?:(?:E?hl)|(?:E?h)|(?:E?l))(?:[0-9]+|\[[0-9,\-]+\])'
+
+    m = re.search(r'(%s)?(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?' % line_selector, k)
     if m.group(1):
-        lprefix = "El" if m.group(1).startswith("El") else "l"
-        lineidx = ParseIdxSpec(m.group(1), lprefix)
+        lineidx, header = ParseLineIdxSpec(m.group(1))
         for li in lineidx:
             if m.group(4):
                 for si in range(0, len(m.group(4)), 2):
-                    linefstyle.append([li, fontstyle[m.group(4)[si:si+2]]])
+                    entry = [li, fontstyle[m.group(4)[si:si+2]]]
+                    meta = LineMeta(header)
+                    if meta:
+                        entry.append(meta)
+                    linefstyle.append(entry)
             if m.group(3):
-                linefsize.append([li, m.group(3)[1:]])
+                entry = [li, m.group(3)[1:]]
+                meta = LineMeta(header)
+                if meta:
+                    entry.append(meta)
+                linefsize.append(entry)
             if m.group(2):
                 if m.group(2)[0] == "m":
-                    linecolor.append([li, linecolors[m.group(2)[1:]], False])
+                    entry = [li, linecolors[m.group(2)[1:]], False]
                 else:
-                    linecolor.append([li, fontcolor[m.group(2)], True])
+                    entry = [li, fontcolor[m.group(2)], True]
+                meta = HeaderMeta(header)
+                if meta:
+                    entry.append(meta)
+                linecolor.append(entry)
 
     m = re.search(
-        r'^((?:E?l)(?:[0-9]+|\[[0-9,\-]+\]))'
+        r'^(%s)'
         r'((?:(?:f[maed])|(?:f[0-9]+)|(?:ld|ul|st|it))+)$',
         k,
     )
     if m and m.group(1):
         suffix = m.group(2)
         if re.search(r"f[maed]", suffix):
-            lprefix = "El" if m.group(1).startswith("El") else "l"
-            lineidx = ParseIdxSpec(m.group(1), lprefix)
+            lineidx, header = ParseLineIdxSpec(m.group(1))
             parsed_font = None
             parsed_size = None
             parsed_styles = []
@@ -263,35 +299,47 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
             for li in lineidx:
                 if parsed_font:
                     entry = [li, fontface[parsed_font]]
+                    meta = LineMeta(header)
+                    if meta:
+                        entry.append(meta)
                     if entry not in linefont:
                         linefont.append(entry)
                 if parsed_size:
                     entry = [li, parsed_size]
+                    meta = LineMeta(header)
+                    if meta:
+                        entry.append(meta)
                     if entry not in linefsize:
                         linefsize.append(entry)
                 for style_token in parsed_styles:
                     entry = [li, fontstyle[style_token]]
+                    meta = LineMeta(header)
+                    if meta:
+                        entry.append(meta)
                     if entry not in linefstyle:
                         linefstyle.append(entry)
 
-    m = re.search(r'((?:E?l)(?:[0-9]+|\[[0-9,\-]+\]))date', k)
+    m = re.search(r'(%s)date' % line_selector, k)
     if m and m.group(1):
-        lprefix = "El" if m.group(1).startswith("El") else "l"
-        lineidx = ParseIdxSpec(m.group(1), lprefix)
+        lineidx, header = ParseLineIdxSpec(m.group(1))
         for li in lineidx:
-            linedate.append([li, True])
+            entry = [li, True]
+            meta = LineMeta(header)
+            if meta:
+                entry.append(meta)
+            linedate.append(entry)
 
-    m = re.search(r'((?:E?l)(?:[0-9]+|\[[0-9,\-]+\]))?((?:E?w)(?:[0-9]+)|(?:E?w)(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
+    m = re.search(r'(%s)?((?:E?w)(?:[0-9]+)|(?:E?w)(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?' % line_selector, k)
     if m.group(2):
+        header = False
         if m.group(1):
-            lprefix = "El" if m.group(1).startswith("El") else "l"
-            lineidx = ParseIdxSpec(m.group(1), lprefix)
+            lineidx, header = ParseLineIdxSpec(m.group(1))
         else:
             lineidx = [None]
         wprefix = "Ew" if m.group(2).startswith("Ew") else "w"
         wordidx = ParseIdxSpec(m.group(2), wprefix)
         for li in lineidx:
-            lmeta = {'lineskip': li} if li else None
+            lmeta = WordLineMeta(li, header)
             for wi in wordidx:
                 if m.group(3):
                     wordcolor.append([wi, fontcolor[m.group(3)], lmeta])

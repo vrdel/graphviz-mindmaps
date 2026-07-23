@@ -258,7 +258,7 @@ class Tree:
             self._label = self._label.split("</TD></TR><TR>")
 
             for value in self._linedate:
-                _, scoped_indexes = self._scoped_line_fragment_indexes(self._label)
+                _, scoped_indexes = self._line_fragment_indexes_for_attr(value, self._label)
                 if not scoped_indexes:
                     continue
                 li = self._resolve_line_sel(int(value[0]), len(scoped_indexes))
@@ -278,6 +278,74 @@ class Tree:
 
             self._label = "".join(self._label)
             self._label = self._label.split("<SEP>")
+
+        def _attr_meta(self, item):
+            for part in reversed(item):
+                if isinstance(part, dict):
+                    return part
+            return {}
+
+        def _is_header_attr(self, item):
+            return bool(self._attr_meta(item).get("header"))
+
+        def _line_fragment_indexes_for_attr(self, item, fragments=None):
+            if self._is_header_attr(item):
+                return self._header_line_fragment_indexes(fragments)
+            return self._scoped_line_fragment_indexes(fragments)
+
+        def _line_word_indexes_for_attr(self, item):
+            lmeta = item[2] if len(item) > 2 and isinstance(item[2], dict) else {}
+            if lmeta.get("header"):
+                return self._header_line_word_indexes()
+            return self._scoped_line_word_indexes()
+
+        def _remove_verbatim_body_boundary(self):
+            if "__GVMM_BODY_BOUNDARY__" not in "".join(self._label):
+                return
+            fragments = "<SEP>".join(self._label).split("</TD></TR><TR>")
+            fragments = [
+                fragment
+                for fragment in fragments
+                if "__GVMM_BODY_BOUNDARY__" not in fragment
+            ]
+            for index in range(len(fragments) - 1):
+                fragments[index] = fragments[index] + "</TD></TR><TR>"
+            self._label = "".join(fragments).split("<SEP>")
+
+        def _first_header_line_has_attr(self, attrlists):
+            for attrlist in attrlists:
+                for item in attrlist or []:
+                    if not self._is_header_attr(item):
+                        continue
+                    fragments, indexes = self._header_line_fragment_indexes()
+                    if not indexes:
+                        continue
+                    li = self._resolve_line_sel(int(item[0]), len(indexes))
+                    if li == 1:
+                        return True
+            return False
+
+        def _apply_default_verbatim_header_style(self, attrlists):
+            if not (self._verbatim or self._draw):
+                return
+            if self._first_header_line_has_attr(attrlists):
+                return
+
+            fragments, indexes = self._header_line_fragment_indexes()
+            if not indexes:
+                return
+
+            self._label = "<SEP>".join(self._label)
+            self._label = self._label.split("</TD></TR><TR>")
+            target_idx = indexes[0]
+            self._label[target_idx] = self._label[target_idx].replace("<TD>", "<TD><B><U><FONT>", 1)
+            if "</TD>" in self._label[target_idx]:
+                self._label[target_idx] = self._label[target_idx].replace("</TD>", "</FONT></U></B></TD>", 1)
+            else:
+                self._label[target_idx] += "</FONT></U></B>"
+            for index in range(len(self._label) - 1):
+                self._label[index] = self._label[index] + "</TD></TR><TR>"
+            self._label = "".join(self._label).split("<SEP>")
 
         def _resolve_line_sel(self, li, total_lines):
             if total_lines < 1:
@@ -322,13 +390,37 @@ class Tree:
                 del line_indexes[0]
 
             if self._verbatim or self._draw:
-                if line_indexes:
+                boundary_index = self._body_boundary_line_index()
+                if boundary_index is not None:
+                    line_indexes = line_indexes[boundary_index + 1:]
+                elif line_indexes:
                     del line_indexes[0]
                 while line_indexes and not line_indexes[0]:
                     del line_indexes[0]
                 while line_indexes and not line_indexes[-1]:
                     del line_indexes[-1]
 
+            return line_indexes
+
+        def _header_line_word_indexes(self):
+            line_indexes = self._label_line_word_indexes()
+
+            while line_indexes and not line_indexes[0]:
+                del line_indexes[0]
+
+            if not (self._verbatim or self._draw):
+                return []
+
+            boundary_index = self._body_boundary_line_index()
+            if boundary_index is not None:
+                line_indexes = line_indexes[:boundary_index]
+            else:
+                line_indexes = line_indexes[:1]
+
+            while line_indexes and not line_indexes[0]:
+                del line_indexes[0]
+            while line_indexes and not line_indexes[-1]:
+                line_indexes.pop()
             return line_indexes
 
         def _scoped_line_fragment_indexes(self, fragments=None):
@@ -343,7 +435,10 @@ class Tree:
 
             if self._verbatim or self._draw:
                 indexes = list(range(len(fragments)))
-                if indexes:
+                boundary_index = self._body_boundary_fragment_index(fragments)
+                if boundary_index is not None:
+                    indexes = [index for index in indexes if index > boundary_index]
+                elif indexes:
                     del indexes[0]
                 while indexes and not has_visible_content(fragments[indexes[0]]):
                     del indexes[0]
@@ -353,6 +448,41 @@ class Tree:
                 indexes = [idx for idx, fragment in enumerate(fragments) if has_visible_content(fragment)]
 
             return fragments, indexes
+
+        def _header_line_fragment_indexes(self, fragments=None):
+            def has_visible_content(fragment):
+                text = re.sub(r"<[^>]+>", "", fragment)
+                text = text.replace("&nbsp;", "").strip()
+                text = text.replace("<", "").replace(">", "").strip()
+                return bool(text)
+
+            if fragments is None:
+                fragments = "<SEP>".join(self._label).split("</TD></TR><TR>")
+
+            if not (self._verbatim or self._draw):
+                return fragments, []
+
+            boundary_index = self._body_boundary_fragment_index(fragments)
+            if boundary_index is not None:
+                indexes = list(range(boundary_index))
+            else:
+                indexes = list(range(1))
+
+            indexes = [idx for idx in indexes if idx < len(fragments) and has_visible_content(fragments[idx])]
+            return fragments, indexes
+
+        def _body_boundary_fragment_index(self, fragments):
+            for index, fragment in enumerate(fragments):
+                if "__GVMM_BODY_BOUNDARY__" in fragment:
+                    return index
+            return None
+
+        def _body_boundary_line_index(self):
+            for index, row in enumerate(self._label_line_word_indexes()):
+                for token_index in row:
+                    if "__GVMM_BODY_BOUNDARY__" in self._label[token_index]:
+                        return index
+            return None
 
         def _wordattr(self, value, sattr, eattr=None):
             if len(value) > 0:
@@ -365,7 +495,7 @@ class Tree:
                 for item in value:
                     target_idx = int(item[0])
                     if type(item[2]) == dict and item[2]["lineskip"]:
-                        line_indexes = self._scoped_line_word_indexes()
+                        line_indexes = self._line_word_indexes_for_attr(item)
                         if not line_indexes:
                             continue
                         lskip = self._resolve_line_sel(item[2]["lineskip"], len(line_indexes))
@@ -446,7 +576,7 @@ class Tree:
                     self._label = "<SEP>".join(self._label)
                     self._label = self._label.split("</TD></TR><TR>")
                     for item in value:
-                        _, scoped_indexes = self._scoped_line_fragment_indexes(self._label)
+                        _, scoped_indexes = self._line_fragment_indexes_for_attr(item, self._label)
                         if not scoped_indexes:
                             continue
                         li = self._resolve_line_sel(int(item[0]), len(scoped_indexes))
@@ -535,6 +665,8 @@ class Tree:
         c.linefont()
         c.colorifylines()
         c.linedate()
+        c._apply_default_verbatim_header_style((wordcolor, wordfsize, wordfstyle, linecolor, linefsize, linefstyle, linefont, linedate))
+        c._remove_verbatim_body_boundary()
 
         self.post_attr_proc_label(c._label, ntype, vrbt, draw, textleft)
 
