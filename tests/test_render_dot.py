@@ -54,6 +54,23 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertIn('penwidth="3"', rendered)
         self.assertNotIn('fontcolor="forestgreen"', rendered)
 
+    def test_check_node_uses_default_border_color_and_width(self):
+        tree = self._tree()
+        node = tree.Node(
+            tree,
+            "node101",
+            self._label("check node with default border"),
+            "\t\t",
+            "check",
+        )
+
+        rendered = node.element()
+
+        self.assertIn('fontcolor="%s"' % fontcolor["def"], rendered)
+        self.assertIn('color="royalblue"', rendered)
+        self.assertIn('penwidth="2"', rendered)
+        self.assertNotIn('fontcolor="royalblue"', rendered)
+
     def test_visual_node_attributes_override_existing_attrs(self):
         tree = self._tree()
         node = tree.Node(
