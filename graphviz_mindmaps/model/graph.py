@@ -135,6 +135,8 @@ class Tree:
 
         def _apply_bordercolor(self, attrs):
             bordercolor = self._bordercolor or self._tree.default_bordercolor
+            if not bordercolor and self._ntype == "check":
+                bordercolor = "royalblue"
             if not bordercolor:
                 return attrs
             if re.search(r'(^|\s)color=', attrs):
@@ -143,6 +145,8 @@ class Tree:
 
         def _apply_borderwidth(self, attrs):
             borderwidth = self._borderwidth or self._tree.default_borderwidth
+            if not borderwidth and self._ntype == "check":
+                borderwidth = "2"
             if not borderwidth:
                 return attrs
             if "penwidth=" in attrs:
