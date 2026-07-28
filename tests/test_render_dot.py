@@ -96,6 +96,21 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertIn('penwidth="2"', rendered)
         self.assertIn('style="rounded,radial,dashed"', rendered)
 
+    def test_color_leaf_nodes_use_large_fontsize(self):
+        tree = self._tree()
+
+        for ntype in ("cgreen", "ccyan", "cblue", "cpink", "cred", "cyello", "corang", "cgrey", "cblack"):
+            with self.subTest(ntype=ntype):
+                node = tree.Node(
+                    tree,
+                    "node101",
+                    self._label("%s leaf node" % ntype),
+                    "\t\t",
+                    ntype,
+                )
+
+                self.assertIn('fontsize="%s"' % fontsize["l"], node.element())
+
     def test_bg_attribute_adds_filled_style_when_base_type_has_no_fill(self):
         tree = self._tree()
         node = tree.Node(
