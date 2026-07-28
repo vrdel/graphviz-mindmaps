@@ -84,7 +84,7 @@ nodetype = {
     "commen": "shape=note fontname=\"%s\" fontsize=\"%s\" margin=\"0.2\" style=\"radial\" fillcolor=\"#FFF09A\" color=\"#8a8a8a\"" % (font["comic"], fontsize["l"]),
     "term": "shape=note fontname=\"%s\" gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15\" fillcolor=\"#fbfbfb\" color=\"#8a8a8a\"" % (font["mono"]),
     "check": "shape=rarrow fontcolor=\"%s\" margin=\"0.20\" style=\"filled\" fillcolor=\"#ffffff\" color=\"#4A90D9\"" % (fontcolor["def"]),
-    "todo": "shape=box fontcolor=\"%s\" fontsize=\"%s\" margin=\"0.20\" style=\"filled, diagonals\" fillcolor=\"#FFF09A\" color=\"#B3A443\"" % (fontcolor["def"], fontsize["xl"]),
+    "todo": "shape=box fontcolor=\"%s\" fontsize=\"18\" margin=\"0.20\" style=\"filled, diagonals\" fillcolor=\"#FFF09A\" color=\"#B3A443\"" % (fontcolor["def"]),
     "decisi": "shape=diamond style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#ffc990\" color=\"#8a8a8a\"" % (fontsize["l"]),
     "saying": "shape=egg style=\"radial\" margin=\"0.0,0.15\" fontsize=\"%s\" fillcolor=\"#A9FFFF\" color=\"#8a8a8a\"" % (fontsize["l"]),
     "cgreen": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#bcffc2\" color=\"#8a8a8a\"" % (fontsize["l"]),

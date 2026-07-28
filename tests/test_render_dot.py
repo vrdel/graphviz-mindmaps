@@ -111,7 +111,7 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
 
                 self.assertIn('fontsize="%s"' % fontsize["l"], node.element())
 
-    def test_todo_node_uses_extra_large_fontsize(self):
+    def test_todo_node_uses_18_point_fontsize(self):
         tree = self._tree()
         node = tree.Node(
             tree,
@@ -121,7 +121,7 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
             "todo",
         )
 
-        self.assertIn('fontsize="%s"' % fontsize["xl"], node.element())
+        self.assertIn('fontsize="18"', node.element())
 
     def test_bg_attribute_adds_filled_style_when_base_type_has_no_fill(self):
         tree = self._tree()
