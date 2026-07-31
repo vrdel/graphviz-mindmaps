@@ -401,6 +401,32 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertIn("__GVMM_BODY_BOUNDARY__", blocks[0][2])
         self.assertIn("body<WHITESP>word1,<WHITESP>word2", blocks[0][2])
 
+    def test_verbatim_body_replaces_only_line_start_markers(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# Bullet markers",
+                "\t\t: verbatim",
+                "\t\t: * - valid",
+                "\t\t:   - valid",
+                "\t\t:     - valid",
+                "\t\t:   * - valid",
+                "\t\t: - valid",
+                "\t\t: not valid - sign replacement",
+                "\t\t: ",
+            ],
+            ApplyInlineBacktickBold,
+        )
+
+        body = blocks[0][2]
+
+        self.assertIn("•<WHITESP>-<WHITESP>valid", body)
+        self.assertIn("<WHITESP><WHITESP>–<WHITESP>valid", body)
+        self.assertIn("<WHITESP><WHITESP><WHITESP><WHITESP>–<WHITESP>valid", body)
+        self.assertIn("<WHITESP><WHITESP>•<WHITESP>-<WHITESP>valid", body)
+        self.assertIn("not<WHITESP>valid<WHITESP>-<WHITESP>sign<WHITESP>replacement", body)
+
 
 if __name__ == "__main__":
     unittest.main()
