@@ -79,10 +79,11 @@ def ParLoc(line):
     return parloc
 
 
-def _EscapeVerbatimBodyLine(text, apply_inline_backtick_bold):
+def _EscapeVerbatimBodyLine(text, apply_inline_backtick_bold, normalize_markers=True):
     text = NormalizeVerbatimWhitespace(text)
-    text = re.sub(r"^([ \t]*)\*(?=\s)", r"\1•", text, count=1)
-    text = re.sub(r"^([ \t]*)-(?=\s)", r"\1–", text, count=1)
+    if normalize_markers:
+        text = re.sub(r"^([ \t]*)\*(?=\s)", r"\1•", text, count=1)
+        text = re.sub(r"^([ \t]*)-(?=\s)", r"\1–", text, count=1)
     text = text.replace("&", "&amp;")
     text = text.replace("<", "&lt;")
     text = text.replace(">", "&gt;")
@@ -94,7 +95,9 @@ def _EscapeVerbatimBodyLine(text, apply_inline_backtick_bold):
 
 
 def _CollectVerbatimNodeLine(lines, node_line_index, apply_inline_backtick_bold, header_line=None, attr_line_index=None):
-    body_index = (attr_line_index if attr_line_index is not None else node_line_index + 1) + 1
+    attr_index = attr_line_index if attr_line_index is not None else node_line_index + 1
+    body_index = attr_index + 1
+    normalize_markers = not re.search(r"(?<!\S)rawmarkers(?!\S)", lines[attr_index])
     body_lines = []
 
     while body_index < len(lines) and '# ' not in lines[body_index] \
@@ -107,7 +110,7 @@ def _CollectVerbatimNodeLine(lines, node_line_index, apply_inline_backtick_bold,
             body_lines.append(lines[body_index].lstrip("\t;").rstrip())
 
         if body_lines:
-            body_lines[-1] = _EscapeVerbatimBodyLine(body_lines[-1], apply_inline_backtick_bold)
+            body_lines[-1] = _EscapeVerbatimBodyLine(body_lines[-1], apply_inline_backtick_bold, normalize_markers)
         body_index += 1
 
     vrbtnode = "".join(body_lines).strip("<BR/>")
