@@ -81,6 +81,8 @@ def ParLoc(line):
 
 def _EscapeVerbatimBodyLine(text, apply_inline_backtick_bold):
     text = NormalizeVerbatimWhitespace(text)
+    text = re.sub(r"^([ \t]*)\*(?=\s)", r"\1•", text, count=1)
+    text = re.sub(r"^([ \t]*)-(?=\s)", r"\1–", text, count=1)
     text = text.replace("&", "&amp;")
     text = text.replace("<", "&lt;")
     text = text.replace(">", "&gt;")
