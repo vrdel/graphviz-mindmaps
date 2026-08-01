@@ -72,6 +72,67 @@ def EscapeResidualHtmlAngles(text):
     return protected
 
 
+def ApplyVerbatimCalloutRows(labelhtml):
+    colors = {
+        "RED": "#FF9999",
+        "YELLOW": "#FFF180",
+        "GREEN": "#8BFF80",
+        "CYAN": "#80FFFB",
+    }
+
+    def row_content(row):
+        match = re.search(r"<TD[^>]*>(.*)", row)
+        if not match:
+            return ""
+        return match.group(1)
+
+    def is_empty_row(row):
+        content = row_content(row)
+        content = re.sub(r"</?[^>]+>", "", content)
+        content = re.sub(r"(?:<SEP>|&nbsp;|\s)+", "", content)
+        return content == "" or content == "__GVMM_HR__"
+
+    def is_bullet_row(row):
+        content = re.sub(r"^(?:<SEP>|&nbsp;|\s)+", "", row_content(row))
+        return re.match(r"^[•–*-](?:<SEP>|&nbsp;|\s)+", content) is not None
+
+    def apply_bgcolor(row, color):
+        if "BGCOLOR=" in row:
+            return row
+        return re.sub(
+            r"<TD((?:\s+[^<>]*)?)>",
+            r'<TD\1 BGCOLOR="%s">' % color,
+            row,
+            count=1,
+        )
+
+    merged = "<SEP>".join(labelhtml)
+    rows = merged.split("</TD></TR><TR>")
+    active_color = None
+    for index, row in enumerate(rows):
+        match = re.search(r"__GVMM_CALLOUT_(RED|YELLOW|GREEN|CYAN)__", row)
+        if match:
+            active_color = colors[match.group(1)]
+            row = row.replace(match.group(0), "")
+            rows[index] = apply_bgcolor(row, active_color)
+            continue
+
+        if is_empty_row(row) or is_bullet_row(row):
+            active_color = None
+        elif active_color:
+            rows[index] = apply_bgcolor(row, active_color)
+
+    for index in range(len(rows) - 1):
+        rows[index] = rows[index] + "</TD></TR><TR>"
+    merged = "".join(rows)
+    merged = re.sub(
+        r"<TR><TD[^>]*>(?:<SEP>|&nbsp;|\s)*__GVMM_HR__(?:<SEP>|&nbsp;|\s)*</TD></TR>",
+        "<HR/>",
+        merged,
+    )
+    labelhtml[:] = merged.split("<SEP>")
+
+
 def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larrow2, html_rarrow2, img_path_resolver):
     ntype = ""
 
@@ -106,19 +167,29 @@ def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larro
             labelhtml[token_index] = token.replace("<", "&lt;")
 
         if not vrbt and not draw:
-            HtmlCompositeArrow("<=", html_larrow1, token, token_index, labelhtml)
-            HtmlCompositeArrow("=>", html_rarrow1, token, token_index, labelhtml)
-            HtmlCompositeArrow("->", html_rarrow2, token, token_index, labelhtml)
-            HtmlCompositeArrow("<-", html_larrow2, token, token_index, labelhtml)
+            HtmlCompositeArrow("<=", html_larrow2, token, token_index, labelhtml)
+            HtmlCompositeArrow("=>", html_rarrow2, token, token_index, labelhtml)
+            HtmlCompositeArrow("->", html_rarrow1, token, token_index, labelhtml)
+            HtmlCompositeArrow("<-", html_larrow1, token, token_index, labelhtml)
         else:
-            HtmlCompositeArrow("<=", "&lt;&#9552;", token, token_index, labelhtml)
-            HtmlCompositeArrow("=>", "&#9552;&gt;", token, token_index, labelhtml)
+            if "__GVMM_LARROW1__" in labelhtml[token_index]:
+                labelhtml[token_index] = labelhtml[token_index].replace("__GVMM_LARROW1__", "<-")
+                HtmlCompositeArrow("<-", html_larrow1, labelhtml[token_index], token_index, labelhtml)
+
+            if "__GVMM_LARROW2__" in labelhtml[token_index]:
+                labelhtml[token_index] = labelhtml[token_index].replace("__GVMM_LARROW2__", "<=")
+                HtmlCompositeArrow("<=", html_larrow2, labelhtml[token_index], token_index, labelhtml)
+
+            if "__GVMM_RARROW1__" in labelhtml[token_index]:
+                labelhtml[token_index] = labelhtml[token_index].replace("__GVMM_RARROW1__", "->")
+                HtmlCompositeArrow("->", html_rarrow1, labelhtml[token_index], token_index, labelhtml)
+
+            if "__GVMM_RARROW2__" in labelhtml[token_index]:
+                labelhtml[token_index] = labelhtml[token_index].replace("__GVMM_RARROW2__", "=>")
+                HtmlCompositeArrow("=>", html_rarrow2, labelhtml[token_index], token_index, labelhtml)
 
             if '<-' in labelhtml[token_index]:
                 labelhtml[token_index] = re.sub("<-", "&lt;-", labelhtml[token_index])
-
-            if '->' in labelhtml[token_index]:
-                labelhtml[token_index] = re.sub("->", "-&gt;", labelhtml[token_index])
 
             if "><<" in labelhtml[token_index] or ">><" in labelhtml[token_index]:
                 labelhtml[token_index] = re.sub(
@@ -159,6 +230,8 @@ def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larro
             i += 1
         i += 1
     labelhtml.insert(len(labelhtml), "</TD></TR></TABLE>")
+    if vrbt or draw:
+        ApplyVerbatimCalloutRows(labelhtml)
     return labelhtml, ntype, label
 
 
