@@ -220,8 +220,22 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
             meta["header"] = True
         return meta
 
-    m = re.search('(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?', k)
-    if m.group(1):
+    m = re.search(r'^h(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?$', k)
+    if m and (m.group(1) or m.group(2) or m.group(3)):
+        meta = {"header": True}
+        if m.group(1):
+            if m.group(1)[0] == "m":
+                linecolor.insert(0, [0, linecolors[m.group(1)[1:]], False, meta])
+            else:
+                linecolor.insert(0, [0, fontcolor[m.group(1)], True, meta])
+        if m.group(2):
+            linefsize.append([0, m.group(2)[1:], meta])
+        if m.group(3):
+            for si in range(0, len(m.group(3)), 2):
+                linefstyle.append([0, fontstyle[m.group(3)[si:si+2]], meta])
+
+    m = re.search(r'^(m?[rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?$', k)
+    if m and m.group(1):
         if m.group(1)[0] == "m":
             linecolor.insert(0, [0, linecolors[m.group(1)[1:]], False])
         else:
@@ -231,12 +245,12 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
         if m.group(3):
             for si in range(0, len(m.group(3)), 2):
                 linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
-    elif m.group(2):
+    elif m and m.group(2):
         linefsize.append([0, m.group(2)[1:]])
         if m.group(3):
             for si in range(0, len(m.group(3)), 2):
                 linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
-    elif m.group(3):
+    elif m and m.group(3):
         for si in range(0, len(m.group(3)), 2):
             linefstyle.append([0, fontstyle[m.group(3)[si:si+2]]])
 

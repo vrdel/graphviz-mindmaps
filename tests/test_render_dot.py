@@ -35,6 +35,19 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
     def _label(self, text):
         return ["<TABLE><TR><TD>%s</TD></TR></TABLE>" % text]
 
+    def _verbatim_label(self, label):
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            label,
+            True,
+            False,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+        return labelhtml
+
     def test_border_color_does_not_replace_check_fontcolor(self):
         tree = self._tree()
         node = tree.Node(
@@ -379,6 +392,82 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
 
         self.assertIn('<B><FONT COLOR="%s">Emir</FONT></B>' % fontcolor["r"], rendered)
         self.assertNotIn("<U><FONT>Emir", rendered)
+
+    def test_verbatim_unscoped_font_size_targets_body_lines(self):
+        tree = self._tree()
+        node = tree.Node(
+            tree,
+            "node101",
+            self._verbatim_label("Header<BR/> __GVMM_BODY_BOUNDARY__<BR/> body one<BR/> body two<BR/> "),
+            "\t\t",
+            "def",
+            linefsize=[[0, "20"]],
+            verbatim=True,
+        )
+
+        node.linefsize()
+        rendered = "".join(node._label)
+
+        self.assertIn("<TD>Header</TD>", rendered)
+        self.assertIn("<TD>__GVMM_BODY_BOUNDARY__</TD>", rendered)
+        self.assertIn('<TD><FONT POINT-SIZE="20">body&nbsp;one</FONT></TD>', rendered)
+        self.assertIn('<TD><FONT POINT-SIZE="20">body&nbsp;two</FONT></TD>', rendered)
+
+    def test_verbatim_unscoped_font_size_does_not_wrap_horizontal_rules(self):
+        tree = self._tree()
+        node = tree.Node(
+            tree,
+            "node101",
+            self._verbatim_label("Header<BR/> __GVMM_BODY_BOUNDARY__<BR/> before<BR/> __GVMM_HR__<BR/> after<BR/> "),
+            "\t\t",
+            "def",
+            linefsize=[[0, "16"]],
+            verbatim=True,
+        )
+
+        node.linefsize()
+        rendered = "".join(node._label)
+
+        self.assertIn('<TD><FONT POINT-SIZE="16">before</FONT></TD></TR><HR/><TR>', rendered)
+        self.assertIn('<TR><TD><FONT POINT-SIZE="16">after</FONT></TD>', rendered)
+        self.assertNotIn("__GVMM_RENDERED_HR__", rendered)
+        self.assertNotIn('<FONT POINT-SIZE="16"><HR/>', rendered)
+
+    def test_verbatim_unscoped_font_size_preserves_callout_backgrounds(self):
+        tree = self._tree()
+        node = tree.Node(
+            tree,
+            "node101",
+            self._verbatim_label("Header<BR/> __GVMM_BODY_BOUNDARY__<BR/> before<BR/> <WHITESP>•<WHITESP>__GVMM_CALLOUT_YELLOW__callout one<BR/> "),
+            "\t\t",
+            "def",
+            linefsize=[[0, "16"]],
+            verbatim=True,
+        )
+
+        node.linefsize()
+        rendered = "".join(node._label)
+
+        self.assertIn('<TD BGCOLOR="#FFF180"><FONT POINT-SIZE="16"> •&nbsp;callout&nbsp;one</FONT></TD>', rendered)
+        self.assertNotIn('BGCOLOR="#FFF180"> •&nbsp;callout&nbsp;one</FONT>', rendered)
+
+    def test_verbatim_header_font_size_targets_header_lines(self):
+        tree = self._tree()
+        node = tree.Node(
+            tree,
+            "node101",
+            self._verbatim_label("Header<BR/> __GVMM_BODY_BOUNDARY__<BR/> body one<BR/> "),
+            "\t\t",
+            "def",
+            linefsize=[[0, "20", {"header": True}]],
+            verbatim=True,
+        )
+
+        node.linefsize()
+        rendered = "".join(node._label)
+
+        self.assertIn('<TD><FONT POINT-SIZE="20">Header</FONT></TD>', rendered)
+        self.assertIn("<TD>body&nbsp;one</TD>", rendered)
 
     def test_verbatim_collection_preserves_multiple_header_lines_and_body_boundary(self):
         blocks = ExtractMindmapBlocks(
