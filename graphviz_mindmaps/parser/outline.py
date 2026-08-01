@@ -80,15 +80,41 @@ def ParLoc(line):
 
 
 def _EscapeVerbatimBodyLine(text, apply_inline_backtick_bold, normalize_markers=True):
+    callout_markers = {
+        "!": "RED",
+        "?": "YELLOW",
+        "$": "GREEN",
+        "@": "CYAN",
+    }
+
     text = NormalizeVerbatimWhitespace(text)
+    if normalize_markers and re.match(r"^[ \t]*-{3,}[ \t]*$", text):
+        return "__GVMM_HR__<BR/> "
     if normalize_markers:
         text = re.sub(r"^([ \t]*)\*(?=\s)", r"\1•", text, count=1)
         text = re.sub(r"^([ \t]*)-(?=\s)", r"\1–", text, count=1)
+        text = text.replace("<=", "__GVMM_LARROW2__")
+        text = text.replace("<-", "__GVMM_LARROW1__")
+        text = text.replace("=>", "__GVMM_RARROW2__")
+        text = text.replace("->", "__GVMM_RARROW1__")
+
+    def apply_callout(match):
+        return "%s__GVMM_CALLOUT_%s__" % (
+            match.group(1),
+            callout_markers[match.group(2)],
+        )
+
+    text = re.sub(
+        r"^([ \t]*(?:[•–*-])\s+)([!?$@])(?:\s+|$)",
+        apply_callout,
+        text,
+        count=1,
+    )
     text = text.replace("&", "&amp;")
     text = text.replace("<", "&lt;")
     text = text.replace(">", "&gt;")
     if "`" in text or "*" in text:
-        text = apply_inline_backtick_bold(text, allow_linebreak=True, allow_asterisk=False)
+        text = apply_inline_backtick_bold(text, allow_linebreak=True, allow_asterisk=normalize_markers)
     text = text.replace(" ", "<WHITESP>")
     text = text.replace("\t", "<TAB>")
     return text + "<BR/> "
