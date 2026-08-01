@@ -436,6 +436,7 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
                 "\t\t: verbatim rawmarkers",
                 "\t\t: * - valid",
                 "\t\t:   - valid",
+                "\t\t: ---",
                 "\t\t: not valid - sign replacement",
                 "\t\t: ",
             ],
@@ -446,9 +447,196 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
 
         self.assertIn("*<WHITESP>-<WHITESP>valid", body)
         self.assertIn("<WHITESP><WHITESP>-<WHITESP>valid", body)
+        self.assertIn("---", body)
         self.assertIn("not<WHITESP>valid<WHITESP>-<WHITESP>sign<WHITESP>replacement", body)
         self.assertNotIn("•<WHITESP>-<WHITESP>valid", body)
         self.assertNotIn("<WHITESP><WHITESP>–<WHITESP>valid", body)
+        self.assertNotIn("__GVMM_HR__", body)
+
+    def test_verbatim_bolds_asterisk_wrapped_text_when_markers_are_normalized(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# Bold verbatim",
+                "\t\t: verbatim",
+                "\t\t: i want *bolded text* here",
+                "\t\t: ",
+            ],
+            ApplyInlineBacktickBold,
+        )
+
+        self.assertIn("i<WHITESP>want<WHITESP><B>bolded<WHITESP>text</B><WHITESP>here", blocks[0][2])
+
+    def test_verbatim_rawmarkers_keeps_asterisk_wrapped_text_literal(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# Raw bold verbatim",
+                "\t\t: verbatim rawmarkers",
+                "\t\t: i want *bolded text* here",
+                "\t\t: ",
+            ],
+            ApplyInlineBacktickBold,
+        )
+
+        self.assertIn("i<WHITESP>want<WHITESP>*bolded<WHITESP>text*<WHITESP>here", blocks[0][2])
+        self.assertNotIn("<B>bolded", blocks[0][2])
+
+    def test_verbatim_uses_composite_arrows_when_markers_are_normalized(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# Arrow verbatim",
+                "\t\t: verbatim",
+                "\t\t: left => right",
+                "\t\t: from -> to",
+                "\t\t: right <= left",
+                "\t\t: to <- from",
+                "\t\t: ",
+            ],
+            ApplyInlineBacktickBold,
+        )
+        label = blocks[0][2].split("# ", 1)[1]
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            label,
+            True,
+            False,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+
+        rendered = "".join(labelhtml)
+
+        self.assertIn("left&nbsp;%s&nbsp;right" % html_rarrow2, rendered)
+        self.assertIn("from&nbsp;%s&nbsp;to" % html_rarrow1, rendered)
+        self.assertIn("right&nbsp;%s&nbsp;left" % html_larrow2, rendered)
+        self.assertIn("to&nbsp;%s&nbsp;from" % html_larrow1, rendered)
+        self.assertNotIn("__GVMM_LARROW", rendered)
+        self.assertNotIn("__GVMM_RARROW", rendered)
+
+    def test_verbatim_rawmarkers_keeps_arrows_literal(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# Raw arrow verbatim",
+                "\t\t: verbatim rawmarkers",
+                "\t\t: left => right",
+                "\t\t: from -> to",
+                "\t\t: right <= left",
+                "\t\t: to <- from",
+                "\t\t: ",
+            ],
+            ApplyInlineBacktickBold,
+        )
+        label = blocks[0][2].split("# ", 1)[1]
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            label,
+            True,
+            False,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+
+        rendered = "".join(labelhtml)
+
+        self.assertIn("left&nbsp;=&gt;&nbsp;right", rendered)
+        self.assertIn("from&nbsp;-&gt;&nbsp;to", rendered)
+        self.assertIn("right&nbsp;&lt;=&nbsp;left", rendered)
+        self.assertIn("to&nbsp;&lt;-&nbsp;from", rendered)
+        self.assertNotIn(html_larrow1, rendered)
+        self.assertNotIn(html_larrow2, rendered)
+        self.assertNotIn(html_rarrow1, rendered)
+        self.assertNotIn(html_rarrow2, rendered)
+
+    def test_verbatim_list_callouts_highlight_bullet_rows(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# List callouts",
+                "\t\t: verbatim",
+                "\t\t: * ! red item",
+                "\t\t: * ? yellow item",
+                "\t\t: * $ green item",
+                "\t\t:   green continuation",
+                "\t\t: * @ cyan item",
+                "\t\t: not a list ! marker",
+                "\t\t: ",
+                "\t\t: plain after empty line",
+                "\t\t: ",
+            ],
+            ApplyInlineBacktickBold,
+        )
+        label = blocks[0][2].split("# ", 1)[1]
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            label,
+            True,
+            False,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+
+        rendered = "".join(labelhtml)
+
+        self.assertIn('BGCOLOR="#FF9999"', rendered)
+        self.assertIn('BGCOLOR="#FFF180"', rendered)
+        self.assertIn('BGCOLOR="#8BFF80"', rendered)
+        self.assertIn('BGCOLOR="#80FFFB"', rendered)
+        self.assertIn("•&nbsp;red&nbsp;item", rendered)
+        self.assertIn("•&nbsp;yellow&nbsp;item", rendered)
+        self.assertIn("•&nbsp;green&nbsp;item", rendered)
+        self.assertIn('BGCOLOR="#8BFF80">   green&nbsp;continuation', rendered)
+        self.assertIn("•&nbsp;cyan&nbsp;item", rendered)
+        self.assertIn("not&nbsp;a&nbsp;list&nbsp;!&nbsp;marker", rendered)
+        self.assertIn("<TD> plain&nbsp;after&nbsp;empty&nbsp;line", rendered)
+        self.assertNotIn("__GVMM_CALLOUT_", rendered)
+
+    def test_verbatim_dash_only_line_renders_horizontal_rule(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# Horizontal rule",
+                "\t\t: verbatim",
+                "\t\t: before",
+                "\t\t: ---",
+                "\t\t: -----",
+                "\t\t: after",
+                "\t\t: ",
+            ],
+            ApplyInlineBacktickBold,
+        )
+        label = blocks[0][2].split("# ", 1)[1]
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            label,
+            True,
+            False,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+
+        rendered = "".join(labelhtml)
+
+        self.assertEqual(2, rendered.count("<HR/>"))
+        self.assertIn("before", rendered)
+        self.assertIn("after", rendered)
+        self.assertNotIn("__GVMM_HR__", rendered)
 
 
 if __name__ == "__main__":
