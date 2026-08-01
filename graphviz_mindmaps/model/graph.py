@@ -429,6 +429,8 @@ class Tree:
 
         def _scoped_line_fragment_indexes(self, fragments=None):
             def has_visible_content(fragment):
+                if "<HR/>" in fragment or "__GVMM_RENDERED_HR__" in fragment:
+                    return False
                 text = re.sub(r"<[^>]+>", "", fragment)
                 text = text.replace("&nbsp;", "").strip()
                 text = text.replace("<", "").replace(">", "").strip()
@@ -444,6 +446,7 @@ class Tree:
                     indexes = [index for index in indexes if index > boundary_index]
                 elif indexes:
                     del indexes[0]
+                indexes = [index for index in indexes if has_visible_content(fragments[index])]
                 while indexes and not has_visible_content(fragments[indexes[0]]):
                     del indexes[0]
                 while indexes and not has_visible_content(fragments[indexes[-1]]):
@@ -536,33 +539,60 @@ class Tree:
 
         def _lineattr(self, fsattr, tsattr, value, eattr=None):
             def is_separator_row(fragment):
+                if "<HR/>" in fragment or "__GVMM_RENDERED_HR__" in fragment:
+                    return True
                 text = re.sub(r"<[^>]+>", "", fragment)
                 text = text.replace("&nbsp;", "").strip()
                 return text in {"---", "----"}
 
             def replace_td(fragment, replacement):
-                return re.sub(r"<TD(?: ALIGN=\"left\")?>", replacement, fragment, count=1)
+                def preserve_attrs(match):
+                    return replacement.replace("<TD", "<TD%s" % match.group(1), 1)
+
+                return re.sub(r"<TD((?:\s+[^<>]*)?)>", preserve_attrs, fragment, count=1)
+
+            def split_label_rows():
+                merged = "<SEP>".join(self._label)
+                merged = merged.replace(
+                    "</TD></TR><HR/><TR><TD>",
+                    "</TD></TR><TR><TD>__GVMM_RENDERED_HR__</TD></TR><TR><TD>",
+                )
+                return merged.split("</TD></TR><TR>")
+
+            def restore_label_rows(fragments):
+                for index in range(len(fragments) - 1):
+                    fragments[index] = fragments[index] + "</TD></TR><TR>"
+                merged = "".join(fragments)
+                merged = merged.replace("<TR><TD>__GVMM_RENDERED_HR__</TD></TR>", "<HR/>")
+                self._label = merged.split("<SEP>")
+
+            def attr_replacement(item):
+                return "%s\"%s\">" % (tsattr, item[1]) if item[1] not in {"U", "B", "S", "I"} else "%s%s>" % (tsattr, item[1])
+
+            def apply_attr_to_fragment(fragment, item, is_last):
+                if is_separator_row(fragment):
+                    return fragment
+                fragment = replace_td(fragment, attr_replacement(item))
+                if eattr and not is_last:
+                    return fragment + eattr
+                if eattr:
+                    return fragment.replace("</TD>", eattr + "</TD>")
+                return fragment
 
             if len(value) > 0:
                 if value[0][0] == 0:
                     if "FontAwesome" not in self._label[1]:
-                        self._label = "<SEP>".join(self._label)
-                        self._label = self._label.split("</TD></TR><TR>")
-                        for index in range(len(self._label)):
-                            if is_separator_row(self._label[index]):
+                        self._label = split_label_rows()
+                        for item in value:
+                            if item[0] != 0:
                                 continue
-                            self._label[index] = replace_td(
-                                self._label[index],
-                                "%s\"%s\">" % (tsattr, value[0][1]) if value[0][1] not in {"U", "B", "S", "I"} else "%s%s>" % (tsattr, value[0][1]),
-                            )
-                            if eattr and index < len(self._label) - 1:
-                                self._label[index] = self._label[index] + eattr
-                            elif eattr and index == len(self._label) - 1:
-                                self._label[index] = self._label[index].replace("</TD>", eattr + "</TD>")
-                        for index in range(len(self._label) - 1):
-                            self._label[index] = self._label[index] + "</TD></TR><TR>"
-                        self._label = "".join(self._label)
-                        self._label = self._label.split("<SEP>")
+                            if self._verbatim or self._draw:
+                                _, target_indexes = self._line_fragment_indexes_for_attr(item, self._label)
+                            else:
+                                target_indexes = list(range(len(self._label)))
+                            for index in target_indexes:
+                                self._label[index] = apply_attr_to_fragment(self._label[index], item, index == len(self._label) - 1)
+                        restore_label_rows(self._label)
                     else:
                         first = self._label[0]
                         if eattr:
@@ -571,14 +601,13 @@ class Tree:
                         self._label = "<SEP>".join(self._label[1:])
                         self._label = re.sub(
                             r"<TD(?: ALIGN=\"left\")?>",
-                            "%s\"%s\">" % (tsattr, value[0][1]) if value[0][1] not in {"U", "B", "S", "I"} else "%s%s>" % (tsattr, value[0][1]),
+                            attr_replacement(value[0]),
                             self._label,
                         )
                         self._label = self._label.split("<SEP>")
                         self._label.insert(0, first)
                 else:
-                    self._label = "<SEP>".join(self._label)
-                    self._label = self._label.split("</TD></TR><TR>")
+                    self._label = split_label_rows()
                     for item in value:
                         _, scoped_indexes = self._line_fragment_indexes_for_attr(item, self._label)
                         if not scoped_indexes:
@@ -589,16 +618,13 @@ class Tree:
                         target_idx = scoped_indexes[li - 1]
                         self._label[target_idx] = replace_td(
                             self._label[target_idx],
-                            "%s\"%s\">" % (tsattr, item[1]) if item[1] not in {"U", "B", "S", "I"} else "%s%s>" % (tsattr, item[1]),
+                            attr_replacement(item),
                         )
                         if eattr and target_idx < len(self._label) - 1:
                             self._label[target_idx] = self._label[target_idx] + eattr
                         elif eattr and target_idx == len(self._label) - 1:
                             self._label[target_idx] = self._label[target_idx].replace("</TD>", eattr + "</TD>")
-                    for index in range(len(self._label) - 1):
-                        self._label[index] = self._label[index] + "</TD></TR><TR>"
-                    self._label = "".join(self._label)
-                    self._label = self._label.split("<SEP>")
+                    restore_label_rows(self._label)
 
     def __init__(self, nodetype, vrbtcolors, fontcolor, font, fontsize, fontawesome_symb, resolve_verbatim_fill_color_token, post_attr_proc_label, subgraph_depth=None, default_sgmargin="8"):
         self.root = None
