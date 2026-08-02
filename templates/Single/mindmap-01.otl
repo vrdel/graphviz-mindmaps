@@ -177,54 +177,6 @@
 					:
 					: : node bg="#f6fff6" fg="#245c2d" bc="#45A135" bw=2 bs=dashed
 					:
-			# verbatim cgreen
-				: verbatim cgreen
-				:
-				: verbatim cgreen
-				:
-			# verbatim header and body lines
-			# header word1, header word2 in line1
-			# header word1 in line2
-				: verbatim cyello hl1r Ehl1it Ehl1w2b l1r
-				:
-				: body word1, word2 in line1
-				: body word1 word2 word3 in line2
-				:
-			# verbatim default header style
-				: verbatim cyello
-				:
-				: body keeps old first header bold underline
-				:
-				# verbatim cred
-					: verbatim cred
-					:
-					: verbatim cred
-					:
-					# verbatim ccyan
-						: verbatim ccyan
-						:
-						: verbatim ccyan
-						:
-				# verbatim cblue
-					: verbatim cblue
-					:
-					: verbatim cblue
-					:
-					# verbatim cyello
-						: verbatim cyello
-						:
-						: verbatim cyello
-						:
-				# verbatim corang
-					: verbatim corang
-					:
-					: verbatim corang
-					:
-					# verbatim cpink
-						: verbatim cpink
-						:
-						: verbatim cpink
-						:
 		# types
 		# ---
 		# edgd
@@ -318,6 +270,79 @@
 				: line1; line2
 				: ---
 				: edgl
+				:
+	# verbatim nodes
+		:
+		# verbatim cgreen
+			: verbatim cgreen
+			:
+			: verbatim cgreen
+			:
+			# verbatim cred
+				: verbatim cred
+				:
+				: verbatim cred
+				:
+				# verbatim ccyan
+					: verbatim ccyan
+					:
+					: verbatim ccyan
+					:
+			# verbatim cblue
+				: verbatim cblue
+				:
+				: verbatim cblue
+				:
+				# verbatim cyello
+					: verbatim cyello
+					:
+					: verbatim cyello
+					:
+			# verbatim corang
+				: verbatim corang
+				:
+				: verbatim corang
+				:
+				# verbatim cpink
+					: verbatim cpink
+					:
+					: verbatim cpink
+					:
+		# verbatim header and body lines
+		# header word1, header word2 in line1
+		# header word1 in line2
+			: verbatim cyello hl1r Ehl1it Ehl1w2b l1r
+			:
+			: body word1, word2 in line1
+			: body word1 word2 word3 in line2
+			:
+			# verbatim default header style
+				: verbatim cyello
+				:
+				: body keeps old first header bold underline
+				:
+			# verbatim body fontsize16
+				: verbatim cyello fontsize16
+				:
+				: standalone fontsize16 sizes body lines
+				: header keeps its own default style
+				:
+		# verbatim normalized markers
+			: verbatim fs16
+			:
+			: * ! red callout row
+			: * ? yellow callout row
+			: * $ green callout row
+			: * @ cyan callout row
+			: ---
+			: left => right and from -> to
+			:
+			# verbatim rawmarkers
+				: verbatim rawmarkers
+				:
+				: * ! stays literal
+				: --- stays literal
+				: left => right stays literal
 				:
 	# subgraphs
 		:

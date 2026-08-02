@@ -81,6 +81,29 @@
 					:
 					: body keeps old first header bold underline
 					:
+				# verbatim body fontsize16
+					: verbatim cyello fontsize16
+					:
+					: standalone fontsize16 sizes body lines
+					: header keeps its own default style
+					:
+				# verbatim normalized markers
+					: verbatim fs16
+					:
+					: * ! red callout row
+					: * ? yellow callout row
+					: * $ green callout row
+					: * @ cyan callout row
+					: ---
+					: left => right and from -> to
+					:
+				# verbatim rawmarkers
+					: verbatim rawmarkers
+					:
+					: * ! stays literal
+					: --- stays literal
+					: left => right stays literal
+					:
 			# emphasized
 				:
 				# quest
