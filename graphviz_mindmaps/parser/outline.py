@@ -104,12 +104,13 @@ def _EscapeVerbatimBodyLine(text, apply_inline_backtick_bold, normalize_markers=
             callout_markers[match.group(2)],
         )
 
-    text = re.sub(
-        r"^([ \t]*(?:[•–*-])\s+)([!?$@])(?:\s+|$)",
-        apply_callout,
-        text,
-        count=1,
-    )
+    if normalize_markers:
+        text = re.sub(
+            r"^([ \t]*(?:[•–*-])\s+)([!?$@])(?:\s+|$)",
+            apply_callout,
+            text,
+            count=1,
+        )
     text = text.replace("&", "&amp;")
     text = text.replace("<", "&lt;")
     text = text.replace(">", "&gt;")
