@@ -445,8 +445,16 @@ def NormalizeAttributeTokens(tokens):
         r'((?:(?:f[maed])|(?:ld|ul|st|it))+)$'
     )
 
+    def NormalizeFontSizeAlias(token):
+        if "=" in token:
+            return token
+        match = re.match(r"^(?:fs|fontsize)([0-9]+)$", token)
+        if match:
+            return "f%s" % match.group(1)
+        return token
+
     while index < len(tokens):
-        token = tokens[index]
+        token = NormalizeFontSizeAlias(tokens[index])
         if (
             index + 1 < len(tokens)
             and linefont_pattern.match(token)

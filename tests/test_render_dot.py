@@ -13,6 +13,7 @@ from graphviz_mindmaps.constants import (
     vrbtcolors,
 )
 from graphviz_mindmaps.model.graph import Tree
+from graphviz_mindmaps.parser.attributes import NormalizeAttributeTokens
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
 from graphviz_mindmaps.render.label_html import BuildNodeLabelHtml
 from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
@@ -135,6 +136,12 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         )
 
         self.assertIn('fontsize="18"', node.element())
+
+    def test_fontsize_token_aliases_match_font_size_shorthand(self):
+        self.assertEqual(
+            ["f16", "f18", "l1fontsize20", "w1fontsize22", "l1fe", "f24"],
+            NormalizeAttributeTokens(["fs16", "fontsize18", "l1fontsize20", "w1fontsize22", "l1fe", "fs24"]),
+        )
 
     def test_bg_attribute_adds_filled_style_when_base_type_has_no_fill(self):
         tree = self._tree()
@@ -523,6 +530,7 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
                 "\t: fname=out.jpg",
                 "\t# Raw marker text",
                 "\t\t: verbatim rawmarkers",
+                "\t\t: * ! no callout",
                 "\t\t: * - valid",
                 "\t\t:   - valid",
                 "\t\t: ---",
@@ -534,13 +542,28 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
 
         body = blocks[0][2]
 
+        self.assertIn("*<WHITESP>!<WHITESP>no<WHITESP>callout", body)
         self.assertIn("*<WHITESP>-<WHITESP>valid", body)
         self.assertIn("<WHITESP><WHITESP>-<WHITESP>valid", body)
         self.assertIn("---", body)
         self.assertIn("not<WHITESP>valid<WHITESP>-<WHITESP>sign<WHITESP>replacement", body)
+        self.assertNotIn("__GVMM_CALLOUT_", body)
         self.assertNotIn("•<WHITESP>-<WHITESP>valid", body)
         self.assertNotIn("<WHITESP><WHITESP>–<WHITESP>valid", body)
         self.assertNotIn("__GVMM_HR__", body)
+
+        label = body.split("# ", 1)[1]
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            label,
+            True,
+            False,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+        self.assertNotIn("BGCOLOR", "".join(labelhtml))
 
     def test_verbatim_bolds_asterisk_wrapped_text_when_markers_are_normalized(self):
         blocks = ExtractMindmapBlocks(
