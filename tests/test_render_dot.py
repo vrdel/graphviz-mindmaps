@@ -670,6 +670,74 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertNotIn(html_rarrow1, rendered)
         self.assertNotIn(html_rarrow2, rendered)
 
+    def test_draw_implies_rawmarkers_for_body_markers(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# Draw raw markers",
+                "\t\t: draw",
+                "\t\t: * ! no callout",
+                "\t\t: * - valid",
+                "\t\t:   - valid",
+                "\t\t: ---",
+                "\t\t: i want *literal text* here",
+                "\t\t: ",
+            ],
+            ApplyInlineBacktickBold,
+        )
+
+        body = blocks[0][2]
+
+        self.assertIn("*<WHITESP>!<WHITESP>no<WHITESP>callout", body)
+        self.assertIn("*<WHITESP>-<WHITESP>valid", body)
+        self.assertIn("<WHITESP><WHITESP>-<WHITESP>valid", body)
+        self.assertIn("---", body)
+        self.assertIn("i<WHITESP>want<WHITESP>*literal<WHITESP>text*<WHITESP>here", body)
+        self.assertNotIn("__GVMM_CALLOUT_", body)
+        self.assertNotIn("__GVMM_HR__", body)
+        self.assertNotIn("<B>literal", body)
+        self.assertNotIn("•<WHITESP>-<WHITESP>valid", body)
+        self.assertNotIn("<WHITESP><WHITESP>–<WHITESP>valid", body)
+
+    def test_draw_implies_rawmarkers_for_arrows(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# Draw raw arrows",
+                "\t\t: draw",
+                "\t\t: left => right",
+                "\t\t: from -> to",
+                "\t\t: right <= left",
+                "\t\t: to <- from",
+                "\t\t: ",
+            ],
+            ApplyInlineBacktickBold,
+        )
+        label = blocks[0][2].split("# ", 1)[1]
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            label,
+            False,
+            True,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+
+        rendered = "".join(labelhtml)
+
+        self.assertIn("left&nbsp;=&gt;&nbsp;right", rendered)
+        self.assertIn("from&nbsp;-&gt;&nbsp;to", rendered)
+        self.assertIn("right&nbsp;&lt;=&nbsp;left", rendered)
+        self.assertIn("to&nbsp;&lt;-&nbsp;from", rendered)
+        self.assertNotIn(html_larrow1, rendered)
+        self.assertNotIn(html_larrow2, rendered)
+        self.assertNotIn(html_rarrow1, rendered)
+        self.assertNotIn(html_rarrow2, rendered)
+
     def test_verbatim_list_callouts_highlight_bullet_rows(self):
         blocks = ExtractMindmapBlocks(
             [
