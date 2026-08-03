@@ -124,7 +124,10 @@ def _EscapeVerbatimBodyLine(text, apply_inline_backtick_bold, normalize_markers=
 def _CollectVerbatimNodeLine(lines, node_line_index, apply_inline_backtick_bold, header_line=None, attr_line_index=None):
     attr_index = attr_line_index if attr_line_index is not None else node_line_index + 1
     body_index = attr_index + 1
-    normalize_markers = not re.search(r"(?<!\S)rawmarkers(?!\S)", lines[attr_index])
+    normalize_markers = not (
+        "draw" in lines[attr_index]
+        or re.search(r"(?<!\S)rawmarkers(?!\S)", lines[attr_index])
+    )
     body_lines = []
 
     while body_index < len(lines) and '# ' not in lines[body_index] \
