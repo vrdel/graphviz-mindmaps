@@ -1,3 +1,5 @@
+import base64
+import re
 import unittest
 
 from graphviz_mindmaps import fontawesome
@@ -496,6 +498,32 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertIn("header word1, header word2 in line1; header word1 in line2", blocks[0][2])
         self.assertIn("__GVMM_BODY_BOUNDARY__", blocks[0][2])
         self.assertIn("body<WHITESP>word1,<WHITESP>word2", blocks[0][2])
+
+    def test_code_collection_preserves_multiple_header_lines_and_code_body(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# test funkcija s",
+                "\t# assertovima",
+                "\t# ---",
+                "\t# kod",
+                "\t\t: code python",
+                "\t\t: ",
+                "\t\t: def test_connector_init(mocker):",
+                "\t\t:     assert mocker.call_count == 1",
+                "\t\t: ",
+            ],
+            ApplyInlineBacktickBold,
+        )
+
+        self.assertEqual(1, len(blocks))
+        self.assertIn("test funkcija s; assertovima; ---; kod", blocks[0][2])
+        match = re.search(r'<CODEBLOCK lang="python" data="([^"]*)"/>', blocks[0][2])
+        self.assertIsNotNone(match)
+        source = base64.b64decode(match.group(1)).decode("utf-8")
+        self.assertIn("def test_connector_init(mocker):", source)
+        self.assertIn("    assert mocker.call_count == 1", source)
 
     def test_verbatim_body_replaces_only_line_start_markers(self):
         blocks = ExtractMindmapBlocks(
