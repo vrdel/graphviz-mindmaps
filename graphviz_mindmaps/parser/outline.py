@@ -156,8 +156,9 @@ def ParseCodeDirective(line):
     return match.group(1) or "text", style_match.group(1) if style_match else None
 
 
-def _CollectCodeNodeLine(lines, node_line_index, language, style_name=None):
-    body_index = node_line_index + 2
+def _CollectCodeNodeLine(lines, node_line_index, language, style_name=None, header_line=None, attr_line_index=None):
+    attr_index = attr_line_index if attr_line_index is not None else node_line_index + 1
+    body_index = attr_index + 1
     body_lines = []
 
     while body_index < len(lines) and '# ' not in lines[body_index] \
@@ -174,7 +175,7 @@ def _CollectCodeNodeLine(lines, node_line_index, language, style_name=None):
     source = "\n".join(body_lines)
     encoded = base64.b64encode(source.encode("utf-8")).decode("ascii")
     style_attr = " style=\"%s\"" % style_name if style_name else ""
-    codenode = lines[node_line_index] + "<CODEBLOCK lang=\"%s\"%s data=\"%s\"/>" % (language, style_attr, encoded)
+    codenode = (header_line or lines[node_line_index]) + "<CODEBLOCK lang=\"%s\"%s data=\"%s\"/>" % (language, style_attr, encoded)
     return codenode, body_index
 
 
@@ -223,7 +224,19 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
                     else:
                         if "# " not in worklines[cursor]:
                             linesbymm.append(worklines[cursor])
-                            if "verbatim" in worklines[cursor] or \
+                            language, style_name = ParseCodeDirective(worklines[cursor])
+                            if language:
+                                codenode, next_index = _CollectCodeNodeLine(
+                                    worklines,
+                                    scan_index,
+                                    language,
+                                    style_name,
+                                    header_line=linesbymm[-2],
+                                    attr_line_index=cursor,
+                                )
+                                linesbymm[-2] = codenode
+                                cursor = next_index - 1
+                            elif "verbatim" in worklines[cursor] or \
                                     "verbat" in worklines[cursor] or \
                                     "draw" in worklines[cursor]:
                                 vrbtnode, next_index = _CollectVerbatimNodeLine(
