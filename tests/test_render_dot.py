@@ -347,6 +347,36 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
             rendered,
         )
 
+    def test_header_line_attributes_target_non_verbatim_label_lines(self):
+        tree = self._tree()
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            "header1;header2",
+            False,
+            False,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+        node = tree.Node(
+            tree,
+            "node101",
+            labelhtml,
+            "\t\t",
+            "node",
+            linecolor=[[1, fontcolor["r"], True, {"header": True}]],
+        )
+
+        node.colorifylines()
+        rendered = "".join(node._label)
+
+        self.assertIn(
+            '<TD><B><FONT COLOR="%s">header1</FONT></B></TD>' % fontcolor["r"],
+            rendered,
+        )
+        self.assertIn("<TD>header2</TD>", rendered)
+
     def test_verbatim_header_gets_legacy_style_when_first_header_has_no_attrs(self):
         tree = self._tree(PostAttrProcLabel)
         root = tree.addroot("node1")

@@ -413,7 +413,7 @@ class Tree:
                 del line_indexes[0]
 
             if not (self._verbatim or self._draw):
-                return []
+                return line_indexes
 
             boundary_index = self._body_boundary_line_index()
             if boundary_index is not None:
@@ -467,7 +467,8 @@ class Tree:
                 fragments = "<SEP>".join(self._label).split("</TD></TR><TR>")
 
             if not (self._verbatim or self._draw):
-                return fragments, []
+                indexes = [idx for idx in range(len(fragments)) if has_visible_content(fragments[idx])]
+                return fragments, indexes
 
             boundary_index = self._body_boundary_fragment_index(fragments)
             if boundary_index is not None:
