@@ -156,6 +156,10 @@ def ParseCodeDirective(line):
     return match.group(1) or "text", style_match.group(1) if style_match else None
 
 
+def IsVerbatimDirectiveLine(line):
+    return re.search(r"(?<!\S)(?:verbatim|verbat|block)(?!\S)", line) is not None
+
+
 def _CollectCodeNodeLine(lines, node_line_index, language, style_name=None, header_line=None, attr_line_index=None):
     attr_index = attr_line_index if attr_line_index is not None else node_line_index + 1
     body_index = attr_index + 1
@@ -209,8 +213,7 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
                         codenode, next_index = _CollectCodeNodeLine(worklines, scan_index, language, style_name)
                         linesbymm[-2] = codenode
                         cursor = next_index - 1
-                    elif "verbatim" in worklines[scan_index + 1] or \
-                            "verbat" in worklines[scan_index + 1] or \
+                    elif IsVerbatimDirectiveLine(worklines[scan_index + 1]) or \
                             "draw" in worklines[scan_index + 1]:
                         vrbtnode, next_index = _CollectVerbatimNodeLine(worklines, scan_index, apply_inline_backtick_bold)
                         linesbymm[-2] = vrbtnode
@@ -236,8 +239,7 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
                                 )
                                 linesbymm[-2] = codenode
                                 cursor = next_index - 1
-                            elif "verbatim" in worklines[cursor] or \
-                                    "verbat" in worklines[cursor] or \
+                            elif IsVerbatimDirectiveLine(worklines[cursor]) or \
                                     "draw" in worklines[cursor]:
                                 vrbtnode, next_index = _CollectVerbatimNodeLine(
                                     worklines,
@@ -259,7 +261,7 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
 
 
 def ResolveNodeRenderFlags(nextline):
-    vrbt = "verbatim" in nextline or "verbat" in nextline
+    vrbt = IsVerbatimDirectiveLine(nextline)
     draw = "draw" in nextline
     textleft = "textleft" in nextline
     return vrbt, draw, textleft

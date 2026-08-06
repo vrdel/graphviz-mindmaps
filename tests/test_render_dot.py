@@ -508,14 +508,14 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertIn('<TD><FONT POINT-SIZE="20">Header</FONT></TD>', rendered)
         self.assertIn("<TD>body&nbsp;one</TD>", rendered)
 
-    def test_verbatim_collection_preserves_multiple_header_lines_and_body_boundary(self):
+    def test_block_collection_preserves_multiple_header_lines_and_body_boundary(self):
         blocks = ExtractMindmapBlocks(
             [
                 "# Root",
                 "\t: fname=out.jpg",
                 "\t# header word1, header word2 in line1",
                 "\t# header word1 in line2",
-                "\t\t: verbatim cyello hl1r Ehl1it Ehl1w2b l1r",
+                "\t\t: block cyello hl1r Ehl1it Ehl1w2b l1r",
                 "\t\t: ",
                 "\t\t: body word1, word2 in line1",
                 "\t\t: body word1 word2 word3 in line3",
@@ -528,6 +528,21 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertIn("header word1, header word2 in line1; header word1 in line2", blocks[0][2])
         self.assertIn("__GVMM_BODY_BOUNDARY__", blocks[0][2])
         self.assertIn("body<WHITESP>word1,<WHITESP>word2", blocks[0][2])
+
+    def test_verbatim_collection_stays_supported(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# legacy header",
+                "\t\t: verbatim",
+                "\t\t: legacy body",
+            ],
+            ApplyInlineBacktickBold,
+        )
+
+        self.assertIn("__GVMM_BODY_BOUNDARY__", blocks[0][2])
+        self.assertIn("legacy<WHITESP>body", blocks[0][2])
 
     def test_code_collection_preserves_multiple_header_lines_and_code_body(self):
         blocks = ExtractMindmapBlocks(
