@@ -74,10 +74,10 @@ def EscapeResidualHtmlAngles(text):
 
 def ApplyVerbatimCalloutRows(labelhtml):
     colors = {
-        "RED": "#FF9999",
-        "YELLOW": "#FFF180",
-        "GREEN": "#8BFF80",
-        "CYAN": "#80FFFB",
+        "RED": "#F2B8B8",
+        "YELLOW": "#F1E6A8",
+        "GREEN": "#B8E3B4",
+        "CYAN": "#B4E4E3",
     }
 
     def row_content(row):

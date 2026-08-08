@@ -487,8 +487,8 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         node.linefsize()
         rendered = "".join(node._label)
 
-        self.assertIn('<TD BGCOLOR="#FFF180"><FONT POINT-SIZE="16"> •&nbsp;callout&nbsp;one</FONT></TD>', rendered)
-        self.assertNotIn('BGCOLOR="#FFF180"> •&nbsp;callout&nbsp;one</FONT>', rendered)
+        self.assertIn('<TD BGCOLOR="#F1E6A8"><FONT POINT-SIZE="16"> •&nbsp;callout&nbsp;one</FONT></TD>', rendered)
+        self.assertNotIn('BGCOLOR="#F1E6A8"> •&nbsp;callout&nbsp;one</FONT>', rendered)
 
     def test_verbatim_header_font_size_targets_header_lines(self):
         tree = self._tree()
@@ -844,14 +844,14 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
 
         rendered = "".join(labelhtml)
 
-        self.assertIn('BGCOLOR="#FF9999"', rendered)
-        self.assertIn('BGCOLOR="#FFF180"', rendered)
-        self.assertIn('BGCOLOR="#8BFF80"', rendered)
-        self.assertIn('BGCOLOR="#80FFFB"', rendered)
+        self.assertIn('BGCOLOR="#F2B8B8"', rendered)
+        self.assertIn('BGCOLOR="#F1E6A8"', rendered)
+        self.assertIn('BGCOLOR="#B8E3B4"', rendered)
+        self.assertIn('BGCOLOR="#B4E4E3"', rendered)
         self.assertIn("•&nbsp;red&nbsp;item", rendered)
         self.assertIn("•&nbsp;yellow&nbsp;item", rendered)
         self.assertIn("•&nbsp;green&nbsp;item", rendered)
-        self.assertIn('BGCOLOR="#8BFF80">   green&nbsp;continuation', rendered)
+        self.assertIn('BGCOLOR="#B8E3B4">   green&nbsp;continuation', rendered)
         self.assertIn("•&nbsp;cyan&nbsp;item", rendered)
         self.assertIn("not&nbsp;a&nbsp;list&nbsp;!&nbsp;marker", rendered)
         self.assertIn("<TD> plain&nbsp;after&nbsp;empty&nbsp;line", rendered)
