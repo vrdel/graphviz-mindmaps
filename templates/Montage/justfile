@@ -3,7 +3,7 @@ mm := "mindmap-01.otl"
 montage := "montage.yml"
 wiki := "Template.wiki"
 output := "final_montage.jpg"
-scale := "60"
+scale := "90"
 background := "#efefef"
 
 build target:

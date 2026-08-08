@@ -1,6 +1,6 @@
 mm := "mindmap-01.otl"
 wiki := "Template.wiki"
-scale := "60"
+scale := "90"
 
 build target:
     gvmm-exe.py gvmm -s {{scale}} -f "{{target}}" > /dev/null
