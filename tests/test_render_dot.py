@@ -472,6 +472,34 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertNotIn("__GVMM_RENDERED_HR__", rendered)
         self.assertNotIn('<FONT POINT-SIZE="16"><HR/>', rendered)
 
+    def test_verbatim_end_relative_line_selectors_count_internal_blank_rows(self):
+        tree = self._tree()
+        node = tree.Node(
+            tree,
+            "node101",
+            self._verbatim_label(
+                "Header<BR/> __GVMM_BODY_BOUNDARY__<BR/> "
+                "first command line<BR/> "
+                "second command line<BR/> "
+                "<BR/> "
+                "expected result:<BR/> "
+                "service returned a sample error message<BR/> "
+                "<BR/> "
+                "final note line<BR/> "
+            ),
+            "\t\t",
+            "def",
+            linefstyle=[[-1, "I"], [-4, "I"]],
+            verbatim=True,
+        )
+
+        node.linefstyle()
+        rendered = "".join(node._label)
+
+        self.assertIn("<TD><I>expected&nbsp;result:</I></TD>", rendered)
+        self.assertIn("<TD><I>final&nbsp;note&nbsp;line</I></TD>", rendered)
+        self.assertIn("<TD>second&nbsp;command&nbsp;line</TD>", rendered)
+
     def test_verbatim_unscoped_font_size_preserves_callout_backgrounds(self):
         tree = self._tree()
         node = tree.Node(

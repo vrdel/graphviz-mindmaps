@@ -292,10 +292,16 @@ class Tree:
         def _is_header_attr(self, item):
             return bool(self._attr_meta(item).get("header"))
 
+        def _is_end_relative_line_attr(self, item):
+            return int(item[0]) < 0
+
         def _line_fragment_indexes_for_attr(self, item, fragments=None):
             if self._is_header_attr(item):
                 return self._header_line_fragment_indexes(fragments)
-            return self._scoped_line_fragment_indexes(fragments)
+            return self._scoped_line_fragment_indexes(
+                fragments,
+                include_internal_blank_rows=self._is_end_relative_line_attr(item),
+            )
 
         def _line_word_indexes_for_attr(self, item):
             lmeta = item[2] if len(item) > 2 and isinstance(item[2], dict) else {}
@@ -427,7 +433,7 @@ class Tree:
                 line_indexes.pop()
             return line_indexes
 
-        def _scoped_line_fragment_indexes(self, fragments=None):
+        def _scoped_line_fragment_indexes(self, fragments=None, include_internal_blank_rows=False):
             def has_visible_content(fragment):
                 if "<HR/>" in fragment or "__GVMM_RENDERED_HR__" in fragment:
                     return False
@@ -446,11 +452,12 @@ class Tree:
                     indexes = [index for index in indexes if index > boundary_index]
                 elif indexes:
                     del indexes[0]
-                indexes = [index for index in indexes if has_visible_content(fragments[index])]
                 while indexes and not has_visible_content(fragments[indexes[0]]):
                     del indexes[0]
                 while indexes and not has_visible_content(fragments[indexes[-1]]):
                     indexes.pop()
+                if not include_internal_blank_rows:
+                    indexes = [index for index in indexes if has_visible_content(fragments[index])]
             else:
                 indexes = [idx for idx, fragment in enumerate(fragments) if has_visible_content(fragment)]
 
