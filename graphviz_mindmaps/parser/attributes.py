@@ -378,6 +378,11 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
             if m.group(3):
                 symbsize.append([int(m.group(1)[3:]), m.group(3)[1:]])
 
+    if k == "sgstart":
+        sgcolor.append("s")
+    elif k == "sgend":
+        sgcolor.append("e")
+
     m = re.search(r'(sg([rgbycpwkt])(-?[0-9]+)?([sdtl](?!tart))?(start|end)?([\'\"](.*)[\'\"])?)?', k)
     if m.group(1):
         ckey = m.group(2)

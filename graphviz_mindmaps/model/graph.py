@@ -688,7 +688,7 @@ class Tree:
         enable_subgraphs = self._subgraphs_enabled_for_tabs(tabs, p)
         sgmargin = sgmargin if sgmargin is not None else self.default_sgmargin
         margin_attr = tabs + "\t" + "margin = \"%s\";\n" % sgmargin if sgmargin else ""
-        if enable_subgraphs and sgcolor and sgcolor[0] == "s":
+        if enable_subgraphs and sgcolor and sgcolor[0].startswith("s"):
             self._addchild_rev("", ["}"], tabs, "sgwrap", p)
         if enable_subgraphs:
             self._addchild_rev("", ["}"], tabs, "sgwrap", p)
@@ -708,7 +708,7 @@ class Tree:
 
         self.post_attr_proc_label(c._label, ntype, vrbt, draw, textleft)
 
-        if enable_subgraphs and sgcolor and sgcolor[0] == "#":
+        if enable_subgraphs and sgcolor and sgcolor[0].startswith("#"):
             sgattr = margin_attr + "style = \"%s rounded\";\n" % (sgstyle + "," if sgstyle else "") + tabs + "\t" + "color = \"%s\";\n" % (sgcolor if not sgstyle else "#000000") + tabs + "\t" + "bgcolor = \"%s\"" % (sgcolor)
         else:
             sgattr = margin_attr + "style = invis;"
@@ -717,7 +717,7 @@ class Tree:
             self._addchild_rev("", ["fontname = \"%s\";\n" % (self.font["balsamiq"]) + tabs + "\t" + "fontsize = \"%s\";\n" % (self.fontsize["xxl"])], tabs, "sgwrap", p)
         if enable_subgraphs:
             self._addchild_rev("", ["subgraph cluster%s {\n" % nodename.replace("node", "") + tabs + "\t" + sgattr], tabs, "sgwrap", p)
-        if enable_subgraphs and sgcolor and sgcolor[0] == "e":
+        if enable_subgraphs and sgcolor and sgcolor[0].startswith("e"):
             sgattr = margin_attr + "style = \"%s rounded\";\n" % (sgstyle + "," if sgstyle else "") + tabs + "\t" + "color = \"%s\";\n" % (sgcolor[1:] if not sgstyle else "#000000") + tabs + "\t" + "bgcolor = \"%s\";" % (sgcolor[1:])
             self._addchild_rev("", ["subgraph cluster%s {\n" % nodename.replace("node", "colored") + tabs + "\t" + sgattr], tabs, "sgwrap", p)
 

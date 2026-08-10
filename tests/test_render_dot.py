@@ -1,5 +1,7 @@
 import base64
 import re
+import subprocess
+import tempfile
 import unittest
 
 from graphviz_mindmaps import fontawesome
@@ -15,6 +17,8 @@ from graphviz_mindmaps.constants import (
     vrbtcolors,
 )
 from graphviz_mindmaps.model.graph import Tree
+from graphviz_mindmaps.model.styles import NodePrepState
+from graphviz_mindmaps.parser.attributes import ApplyNodeAttributeTokens
 from graphviz_mindmaps.parser.attributes import NormalizeAttributeTokens
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
 from graphviz_mindmaps.render.label_html import BuildNodeLabelHtml
@@ -274,6 +278,57 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         rendered = "\n".join(node.element() for node in root.childs())
 
         self.assertIn('margin = "18";', rendered)
+
+    def test_transparent_subgraph_start_end_markers_generate_balanced_wrappers(self):
+        state = NodePrepState(ntype="node")
+        ApplyNodeAttributeTokens(
+            ["sgend"],
+            "node102",
+            state,
+            [],
+            [],
+            {},
+            lambda token: None,
+            lambda spec, symbol_map: [],
+            lambda image, image_key="img": image,
+            fontawesome.symb,
+            [],
+            tempfile,
+            subprocess,
+            None,
+        )
+        self.assertEqual(["e"], state.sgcolor)
+
+        tree = self._tree()
+        root = tree.addroot("node1")
+        tree.addchild_rev(
+            "node101",
+            "\t\t",
+            "node",
+            self._label("range start"),
+            root,
+            sgcolor="s",
+        )
+        tree.addchild_rev(
+            "node102",
+            "\t\t",
+            "node",
+            self._label("range end"),
+            root,
+            sgcolor=state.sgcolor_value(),
+        )
+
+        rendered = "\n".join(node.element() for node in root.childs())
+
+        depth = 0
+        for char in rendered:
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+            self.assertGreaterEqual(depth, 0)
+        self.assertEqual(0, depth)
+        self.assertIn("subgraph clustercolored102", rendered)
 
     def test_attached_image_row_is_ignored_by_line_selectors(self):
         tree = self._tree()
