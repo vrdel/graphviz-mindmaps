@@ -337,6 +337,16 @@
 			: ---
 			: left => right and from -> to
 			:
+			# all block callouts
+				: block rawmarkers
+				:
+				: * ! red callout row
+				: * ? yellow callout row
+				: * $ green callout row
+				: * @ cyan callout row
+				: ---
+				: left => right and from -> to
+				:
 			# block rawmarkers
 				: block rawmarkers
 				:
