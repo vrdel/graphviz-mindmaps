@@ -47,7 +47,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     target_name = argv[0]
-    just_recipe = "buildpreview" if len(argv) == 2 else "build"
+    preview = len(argv) == 2
+    just_recipe = "buildpreview" if preview else "build"
+    make_target = f"preview-{target_name}" if preview else target_name
     justfile = find_target_justfile(target_name) if Path(target_name).suffix in JUST_TARGET_SUFFIXES else None
     makefile = None if justfile is not None else find_target_makefile(target_name)
 
@@ -64,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(makefile.name, flush=True)
     print(f"Found in {makefile.name}", flush=True)
-    result = subprocess.run(["make", "-f", str(makefile), target_name])
+    result = subprocess.run(["make", "-f", str(makefile), make_target])
     return result.returncode
 
 

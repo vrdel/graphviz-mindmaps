@@ -1,0 +1,27 @@
+mm1 = hrzoo-2405-1.otl
+montage1 = 2024-05.gmm
+wiki1 = LDAP-Backend.wiki
+mm2 = hrzoo-2605.otl
+
+step-$(montage1):
+	montage.py -s 80 $(montage1) > /dev/null
+	vim -c ':Vimwiki2HTML' -c ':wq' '$(wiki1)' > /dev/null
+
+step-$(mm1):
+	gvmm-exe.py gvmm -f $(mm1) > /dev/null
+
+$(mm1): step-$(mm1) step-$(montage1)
+
+step-$(mm2):
+	gvmm-exe.py gvmm -f $(mm2) > /dev/null
+
+$(mm2): step-$(mm2) step-$(montage1)
+
+preview-$(mm1): $(mm1)
+
+preview-$(mm2): $(mm2)
+
+preview-$(mm1) preview-$(mm2):
+	galacomm.py -r my_whiteboard > /dev/null || galaview.sh "`basename \"${PWD}\"`_`basename \"$(montage1)\" .gmm`".* &
+
+.PHONY: $(mm1) $(mm2) preview-$(mm1) preview-$(mm2)
