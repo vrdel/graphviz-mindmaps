@@ -23,6 +23,21 @@ class TargetMakeTests(unittest.TestCase):
 
         return return_code, run
 
+    def run_in_make_project(self, argv):
+        with tempfile.TemporaryDirectory() as tempdir:
+            with open(os.path.join(tempdir, "Makefile.2024-05"), "w") as makefile:
+                makefile.write("mindmap-01.otl preview-mindmap-01.otl:\n")
+
+            with mock.patch.object(target_make.Path, "cwd", return_value=target_make.Path(tempdir)):
+                with mock.patch.object(
+                    target_make.subprocess,
+                    "run",
+                    return_value=SimpleNamespace(returncode=0),
+                ) as run:
+                    return_code = target_make.main(argv)
+
+        return return_code, run
+
     def test_justfile_uses_build_by_default(self):
         return_code, run = self.run_in_project(["mindmap-01.otl"])
 
@@ -38,6 +53,22 @@ class TargetMakeTests(unittest.TestCase):
         self.assertEqual(0, return_code)
         self.assertEqual("buildpreview", run.call_args.args[0][3])
         self.assertEqual("mindmap-01.otl", run.call_args.args[0][4])
+
+    def test_makefile_uses_target_by_default(self):
+        return_code, run = self.run_in_make_project(["mindmap-01.otl"])
+
+        self.assertEqual(0, return_code)
+        run.assert_called_once_with(
+            ["make", "-f", mock.ANY, "mindmap-01.otl"]
+        )
+
+    def test_makefile_p_uses_preview_target(self):
+        return_code, run = self.run_in_make_project(["mindmap-01.otl", "p"])
+
+        self.assertEqual(0, return_code)
+        run.assert_called_once_with(
+            ["make", "-f", mock.ANY, "preview-mindmap-01.otl"]
+        )
 
     def test_rejects_unknown_second_argument(self):
         with mock.patch.object(target_make.subprocess, "run") as run:
