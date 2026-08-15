@@ -6,9 +6,7 @@ build target:
     gvmm-exe.py gvmm -s {{scale}} -f "{{target}}" > /dev/null
     vim -c ':Vimwiki2HTML' -c ':wq' '{{wiki}}' > /dev/null
 
-buildpreview target:
-    gvmm-exe.py gvmm -s {{scale}} -f "{{target}}" > /dev/null
-    vim -c ':Vimwiki2HTML' -c ':wq' '{{wiki}}' > /dev/null
+buildpreview target: (build target)
     galacomm.py -r my_whiteboard > /dev/null || galaview.sh `basename "{{target}}" .otl`.[jp]* &
 
 mindmap: (build mm)
