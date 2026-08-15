@@ -14,6 +14,15 @@ build target:
     esac
     gvmm-exe.py montage -b "{{background}}" -s {{scale}} {{montage}} -o {{output}} > /dev/null
     vim -c ':Vimwiki2HTML' -c ':wq' '{{wiki}}' > /dev/null
+
+buildpreview target:
+    case "{{target}}" in \
+      *.otl) gvmm-exe.py gvmm -f "{{target}}" > /dev/null ;; \
+      *.yml|*.yaml) ;; \
+      *) echo "unsupported target: {{target}}" >&2; exit 2 ;; \
+    esac
+    gvmm-exe.py montage -b "{{background}}" -s {{scale}} {{montage}} -o {{output}} > /dev/null
+    vim -c ':Vimwiki2HTML' -c ':wq' '{{wiki}}' > /dev/null
     galacomm.py -r my_whiteboard > /dev/null || galaview.sh {{output}} &
 
 mindmap: (build mm)
