@@ -42,18 +42,19 @@ def find_target_justfile(target: str) -> Path | None:
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
-    if not argv:
-        print("Usage: target-make <target>", file=sys.stderr)
+    if not argv or len(argv) > 2 or (len(argv) == 2 and argv[1] != "p"):
+        print("Usage: target-make <target> [p]", file=sys.stderr)
         return 2
 
     target_name = argv[0]
+    just_recipe = "buildpreview" if len(argv) == 2 else "build"
     justfile = find_target_justfile(target_name) if Path(target_name).suffix in JUST_TARGET_SUFFIXES else None
     makefile = None if justfile is not None else find_target_makefile(target_name)
 
     if justfile is not None:
         print(justfile.name, flush=True)
         print(f"Found in {justfile.name}", flush=True)
-        result = subprocess.run(["just", "-f", str(justfile), "build", target_name])
+        result = subprocess.run(["just", "-f", str(justfile), just_recipe, target_name])
         return result.returncode
 
     if makefile is None:
