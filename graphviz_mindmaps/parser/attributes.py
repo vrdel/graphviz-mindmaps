@@ -92,7 +92,7 @@ def ResolveVerbatimFillColorToken(token, vrbtcolors):
         return vrbtcolors[token]
 
     match = re.match(
-        r"^(c(?:green|cyan|blue|pink|red|yello|orang|white))(-?[0-9]+)$",
+        r"^(c(?:def|green|cyan|blue|pink|red|yello|orang|white))(-?[0-9]+)$",
         token,
     )
     if not match:

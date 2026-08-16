@@ -36,6 +36,7 @@ subgraphcolors = {
 }
 
 vrbtcolors = {
+    "cdef": "#f4f4f4",
     "cgreen": "#dffde6",
     "cred": "#fde0df",
     "cblue": "#e1dffd",
