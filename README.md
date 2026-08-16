@@ -101,6 +101,14 @@ Set a default style for untyped leaf nodes from the root attribute line:
 
 If `leaf=` is omitted, untyped leaf nodes keep the default underline style. Explicit node attributes still win, so `: todo`, `: quest`, `: cgreen`, and similar typed nodes are unchanged.
 
+Use `cdef` on a block node to select the current theme's default regular-node fill color:
+
+```text
+# Default-colored block
+    : block cdef
+    : block body
+```
+
 Code blocks can be highlighted and rendered as image-backed Graphviz nodes:
 
 ```text

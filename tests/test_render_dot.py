@@ -20,6 +20,7 @@ from graphviz_mindmaps.model.graph import Tree
 from graphviz_mindmaps.model.styles import NodePrepState
 from graphviz_mindmaps.parser.attributes import ApplyNodeAttributeTokens
 from graphviz_mindmaps.parser.attributes import NormalizeAttributeTokens
+from graphviz_mindmaps.parser.attributes import ResolveVerbatimFillColorToken
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
 from graphviz_mindmaps.render.label_html import BuildNodeLabelHtml
 from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
@@ -90,6 +91,38 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertIn('color="royalblue"', rendered)
         self.assertIn('penwidth="2"', rendered)
         self.assertNotIn('fontcolor="royalblue"', rendered)
+
+    def test_cdef_uses_default_regular_node_fill_color(self):
+        default_node_fill = re.search(
+            r'fillcolor="([^"]+)"',
+            nodetype["node"],
+        ).group(1)
+        self.assertEqual(
+            default_node_fill,
+            ResolveVerbatimFillColorToken("cdef", vrbtcolors),
+        )
+
+        tree = self._tree()
+        node = tree.Node(
+            tree,
+            "node101",
+            self._verbatim_label("default block color"),
+            "\t\t",
+            "cdef",
+            verbatim=True,
+        )
+
+        rendered = node.element()
+
+        self.assertIn('fillcolor="%s"' % default_node_fill, rendered)
+
+    def test_cdef_supports_block_color_brightness_adjustments(self):
+        colors = dict(vrbtcolors)
+
+        self.assertEqual(
+            "#fefefe",
+            ResolveVerbatimFillColorToken("cdef10", colors),
+        )
 
     def test_visual_node_attributes_override_existing_attrs(self):
         tree = self._tree()

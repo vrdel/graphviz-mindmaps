@@ -92,6 +92,7 @@ def _apply_palette(palette):
     })
 
     constants.vrbtcolors.update({
+        "cdef": panel,
         "cgreen": palette["green_bg"],
         "cred": palette["red_bg"],
         "cblue": palette["blue_bg"],
