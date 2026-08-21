@@ -12,8 +12,16 @@ from graphviz_mindmaps.constants import (
     fontstyle,
     linecolors,
     subgraphcolors,
+    vrbtcolors,
 )
-from graphviz_mindmaps.render.image_transform import ParseImageTransformSpec, TransformImage
+from graphviz_mindmaps.render.image_transform import (
+    IMAGE_TRANSFORM_KEY_PATTERN,
+    IsImageTransformKey,
+    ParseImageTransformKey,
+    ParseImageTransformSpec,
+    SaturateImageOverlayColor,
+    TransformImage,
+)
 
 fontface = {
     "fd": font["comic"],
@@ -21,21 +29,6 @@ fontface = {
     "fa": "Dejavu Sans",
     "fe": "Dejavu Serif",
 }
-
-IMAGE_NODE_TRANSFORMS = {
-    "img_neg": {"negate": True},
-    "img_neg_cn": {"negate": True, "contrast": True},
-    "img_gr": {"grayscale": True},
-    "img_neg_gr": {"negate": True, "grayscale": True},
-    "img_neg_gr_cn": {"negate": True, "grayscale": True, "contrast": True},
-    "img_sk": {"sketch": True},
-    "img_neg_sk": {"negate": True, "sketch": True},
-    "img_neg_cn_sk": {"negate": True, "contrast": True, "sketch": True},
-    "img_gr_sk": {"grayscale": True, "sketch": True},
-    "img_neg_gr_sk": {"negate": True, "grayscale": True, "sketch": True},
-    "img_neg_gr_cn_sk": {"negate": True, "grayscale": True, "contrast": True, "sketch": True},
-}
-
 
 def RenderTransformedImage(image, transform_key, gen_img_path, tmpdir, tempfile_module):
     if not tmpdir:
@@ -48,11 +41,19 @@ def RenderTransformedImage(image, transform_key, gen_img_path, tmpdir, tempfile_
         tmpdir[-1],
         "%s-%s%s" % (transform_key, next(tempfile_module._get_candidate_names()), suffix),
     )
+    transform_options = ParseImageTransformKey(transform_key)
+    if transform_options is None:
+        raise ValueError("invalid image transform: %s" % transform_key)
+    overlay_token = transform_options.pop("overlay_token", None)
+    if overlay_token is not None:
+        transform_options["overlay_color"] = SaturateImageOverlayColor(
+            ResolveVerbatimFillColorToken(overlay_token, vrbtcolors),
+        )
     TransformImage(
         source,
         output,
         scale_percent=scale_percent,
-        **IMAGE_NODE_TRANSFORMS[transform_key],
+        **transform_options,
     )
     return output
 
@@ -558,14 +559,11 @@ def ApplyNodeAttributeTokens(
                 state.linedate,
             )
 
-        image_match = re.match(
-            r"^(img(?:_neg_gr_cn_sk|_neg_gr_sk|_neg_cn_sk|_neg_sk|_gr_sk|_sk|_neg_gr_cn|_neg_gr|_neg_cn|_neg|_gr)?)[=:](.+)$",
-            token,
-        )
+        image_match = re.match(r"^(%s)[=:](.+)$" % IMAGE_TRANSFORM_KEY_PATTERN, token)
         if image_match:
             image_key, image_spec = image_match.groups()
             image_path = gen_img_path(image_spec.strip())
-            if image_key in IMAGE_NODE_TRANSFORMS:
+            if IsImageTransformKey(image_key):
                 image_path = RenderTransformedImage(
                     image_spec.strip(),
                     image_key,
