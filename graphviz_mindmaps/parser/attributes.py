@@ -19,7 +19,6 @@ from graphviz_mindmaps.render.image_transform import (
     IsImageTransformKey,
     ParseImageTransformKey,
     ParseImageTransformSpec,
-    SaturateImageOverlayColor,
     TransformImage,
 )
 
@@ -46,9 +45,7 @@ def RenderTransformedImage(image, transform_key, gen_img_path, tmpdir, tempfile_
         raise ValueError("invalid image transform: %s" % transform_key)
     overlay_token = transform_options.pop("overlay_token", None)
     if overlay_token is not None:
-        transform_options["overlay_color"] = SaturateImageOverlayColor(
-            ResolveVerbatimFillColorToken(overlay_token, vrbtcolors),
-        )
+        transform_options["overlay_color"] = ResolveVerbatimFillColorToken(overlay_token, vrbtcolors)
     TransformImage(
         source,
         output,
