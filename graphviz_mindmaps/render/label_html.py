@@ -1,5 +1,7 @@
 import re
 
+from graphviz_mindmaps.render.image_transform import IMAGE_TRANSFORM_KEY_PATTERN
+
 
 def HtmlCompositeArrow(arrow, htmlcode, token, token_index, labelhtml):
     found = token.find(arrow)
@@ -139,7 +141,7 @@ def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larro
     if not vrbt and not draw and ("`" in label or "*" in label):
         label = ApplyInlineBacktickBold(label)
 
-    image_pattern = r"img(?:_neg_gr_cn_sk|_neg_gr_sk|_neg_cn_sk|_neg_sk|_gr_sk|_sk|_neg_gr_cn|_neg_gr|_neg_cn|_neg|_gr)?"
+    image_pattern = IMAGE_TRANSFORM_KEY_PATTERN
     if re.match(image_pattern + r"[ ]*[=:]", label):
         match = re.match(r"(" + image_pattern + r")(?:[  ]*[=:][  ]*)(.*)", label)
         if match:

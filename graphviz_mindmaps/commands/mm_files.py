@@ -6,7 +6,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from graphviz_mindmaps.render.image_transform import ParseImageTransformSpec
+from graphviz_mindmaps.render.image_transform import IMAGE_TRANSFORM_KEY_PATTERN, ParseImageTransformSpec
 from graphviz_mindmaps.tools.montage import IMAGE_TRANSFORMS, normalize_spec, parse_yaml_like
 
 
@@ -140,7 +140,7 @@ def collect_mindmap(path: Path, files: dict[Path, Path]) -> None:
         return
     add_existing(path, files)
     text = path.read_text()
-    image_attribute = r"(?:img|img_neg|img_neg_cn|img_gr|img_neg_gr|img_neg_gr_cn|img_sk|img_neg_sk|img_neg_cn_sk|img_gr_sk|img_neg_gr_sk|img_neg_gr_cn_sk)"
+    image_attribute = r"(?:%s)" % IMAGE_TRANSFORM_KEY_PATTERN
     for match in re.finditer(r"""(?<!\S)""" + image_attribute + r"""[=:]("[^"]+"|'[^']+'|[^\s]+)""", text):
         value = unquote(match.group(1))
         image, _ = ParseImageTransformSpec(value)

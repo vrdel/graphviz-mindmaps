@@ -35,13 +35,13 @@ from graphviz_mindmaps.model.styles import (
 )
 from graphviz_mindmaps.parser.attributes import (
     ApplyNodeAttributeTokens,
-    IMAGE_NODE_TRANSFORMS,
     RenderTransformedImage,
     ResolveBaseNodeTypeToken,
     ResolveColorNodeTypeToken,
     ResolveSymbolNames,
     ResolveVerbatimFillColorToken,
 )
+from graphviz_mindmaps.render.image_transform import IsImageTransformKey
 from graphviz_mindmaps.parser.outline import (
     GenImgPath,
     ParseFnameLine,
@@ -245,7 +245,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     tmpdir = session.tmpdir
 
     def ResolveImagePath(image, image_key="img"):
-        if image_key in IMAGE_NODE_TRANSFORMS:
+        if IsImageTransformKey(image_key):
             return RenderTransformedImage(
                 image,
                 image_key,

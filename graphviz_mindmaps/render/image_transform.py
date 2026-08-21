@@ -1,6 +1,61 @@
+import colorsys
 from pathlib import Path
+import re
 
-from PIL import Image, ImageFilter, ImageOps
+from PIL import Image, ImageColor, ImageFilter, ImageOps
+
+
+IMAGE_TRANSFORM_KEY_PATTERN = (
+    r"img(?:_neg)?(?:_gr)?(?:_cn)?(?:_sk)?"
+    r"(?:_c(?:def|green|cyan|blue|pink|red|yello|orang|white)(?:-?[0-9]+)?)?"
+)
+
+_TRANSFORM_OPTIONS = {
+    "neg": "negate",
+    "gr": "grayscale",
+    "cn": "contrast",
+    "sk": "sketch",
+}
+
+
+def ParseImageTransformKey(key: str) -> dict[str, bool | str | float] | None:
+    if not re.fullmatch(IMAGE_TRANSFORM_KEY_PATTERN, key):
+        return None
+
+    parts = key.split("_")[1:]
+    options: dict[str, bool | str | float] = {}
+    previous_index = -1
+    for part in parts:
+        color_match = re.fullmatch(
+            r"(c(?:def|green|cyan|blue|pink|red|yello|orang|white))(?:-?[0-9]+)?",
+            part,
+        )
+        if color_match:
+            options["overlay_token"] = part
+            continue
+
+        option_index = tuple(_TRANSFORM_OPTIONS).index(part)
+        if option_index <= previous_index:
+            return None
+        previous_index = option_index
+        options[_TRANSFORM_OPTIONS[part]] = True
+
+    return options
+
+
+def IsImageTransformKey(key: str) -> bool:
+    return key != "img" and ParseImageTransformKey(key) is not None
+
+
+def SaturateImageOverlayColor(color: str, factor: float = 1.75) -> str:
+    red, green, blue = ImageColor.getrgb(color)
+    hue, saturation, value = colorsys.rgb_to_hsv(
+        red / 255,
+        green / 255,
+        blue / 255,
+    )
+    saturated = colorsys.hsv_to_rgb(hue, min(1, saturation * factor), value)
+    return "#%02x%02x%02x" % tuple(round(channel * 255) for channel in saturated)
 
 
 def ParseImageTransformSpec(spec: str) -> tuple[str, float | None]:
@@ -24,6 +79,8 @@ def TransformImage(
     grayscale: bool = False,
     contrast: bool = False,
     sketch: bool = False,
+    overlay_color: str | None = None,
+    overlay_opacity: float = 0.2,
     scale_percent: float | None = None,
 ) -> None:
     source = Path(source)
@@ -43,6 +100,12 @@ def TransformImage(
             transformed = ImageOps.autocontrast(transformed, cutoff=2)
         if sketch:
             transformed = transformed.filter(ImageFilter.CONTOUR)
+        if overlay_color is not None:
+            if not 0 <= overlay_opacity <= 1:
+                raise ValueError("image overlay opacity must be between zero and one")
+            transformed = transformed.convert("RGB")
+            overlay = Image.new("RGB", transformed.size, ImageColor.getrgb(overlay_color))
+            transformed = Image.blend(transformed, overlay, overlay_opacity)
 
         if scale_percent is not None:
             width = max(1, round(transformed.width * scale_percent / 100))
