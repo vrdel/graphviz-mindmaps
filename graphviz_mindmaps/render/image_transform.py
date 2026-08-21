@@ -1,4 +1,3 @@
-import colorsys
 from pathlib import Path
 import re
 
@@ -7,7 +6,7 @@ from PIL import Image, ImageColor, ImageFilter, ImageOps
 
 IMAGE_TRANSFORM_KEY_PATTERN = (
     r"img(?:_neg)?(?:_gr)?(?:_cn)?(?:_sk)?"
-    r"(?:_c(?:def|green|cyan|blue|pink|red|yello|orang|white)(?:-?[0-9]+)?)?"
+    r"(?:_c(?:def|green|cyan|blue|pink|red|yello|orang|white)(?:[0-9]+)?)?"
 )
 
 _TRANSFORM_OPTIONS = {
@@ -27,11 +26,16 @@ def ParseImageTransformKey(key: str) -> dict[str, bool | str | float] | None:
     previous_index = -1
     for part in parts:
         color_match = re.fullmatch(
-            r"(c(?:def|green|cyan|blue|pink|red|yello|orang|white))(?:-?[0-9]+)?",
+            r"(c(?:def|green|cyan|blue|pink|red|yello|orang|white))([0-9]+)?",
             part,
         )
         if color_match:
-            options["overlay_token"] = part
+            options["overlay_token"] = color_match.group(1)
+            if color_match.group(2) is not None:
+                opacity_percent = int(color_match.group(2))
+                if opacity_percent > 100:
+                    return None
+                options["overlay_opacity"] = opacity_percent / 100
             continue
 
         option_index = tuple(_TRANSFORM_OPTIONS).index(part)
@@ -45,17 +49,6 @@ def ParseImageTransformKey(key: str) -> dict[str, bool | str | float] | None:
 
 def IsImageTransformKey(key: str) -> bool:
     return key != "img" and ParseImageTransformKey(key) is not None
-
-
-def SaturateImageOverlayColor(color: str, factor: float = 1.75) -> str:
-    red, green, blue = ImageColor.getrgb(color)
-    hue, saturation, value = colorsys.rgb_to_hsv(
-        red / 255,
-        green / 255,
-        blue / 255,
-    )
-    saturated = colorsys.hsv_to_rgb(hue, min(1, saturation * factor), value)
-    return "#%02x%02x%02x" % tuple(round(channel * 255) for channel in saturated)
 
 
 def ParseImageTransformSpec(spec: str) -> tuple[str, float | None]:
