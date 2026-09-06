@@ -568,12 +568,17 @@ def ApplyNodeAttributeTokens(
                     tmpdir,
                     tempfile_module,
                 )
-            labelhtml.insert(
-                len(labelhtml) - 1,
-                "</TD></TR><TR><TD COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\""
+            if state.embedded_image_count == 0:
+                image_cell = "</TD></TR><TR><TD"
+            else:
+                image_cell = "</TD><TD"
+            image_cell += (
+                " COLSPAN=\"1\" CELLPADDING=\"0\" BORDER=\"0\"><IMG SRC=\""
                 + image_path
-                + "\"/>",
+                + "\"/>"
             )
+            labelhtml.insert(len(labelhtml) - 1, image_cell)
+            state.embedded_image_count += 1
             state.ntype = "imgil"
             continue
 

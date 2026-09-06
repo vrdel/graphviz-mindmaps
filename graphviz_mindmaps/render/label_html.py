@@ -266,6 +266,30 @@ def InsertSymbolRows(labelhtml, symblist, symbcolor, symbsize, symbol_map, fontc
     labelhtml.insert(2, wasone)
 
 
+def SpanRowsAcrossImages(labelhtml, image_count):
+    if image_count < 2:
+        return
+
+    merged = "<SEP>".join(labelhtml)
+    image_row = re.search(
+        r'<TR><TD\b[^>]*\bCELLPADDING="0"[^>]*\bBORDER="0"[^>]*><IMG SRC=',
+        merged,
+    )
+    if not image_row:
+        return
+
+    def set_colspan(match):
+        attrs = match.group(1)
+        if re.search(r'\bCOLSPAN="[^"]*"', attrs):
+            attrs = re.sub(r'\bCOLSPAN="[^"]*"', 'COLSPAN="%d"' % image_count, attrs)
+        else:
+            attrs = ' COLSPAN="%d"' % image_count + attrs
+        return "<TD%s>" % attrs
+
+    text_rows = re.sub(r"<TD((?:\s+[^<>]*)?)>", set_colspan, merged[:image_row.start()])
+    labelhtml[:] = (text_rows + merged[image_row.start():]).split("<SEP>")
+
+
 def PostAttrProcLabel(label, ntype, vrbt, draw, textleft=False):
     if ntype == "saying":
         label.insert(0, "<I>")

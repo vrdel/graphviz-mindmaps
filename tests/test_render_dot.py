@@ -25,6 +25,7 @@ from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
 from graphviz_mindmaps.render.label_html import BuildNodeLabelHtml
 from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
 from graphviz_mindmaps.render.label_html import PostAttrProcLabel
+from graphviz_mindmaps.render.label_html import SpanRowsAcrossImages
 
 
 class RenderDotNodeAttributeTests(unittest.TestCase):
@@ -389,6 +390,74 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertIn("&nbsp;Thu 23-07-2026", rendered)
         self.assertIn('<IMG SRC="wkcp-pi-260723-122029.png"/>', rendered)
         self.assertNotIn(fontawesome.symb["calendar"] + '&nbsp;<IMG SRC=', rendered)
+
+    def test_multiple_attached_images_render_in_one_row_in_source_order(self):
+        labelhtml, _, _ = BuildNodeLabelHtml(
+            "Example node",
+            False,
+            False,
+            html_larrow1,
+            html_rarrow1,
+            html_larrow2,
+            html_rarrow2,
+            lambda image, image_key="img": image,
+        )
+        state = NodePrepState()
+
+        ApplyNodeAttributeTokens(
+            ["img=first.png", "img=second.png"],
+            "node101",
+            state,
+            labelhtml,
+            [],
+            {},
+            lambda token: None,
+            lambda spec, symbol_map: [],
+            lambda image: image,
+            fontawesome.symb,
+            [],
+            tempfile,
+            subprocess,
+            None,
+        )
+
+        rendered = "".join(labelhtml)
+        self.assertEqual("imgil", state.ntype)
+        self.assertEqual(2, state.embedded_image_count)
+        self.assertEqual(2, rendered.count("<IMG SRC="))
+        self.assertLess(rendered.index("first.png"), rendered.index("second.png"))
+        image_row = rendered[rendered.index('<IMG SRC="first.png"'):]
+        self.assertNotIn("</TR><TR>", image_row[:image_row.index("second.png")])
+        self.assertIn('</TD><TD COLSPAN="1"', image_row[:image_row.index("second.png")])
+        self.assertEqual(2, rendered.count('CELLPADDING="0" BORDER="0"><IMG'))
+
+        SpanRowsAcrossImages(labelhtml, state.embedded_image_count)
+        self.assertIn('<TD COLSPAN="2">Example&nbsp;node&nbsp;</TD>', "".join(labelhtml))
+
+    def test_extract_mindmap_collects_repeated_image_attribute_lines(self):
+        blocks = ExtractMindmapBlocks(
+            [
+                "# Root",
+                "\t: fname=out.jpg",
+                "\t# Example node",
+                "\t\t: img_neg_sk_cred40=first.png|65",
+                "\t\t: img_neg_sk_cred40=second.png|65",
+                "\t\t# Nested node",
+                "\t\t\t: img_neg_sk_cred40=third.png|65",
+                "\t\t\t: img_neg_sk_cred40=fourth.png|65",
+                "",
+            ],
+            ApplyInlineBacktickBold,
+        )
+
+        self.assertIn(
+            "img_neg_sk_cred40=first.png|65 img_neg_sk_cred40=second.png|65",
+            blocks[0][3],
+        )
+        self.assertIn(
+            "img_neg_sk_cred40=third.png|65 img_neg_sk_cred40=fourth.png|65",
+            blocks[0][5],
+        )
 
     def test_verbatim_header_attributes_target_header_lines(self):
         tree = self._tree(PostAttrProcLabel)
