@@ -55,6 +55,7 @@ from graphviz_mindmaps.render.label_html import (
     InsertSymbolRows,
     PostAttrProcLabel,
     PreAttrProcLabel,
+    SpanRowsAcrossImages,
 )
 
 
@@ -420,6 +421,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     ntype = "def"
                 state_obj.ntype = ntype
             PreAttrProcLabel(labelhtml, ntype, ResolveBaseNodeTypeToken, runtime.fontawesome_symb, fontcolor)
+            SpanRowsAcrossImages(labelhtml, state_obj.embedded_image_count)
 
             if vrbt or draw:
                 wordskip = len(line.split("<BR/>", 1)[0].split()) - 1

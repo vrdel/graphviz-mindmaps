@@ -3,6 +3,28 @@ import os
 import re
 import unicodedata
 
+from graphviz_mindmaps.render.image_transform import IMAGE_TRANSFORM_KEY_PATTERN
+
+
+def CollectImageAttributeLines(lines, attr_line_index):
+    attr_line = lines[attr_line_index].rstrip()
+    attr_level = lines[attr_line_index][:ParLoc(lines[attr_line_index])].count("\t")
+    continuation_index = attr_line_index + 1
+
+    while continuation_index < len(lines):
+        continuation = lines[continuation_index]
+        continuation_level = continuation[:ParLoc(continuation)].count("\t")
+        image_match = re.match(
+            r"^\s*[:;|]\s*((?:%s)[=:].+?)\s*$" % IMAGE_TRANSFORM_KEY_PATTERN,
+            continuation,
+        )
+        if continuation_level != attr_level or not image_match:
+            break
+        attr_line += " " + image_match.group(1)
+        continuation_index += 1
+
+    return attr_line
+
 
 def NormalizeVerbatimWhitespace(text):
     normalized = []
@@ -218,6 +240,8 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
                         vrbtnode, next_index = _CollectVerbatimNodeLine(worklines, scan_index, apply_inline_backtick_bold)
                         linesbymm[-2] = vrbtnode
                         cursor = next_index - 1
+                    else:
+                        linesbymm[-1] = CollectImageAttributeLines(worklines, scan_index + 1)
                 elif "# " in worklines[scan_index + 1] and \
                         worklines[scan_index + 1][:ParLoc(worklines[scan_index + 1])].count("\t") == level:
                     cursor = scan_index + 1
@@ -250,6 +274,8 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
                                 )
                                 linesbymm[-2] = vrbtnode
                                 cursor = next_index - 1
+                            else:
+                                linesbymm[-1] = CollectImageAttributeLines(worklines, cursor)
             scan_index += 1
         else:
             cursor = scan_index - 2
