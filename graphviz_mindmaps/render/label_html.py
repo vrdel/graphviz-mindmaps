@@ -147,7 +147,7 @@ def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larro
         if match:
             splittedstr = [match.group(1), match.group(2)]
             labelhtml = [
-                "<TABLE BORDER=\"0\" CELLBORDER=\"0\"><TR><TD CELLPADDING=\"0\" BORDER=\"1\"><IMG SRC=\""
+                "<TABLE BORDER=\"0\" CELLBORDER=\"0\"><TR><TD CELLPADDING=\"0\" BORDER=\"0\"><IMG SRC=\""
                 + img_path_resolver(splittedstr[1].strip(), splittedstr[0])
                 + "\"/></TD></TR></TABLE>"
             ]
