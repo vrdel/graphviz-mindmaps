@@ -67,7 +67,7 @@ nodetype = {
     "impog": "shape=signature fontsize=\"%s\" margin=\"0.25\" style=\"radial\" fillcolor=\"#b6ffb7\" color=\"#8a8a8a\"" % (fontsize["l"]),
     "impob": "shape=signature fontsize=\"%s\" margin=\"0.25\" style=\"radial\" fillcolor=\"#b6e4ff\" color=\"#8a8a8a\"" % (fontsize["l"]),
     "impoy": "shape=signature fontsize=\"%s\" margin=\"0.25\" style=\"radial\" fillcolor=\"#fff4b6\" color=\"#8a8a8a\"" % (fontsize["l"]),
-    "img": "shape=box style=\"radial\" fillcolor=\"#fbfbfb\" color=\"#8a8a8a\"",
+    "img": "shape=none style=\"radial\" fillcolor=\"#fbfbfb\" color=\"#8a8a8a\"",
     "imgil": "shape=box style=\"radial\" fillcolor=\"#fbfbfb\" color=\"#8a8a8a\"",
     "dood": "shape=underline fontcolor=\"%s\" color=\"#b8b8b8\"" % (fontcolor["def"]),
     "def": "shape=underline fontcolor=\"%s\" color=\"#b8b8b8\"" % (fontcolor["def"]),
