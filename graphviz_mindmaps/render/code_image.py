@@ -1,4 +1,5 @@
 import hashlib
+import re
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -40,15 +41,39 @@ def _style_color(style, token_type, fallback):
     return fallback
 
 
-def RenderCodeImage(source, language, tmpdirs, style_name="default"):
+def ExtractCodeHighlights(attrline):
+    """Extract standalone, one-based code line selectors from node attributes."""
+    selected = set()
+
+    def consume(match):
+        spec = match.group(1).strip("[]")
+        for part in spec.split(","):
+            bounds = part.split("-")
+            start = int(bounds[0])
+            end = int(bounds[-1])
+            if start < 1 or end < start:
+                raise ValueError("invalid code line selector: %s" % match.group(0))
+            selected.update(range(start, end + 1))
+        return ""
+
+    remaining = re.sub(
+        r"(?<!\S)l([0-9]+|\[[0-9]+(?:-[0-9]+)?(?:,[0-9]+(?:-[0-9]+)?)*\])(?!\S)",
+        consume,
+        attrline,
+    )
+    return sorted(selected), remaining
+
+
+def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_lines=None):
+    highlight_lines = sorted(set(highlight_lines or []))
     tmpdir = Path(tmpdirs[-1]) if tmpdirs else Path.cwd()
     code_dir = tmpdir / "code"
     code_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        lexer = get_lexer_by_name(language)
+        lexer = get_lexer_by_name(language, stripnl=False, ensurenl=False)
     except ClassNotFound:
-        lexer = get_lexer_by_name("text")
+        lexer = get_lexer_by_name("text", stripnl=False, ensurenl=False)
 
     try:
         style = get_style_by_name(style_name)
@@ -88,7 +113,12 @@ def RenderCodeImage(source, language, tmpdirs, style_name="default"):
     draw = ImageDraw.Draw(image)
 
     y = padding_y
-    for line_tokens in token_lines:
+    for line_number, line_tokens in enumerate(token_lines, start=1):
+        if line_number in highlight_lines:
+            draw.rectangle(
+                (0, y, width - 1, y + line_height - 1),
+                fill=style.highlight_color or "#ffffcc",
+            )
         x = padding_x
         for token_type, text in line_tokens:
             fill = _style_color(style, token_type, "#222222")
@@ -98,7 +128,7 @@ def RenderCodeImage(source, language, tmpdirs, style_name="default"):
         y += line_height
 
     digest = hashlib.sha256(
-        "\0".join([language, source, style_name]).encode("utf-8")
+        "\0".join([language, source, style_name, repr(highlight_lines)]).encode("utf-8")
     ).hexdigest()[:16]
     output = code_dir / ("code-%s.png" % digest)
     image.save(output)
