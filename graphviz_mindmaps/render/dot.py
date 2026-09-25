@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 
 from graphviz_mindmaps.fontawesome import FONT_DIR
-from graphviz_mindmaps.render.code_image import RenderCodeImage
+from graphviz_mindmaps.render.code_image import ExtractCodeHighlights, RenderCodeImage
 from graphviz_mindmaps.constants import (
     MAXDEPTH,
     edgetype,
@@ -348,9 +348,12 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             vrbt, draw, textleft = ResolveNodeRenderFlags(nextline)
 
             if code_source is not None:
+                highlight_lines, nextline = ExtractCodeHighlights(nextline)
                 if not tmpdir:
                     tmpdir.append(tempfile.mkdtemp())
-                code_image_path = RenderCodeImage(code_source, code_language, tmpdir, code_style)
+                code_image_path = RenderCodeImage(
+                    code_source, code_language, tmpdir, code_style, highlight_lines
+                )
                 try:
                     labelhtml, ntype, label = BuildNodeLabelHtml(
                         label,

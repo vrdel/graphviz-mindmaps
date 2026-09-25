@@ -119,6 +119,22 @@ Code blocks can be highlighted and rendered as image-backed Graphviz nodes:
     :     return f"hello {name}"
 ```
 
+Add `l1`, `l12`, or an inclusive range such as `l[2-5]` to the code directive
+to highlight those lines with the Pygments style's highlight color:
+
+```text
+# Python snippet
+    : code python style=monokai l1 l[3-4]
+    : def hello(name):
+    :     greeting = f"hello {name}"
+    :     print(greeting)
+    :     return greeting
+```
+
+Line numbers start at 1 in the code body, excluding the node title and directive.
+Blank code lines count. Multiple selectors are combined; `l[1,3-5,12]` also works.
+Line numbers beyond the code body have no effect.
+
 Build a montage from a YAML file:
 
 ```bash
