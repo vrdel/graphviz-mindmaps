@@ -19,9 +19,11 @@ class CodeHighlightTests(unittest.TestCase):
             '# Root',
             '\t: fname=out.jpg',
             '\t# Example',
-            '\t\t: code python style=monokai l1 l12 l[2-5]',
+            '\t\t: code python style=monokai l1 l12 l[2-5] El1 El[1-5]',
+            '\t\t:',
             '\t\t: print(1)',
             '\t\t: print(2)',
+            '\t\t:',
         ], ApplyInlineBacktickBold)
         with tempfile.TemporaryDirectory() as tmpdir:
             session = RenderSession(tmpdir=[tmpdir])
@@ -32,7 +34,7 @@ class CodeHighlightTests(unittest.TestCase):
                         session, RenderRuntime({}, '#ffffff'),
                     )
             render.assert_called_once()
-            self.assertEqual(('python', [tmpdir], 'monokai', [1, 2, 3, 4, 5, 12]), render.call_args.args[1:])
+            self.assertEqual(('python', [tmpdir], 'monokai', [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 12]), render.call_args.args[1:])
             self.assertIn('Example', session.dotbuf)
             self.assertIn('<IMG SRC="code.png"', session.dotbuf)
 
@@ -47,9 +49,41 @@ class CodeHighlightTests(unittest.TestCase):
         )
 
     def test_invalid_line_numbers_are_rejected(self):
-        for selector in ('l0', 'l[0-2]', 'l[5-2]'):
+        for selector in ('l0', 'l[0-2]', 'l[5-2]', 'El0', 'El[0-2]', 'El[5-2]'):
             with self.subTest(selector=selector), self.assertRaises(ValueError):
                 ExtractCodeHighlights(': code python ' + selector)
+
+    def test_forward_and_end_relative_selectors_ignore_surrounding_blank_lines(self):
+        source = '\n  \npre_save.connect(callback)\n\npre_delete.connect(callback)\n  \n'
+        cases = (
+            ('l1', {3}),
+            ('El1', {5}),
+            ('El[1-5]', {3, 4, 5}),
+            ('l1 El1', {3, 5}),
+            ('l2 El2', {4}),
+            ('l4 El4', set()),
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for selector, expected in cases:
+                with self.subTest(selector=selector):
+                    selected, remaining = ExtractCodeHighlights(': code python ' + selector)
+                    self.assertEqual([':', 'code', 'python'], remaining.split())
+                    path = RenderCodeImage(source, 'python', [tmpdir], highlight_lines=selected)
+                    with Image.open(path) as image:
+                        line_height = (image.height - 28) // 7
+                        color = ImageColor.getrgb(get_style_by_name('default').highlight_color)
+                        actual = {
+                            row for row in range(1, 8)
+                            if image.getpixel((0, 14 + (row - 1) * line_height)) == color
+                        }
+                        self.assertEqual(expected, actual)
+
+    def test_blank_code_has_no_highlights(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            plain = RenderCodeImage('\n  \n', 'text', [tmpdir])
+            highlighted = RenderCodeImage('\n  \n', 'text', [tmpdir], highlight_lines=[1, -1])
+            with Image.open(plain) as before, Image.open(highlighted) as after:
+                self.assertIsNone(ImageChops.difference(before, after).getbbox())
 
     def test_highlights_use_style_color_and_count_blank_lines(self):
         source = '\nvalue = 1\n\nprint(value)'
@@ -71,7 +105,7 @@ class CodeHighlightTests(unittest.TestCase):
                         line_height = (after.height - 28) // 4
                         for number in range(1, 5):
                             y = 14 + (number - 1) * line_height
-                            if number in (1, 3):
+                            if number in (2, 4):
                                 self.assertEqual(color, after.getpixel((0, y)))
                                 self.assertEqual(color, after.getpixel((after.width - 1, y)))
                             else:

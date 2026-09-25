@@ -131,8 +131,10 @@ to highlight those lines with the Pygments style's highlight color:
     :     return greeting
 ```
 
-Line numbers start at 1 in the code body, excluding the node title and directive.
-Blank code lines count. Multiple selectors are combined; `l[1,3-5,12]` also works.
+Line numbers start at the first nonblank code line, excluding the node title,
+directive, and surrounding blank lines. Internal blank lines count.
+Use `El1` for the last nonblank code line or `El[1-5]` for the last five lines.
+Multiple selectors are combined; `l[1,3-5,12]` also works.
 Line numbers beyond the code body have no effect.
 
 Build a montage from a YAML file:
