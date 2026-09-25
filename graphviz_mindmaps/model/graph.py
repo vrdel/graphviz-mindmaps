@@ -654,7 +654,7 @@ class Tree:
         self.default_bordercolor = None
         self.default_borderwidth = None
         self.default_borderstyle = None
-        self.hr_spacing = 2
+        self.hr_spacing = 4
         self.hr_style = "solid"
 
     def _subgraphs_enabled_for_tabs(self, tabs, parent=None):

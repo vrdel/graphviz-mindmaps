@@ -101,7 +101,7 @@ Set a default style for untyped leaf nodes from the root attribute line:
 
 If `leaf=` is omitted, untyped leaf nodes keep the default underline style. Explicit node attributes still win, so `: todo`, `: quest`, `: cgreen`, and similar typed nodes are unchanged.
 
-Horizontal rules created by `---` have 2 points of extra space above and below
+Horizontal rules created by `---` have 4 points of extra space above and below
 by default. Set `hr_spacing` on a root attribute line to change this for all nodes:
 
 ```text

@@ -200,7 +200,7 @@ def ResolveRootHrSpacing(lines):
             if not re.fullmatch(r"[0-9]+", value):
                 raise ValueError("hr_spacing must be a nonnegative integer")
             return int(value)
-    return 2
+    return 4
 
 
 def ResolveRootNodeDefaults(lines):
