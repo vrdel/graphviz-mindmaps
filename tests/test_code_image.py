@@ -1,3 +1,4 @@
+import colorsys
 import tempfile
 import unittest
 from types import SimpleNamespace
@@ -14,6 +15,31 @@ from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
 
 
 class CodeHighlightTests(unittest.TestCase):
+    def test_colored_ranges_and_end_relative_selectors(self):
+        selected, remaining = ExtractCodeHighlights(
+            ': code python l1r l[2-3]g El1b h1r l2f20'
+        )
+        self.assertEqual([(1, 'r'), (2, 'g'), (3, 'g'), (-1, 'b')], selected)
+        self.assertEqual([':', 'code', 'python', 'h1r', 'l2f20'], remaining.split())
+        base = ImageColor.getrgb(get_style_by_name('default').highlight_color)
+        _, saturation, brightness = colorsys.rgb_to_hsv(*(c / 255 for c in base))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for style in ('default', 'monokai'):
+                with self.subTest(style=style):
+                    path = RenderCodeImage('\na = 1\nb = 2\nc = 3\n', 'python', [tmpdir], style, selected)
+                    with Image.open(path) as image:
+                        line_height = (image.height - 28) // 5
+                        for row, hue in ((2, 0), (3, 1 / 3), (4, 2 / 3)):
+                            rgb = image.getpixel((0, 14 + (row - 1) * line_height))
+                            actual = colorsys.rgb_to_hsv(*(c / 255 for c in rgb))
+                            for expected, value in zip((hue, saturation, brightness), actual):
+                                self.assertAlmostEqual(expected, value, places=2)
+                    reverse = RenderCodeImage('\na = 1\nb = 2\nc = 3\n', 'python', [tmpdir], style, list(reversed(selected)))
+                    self.assertNotEqual(path, reverse)
+                    with Image.open(reverse) as image:
+                        rgb = image.getpixel((0, 14 + 3 * line_height))
+                        self.assertGreater(rgb[1], rgb[2])
+
     def test_outline_passes_highlights_to_code_renderer(self):
         blocks = ExtractMindmapBlocks([
             '# Root',
@@ -34,7 +60,7 @@ class CodeHighlightTests(unittest.TestCase):
                         session, RenderRuntime({}, '#ffffff'),
                     )
             render.assert_called_once()
-            self.assertEqual(('python', [tmpdir], 'monokai', [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 12]), render.call_args.args[1:])
+            self.assertEqual(('python', [tmpdir], 'monokai', [(n, '') for n in (1, 12, 2, 3, 4, 5, -1, -1, -2, -3, -4, -5)]), render.call_args.args[1:])
             self.assertIn('Example', session.dotbuf)
             self.assertIn('<IMG SRC="code.png"', session.dotbuf)
 
@@ -42,7 +68,7 @@ class CodeHighlightTests(unittest.TestCase):
         lines, remaining = ExtractCodeHighlights(
             ': code python style=monokai l1 l12 l[2-5] l[4,8-9] h1r l2f20'
         )
-        self.assertEqual([1, 2, 3, 4, 5, 8, 9, 12], lines)
+        self.assertEqual([(n, '') for n in (1, 12, 2, 3, 4, 5, 4, 8, 9)], lines)
         self.assertEqual(
             [':', 'code', 'python', 'style=monokai', 'h1r', 'l2f20'],
             remaining.split(),
