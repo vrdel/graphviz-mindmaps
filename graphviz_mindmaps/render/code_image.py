@@ -1,8 +1,9 @@
 import hashlib
+import colorsys
 import re
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageColor, ImageDraw, ImageFont
 from pygments import lex
 from pygments.lexers import get_lexer_by_name
 from pygments.styles import get_style_by_name
@@ -42,8 +43,8 @@ def _style_color(style, token_type, fallback):
 
 
 def ExtractCodeHighlights(attrline):
-    """Extract one-based selectors, using negative indices for end-relative lines."""
-    selected = set()
+    """Extract ordered (line, color) pairs; negative lines count from the end."""
+    selected = []
 
     def consume(match):
         end_relative = bool(match.group(1))
@@ -54,19 +55,34 @@ def ExtractCodeHighlights(attrline):
             end = int(bounds[-1])
             if start < 1 or end < start:
                 raise ValueError("invalid code line selector: %s" % match.group(0))
-            selected.update(-line if end_relative else line for line in range(start, end + 1))
+            selected.extend(
+                (-line if end_relative else line, match.group(3))
+                for line in range(start, end + 1)
+            )
         return ""
 
     remaining = re.sub(
-        r"(?<!\S)(E?)l([0-9]+|\[[0-9]+(?:-[0-9]+)?(?:,[0-9]+(?:-[0-9]+)?)*\])(?!\S)",
+        r"(?<!\S)(E?)l([0-9]+|\[[0-9]+(?:-[0-9]+)?(?:,[0-9]+(?:-[0-9]+)?)*\])([rgb]?)(?!\S)",
         consume,
         attrline,
     )
-    return sorted(selected), remaining
+    return selected, remaining
+
+
+def _highlight_palette(style):
+    base = get_style_by_name("default").highlight_color or "#ffffcc"
+    _, saturation, brightness = colorsys.rgb_to_hsv(
+        *(channel / 255 for channel in ImageColor.getrgb(base))
+    )
+    palette = {"": style.highlight_color or "#ffffcc"}
+    for key, hue in (("r", 0), ("g", 1 / 3), ("b", 2 / 3)):
+        palette[key] = tuple(round(channel * 255) for channel in
+                             colorsys.hsv_to_rgb(hue, saturation, brightness))
+    return palette
 
 
 def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_lines=None):
-    highlight_lines = sorted(set(highlight_lines or []))
+    highlight_lines = highlight_lines or []
     tmpdir = Path(tmpdirs[-1]) if tmpdirs else Path.cwd()
     code_dir = tmpdir / "code"
     code_dir.mkdir(parents=True, exist_ok=True)
@@ -88,13 +104,14 @@ def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_l
 
     lines = source.splitlines() or [""]
     content_rows = [index for index, line in enumerate(lines, start=1) if line.strip()]
-    highlighted_rows = set()
+    highlighted_rows = {}
     if content_rows:
         first, last = content_rows[0], content_rows[-1]
-        for line in highlight_lines:
+        for selection in highlight_lines:
+            line, color = (selection, "") if isinstance(selection, int) else selection
             row = first + line - 1 if line > 0 else last + line + 1
             if line != 0 and first <= row <= last:
-                highlighted_rows.add(row)
+                highlighted_rows[row] = color
     token_lines = [[]]
     for token_type, value in lex(source, lexer):
         parts = value.split("\n")
@@ -120,13 +137,14 @@ def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_l
     background = "#f8f8f8"
     image = Image.new("RGB", (width, height), background)
     draw = ImageDraw.Draw(image)
+    palette = _highlight_palette(style)
 
     y = padding_y
     for line_number, line_tokens in enumerate(token_lines, start=1):
         if line_number in highlighted_rows:
             draw.rectangle(
                 (0, y, width - 1, y + line_height - 1),
-                fill=style.highlight_color or "#ffffcc",
+                fill=palette[highlighted_rows[line_number]],
             )
         x = padding_x
         for token_type, text in line_tokens:
@@ -137,7 +155,7 @@ def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_l
         y += line_height
 
     digest = hashlib.sha256(
-        "\0".join([language, source, style_name, repr(highlight_lines)]).encode("utf-8")
+        "\0".join([language, source, style_name, repr(sorted(highlighted_rows.items()))]).encode("utf-8")
     ).hexdigest()[:16]
     output = code_dir / ("code-%s.png" % digest)
     image.save(output)

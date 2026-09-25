@@ -137,6 +137,12 @@ Use `El1` for the last nonblank code line or `El[1-5]` for the last five lines.
 Multiple selectors are combined; `l[1,3-5,12]` also works.
 Line numbers beyond the code body have no effect.
 
+Append `r`, `g`, or `b` for pale red, green, or blue highlights:
+`: code python l1r l2g l3b`. Colors match the saturation and brightness of
+Pygments' default yellow highlight. Ranges and end-relative selectors also
+accept colors, for example `l[2-5]g` and `El1b`. If selectors overlap, the last
+one wins. Selectors without a color keep the selected Pygments style's highlight color.
+
 Build a montage from a YAML file:
 
 ```bash
