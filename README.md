@@ -114,6 +114,16 @@ by default. Set `hr_spacing` on a root attribute line to change this for all nod
 Use a nonnegative integer; `hr_spacing=0` removes the extra spacing. The setting
 also applies to rules in block nodes and does not affect line-selector numbering.
 
+Set `hr_style=solid`, `hr_style=dashed`, or `hr_style=dotted` on the root to
+choose the ruler style (default: `solid`). For example:
+
+```text
+# Notes
+    : fname=notes.jpg hr_style=dashed hr_spacing=2
+    # before; ---; after
+        : node
+```
+
 Use `cdef` on a block node to select the current theme's default regular-node fill color:
 
 ```text

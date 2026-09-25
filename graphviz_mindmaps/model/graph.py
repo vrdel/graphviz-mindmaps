@@ -178,7 +178,7 @@ class Tree:
             return self._apply_borderstyle(attrs)
 
         def element(self):
-            label_html = SpaceHorizontalRules("".join(self._label), self._tree.hr_spacing)
+            label_html = SpaceHorizontalRules("".join(self._label), self._tree.hr_spacing, self._tree.hr_style)
             if "sgwrap" in self._ntype:
                 return self._tabs + label_html
             elif self._verbatim:
@@ -655,6 +655,7 @@ class Tree:
         self.default_borderwidth = None
         self.default_borderstyle = None
         self.hr_spacing = 2
+        self.hr_style = "solid"
 
     def _subgraphs_enabled_for_tabs(self, tabs, parent=None):
         if parent is not None and getattr(parent, "_child_subgraphs", None) is False:

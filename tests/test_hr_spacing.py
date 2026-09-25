@@ -8,11 +8,58 @@ from types import SimpleNamespace
 
 from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
-from graphviz_mindmaps.render.dot import GenDot, ResolveRootHrSpacing
+from graphviz_mindmaps.render.dot import GenDot, ResolveRootHrSpacing, ResolveRootHrStyle
 from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold, SpaceHorizontalRules
 
 
 class HorizontalRuleSpacingTests(unittest.TestCase):
+    def test_root_style_default_override_and_validation(self):
+        self.assertEqual('solid', ResolveRootHrStyle(['# Root']))
+        for style in ('solid', 'dashed', 'dotted'):
+            self.assertEqual(style, ResolveRootHrStyle(['# Root', '\t: hr_style=' + style]))
+        self.assertEqual('solid', ResolveRootHrStyle(['# Root', '\t# Child', '\t\t: hr_style=dashed']))
+        with self.assertRaisesRegex(ValueError, 'hr_style'):
+            ResolveRootHrStyle(['# Root', '\t: hr_style=unknown'])
+
+    @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
+    def test_styled_rules_render_full_width_with_spacing_in_nodes_and_blocks(self):
+        for style, dasharray in (('dashed', '5,2'), ('dotted', '1,5')):
+            for body in (
+                ['\t# before; ---; after', '\t\t: node'],
+                ['\t# Block', '\t\t: block', '\t\t:', '\t\t: before', '\t\t: ---', '\t\t: after', '\t\t:'],
+            ):
+                with self.subTest(style=style, body=body), tempfile.TemporaryDirectory() as tmp:
+                    heights = {}
+                    widths = {}
+                    for spacing in (0, 2, 6):
+                        blocks = ExtractMindmapBlocks(
+                            ['# Root', '\t: fname=out.jpg hr_style=%s hr_spacing=%d' % (style, spacing)] + body,
+                            ApplyInlineBacktickBold,
+                        )
+                        path = str(Path(tmp) / 'out.dot')
+                        GenDot(blocks[0], SimpleNamespace(dotname=path, jpgname=None),
+                               RenderSession(tmpdir=[tmp]), RenderRuntime({}, '#ffffff'))
+                        svg = subprocess.run(['dot', '-Tsvg', path], check=True, capture_output=True, text=True)
+                        self.assertEqual('', svg.stderr)
+                        namespace = {'s': 'http://www.w3.org/2000/svg'}
+                        node = next(group for group in ET.fromstring(svg.stdout).findall('.//s:g', namespace)
+                                    if group.findtext('s:title', namespaces=namespace) == 'node101')
+                        rules = [line for line in node.findall('s:polyline', namespace)
+                                 if line.get('stroke-dasharray')]
+                        self.assertEqual(1, len(rules))
+                        self.assertEqual(dasharray, rules[0].get('stroke-dasharray'))
+                        points = [tuple(map(float, p.split(','))) for p in rules[0].get('points').split()]
+                        widths[spacing] = abs(points[-1][0] - points[0][0])
+                        self.assertGreater(widths[spacing], 10)
+                        plain = subprocess.run(['dot', '-Tplain', path], check=True, capture_output=True, text=True)
+                        heights[spacing] = next(float(line.split()[5]) for line in plain.stdout.splitlines()
+                                                if line.startswith('node node101 '))
+                        png = subprocess.run(['dot', '-Tpng', path], check=True, capture_output=True)
+                        self.assertTrue(png.stdout.startswith(b'\x89PNG'))
+                    for spacing in (2, 6):
+                        self.assertAlmostEqual(widths[0], widths[spacing], places=2)
+                        self.assertAlmostEqual(2 * spacing, (heights[spacing] - heights[0]) * 72, places=2)
+
     def test_root_setting_default_zero_and_validation(self):
         self.assertEqual(2, ResolveRootHrSpacing(['# Root', '\t: fname=out.jpg']))
         self.assertEqual(0, ResolveRootHrSpacing(['# Root', '\t: hr_spacing=0']))

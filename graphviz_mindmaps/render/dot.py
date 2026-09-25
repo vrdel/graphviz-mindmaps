@@ -178,6 +178,19 @@ def ResolveRootSgmargin(lines):
     return "8"
 
 
+def ResolveRootHrStyle(lines):
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        value = ParseInlineAttrLine("hr_style", line)
+        if value:
+            value = value.lower()
+            if value not in {"solid", "dashed", "dotted"}:
+                raise ValueError("hr_style must be solid, dashed, or dotted")
+            return value
+    return "solid"
+
+
 def ResolveRootHrSpacing(lines):
     for line in lines[1:]:
         if re.search(r"(\t#) (.*)", line):
@@ -281,6 +294,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     tree.subgraph_depth = ResolveRootSubgraphs(lines)
     tree.default_sgmargin = ResolveRootSgmargin(lines)
     tree.hr_spacing = ResolveRootHrSpacing(lines)
+    tree.hr_style = ResolveRootHrStyle(lines)
     root_node_defaults = ResolveRootNodeDefaults(lines)
     root_edge_defaults = ResolveRootEdgeDefaults(lines)
     node_default_attrs = {

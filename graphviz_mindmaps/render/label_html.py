@@ -3,9 +3,9 @@ import re
 from graphviz_mindmaps.render.image_transform import IMAGE_TRANSFORM_KEY_PATTERN
 
 
-def SpaceHorizontalRules(label, spacing):
-    """Add empty rows around rules after all logical line formatting is done."""
-    if not spacing or "<HR/>" not in label:
+def SpaceHorizontalRules(label, spacing, style="solid"):
+    """Style and space rules after all logical line formatting is done."""
+    if "<HR/>" not in label or (not spacing and style == "solid"):
         return label
     columns = max((
         sum(int(re.search(r'COLSPAN="([0-9]+)"', cell).group(1))
@@ -14,8 +14,12 @@ def SpaceHorizontalRules(label, spacing):
         for row in re.findall(r'<TR>(.*?)</TR>', label, re.S)
     ), default=1)
     spacer = ('<TR><TD COLSPAN="%d" HEIGHT="%d" '
-              'CELLPADDING="0" BORDER="0"></TD></TR>') % (columns, spacing)
-    return label.replace("<HR/>", spacer + "<HR/>" + spacer)
+              'CELLPADDING="0" BORDER="0"></TD></TR>') % (columns, spacing) if spacing else ""
+    rule = "<HR/>"
+    if style != "solid":
+        rule = ('<TR><TD COLSPAN="%d" HEIGHT="1" CELLPADDING="0" '
+                'BORDER="1" SIDES="B" STYLE="%s"></TD></TR>') % (columns, style)
+    return label.replace("<HR/>", spacer + rule + spacer)
 
 
 def HtmlCompositeArrow(arrow, htmlcode, token, token_index, labelhtml):
