@@ -1,3 +1,6 @@
+from graphviz_mindmaps.render.label_html import SpaceHorizontalRules
+
+
 def BuildNodeRefs(rootnodename, nodelevel, level):
     fromnode = rootnodename
     for index in range(0, level - 1):
@@ -175,31 +178,32 @@ class Tree:
             return self._apply_borderstyle(attrs)
 
         def element(self):
+            label_html = SpaceHorizontalRules("".join(self._label), self._tree.hr_spacing)
             if "sgwrap" in self._ntype:
-                return self._tabs + "".join(self._label)
+                return self._tabs + label_html
             elif self._verbatim:
                 if self._ntype == "def":
                     attrs = self._apply_node_overrides(self._tree.nodetype["verbatim"])
-                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, "".join(self._label))
+                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, label_html)
                 else:
                     fillcolor = self._tree.resolve_verbatim_fill_color_token(self._ntype, self._tree.vrbtcolors)
                     if not fillcolor:
                         fillcolor = self._tree.vrbtcolors["def"]
                     attrs = self._apply_node_overrides(self._tree.nodetype["verbatim"].replace(self._tree.vrbtcolors["def"], fillcolor))
-                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, "".join(self._label))
+                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, label_html)
             elif self._draw:
                 if self._ntype == "def":
                     attrs = self._apply_node_overrides(self._tree.nodetype["draw"])
-                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, "".join(self._label))
+                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, label_html)
                 else:
                     fillcolor = self._tree.resolve_verbatim_fill_color_token(self._ntype, self._tree.vrbtcolors)
                     if not fillcolor:
                         fillcolor = self._tree.vrbtcolors["cwhite"]
                     attrs = self._apply_node_overrides(self._tree.nodetype["draw"].replace(self._tree.vrbtcolors["cwhite"], fillcolor))
-                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, "".join(self._label))
+                    return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, label_html)
             else:
                 attrs = self._apply_node_overrides(self._tree.nodetype[self._ntype])
-                return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, "".join(self._label))
+                return "\t" + self._tabs + self._nodename + "[%s label=<%s>];" % (attrs, label_html)
 
         def parent(self):
             return self._parent
@@ -650,6 +654,7 @@ class Tree:
         self.default_bordercolor = None
         self.default_borderwidth = None
         self.default_borderstyle = None
+        self.hr_spacing = 2
 
     def _subgraphs_enabled_for_tabs(self, tabs, parent=None):
         if parent is not None and getattr(parent, "_child_subgraphs", None) is False:

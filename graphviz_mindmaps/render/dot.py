@@ -178,6 +178,18 @@ def ResolveRootSgmargin(lines):
     return "8"
 
 
+def ResolveRootHrSpacing(lines):
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        value = ParseInlineAttrLine("hr_spacing", line)
+        if value:
+            if not re.fullmatch(r"[0-9]+", value):
+                raise ValueError("hr_spacing must be a nonnegative integer")
+            return int(value)
+    return 2
+
+
 def ResolveRootNodeDefaults(lines):
     defaults = {}
     keymap = {
@@ -268,6 +280,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     rankdir = ResolveRootOrientation(lines)
     tree.subgraph_depth = ResolveRootSubgraphs(lines)
     tree.default_sgmargin = ResolveRootSgmargin(lines)
+    tree.hr_spacing = ResolveRootHrSpacing(lines)
     root_node_defaults = ResolveRootNodeDefaults(lines)
     root_edge_defaults = ResolveRootEdgeDefaults(lines)
     node_default_attrs = {

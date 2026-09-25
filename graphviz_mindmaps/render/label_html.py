@@ -3,6 +3,21 @@ import re
 from graphviz_mindmaps.render.image_transform import IMAGE_TRANSFORM_KEY_PATTERN
 
 
+def SpaceHorizontalRules(label, spacing):
+    """Add empty rows around rules after all logical line formatting is done."""
+    if not spacing or "<HR/>" not in label:
+        return label
+    columns = max((
+        sum(int(re.search(r'COLSPAN="([0-9]+)"', cell).group(1))
+            if 'COLSPAN=' in cell else 1
+            for cell in re.findall(r'<TD\b[^>]*>', row))
+        for row in re.findall(r'<TR>(.*?)</TR>', label, re.S)
+    ), default=1)
+    spacer = ('<TR><TD COLSPAN="%d" HEIGHT="%d" '
+              'CELLPADDING="0" BORDER="0"></TD></TR>') % (columns, spacing)
+    return label.replace("<HR/>", spacer + "<HR/>" + spacer)
+
+
 def HtmlCompositeArrow(arrow, htmlcode, token, token_index, labelhtml):
     found = token.find(arrow)
     if found == -1:
