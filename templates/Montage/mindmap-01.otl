@@ -354,6 +354,68 @@
 				: --- stays literal
 				: left => right stays literal
 				:
+	# code highlights
+		:
+		# line numbering
+			: block
+			:
+			: l1 starts at the first nonblank code line
+			: El1 starts at the last nonblank code line
+			: surrounding blank lines do not count
+			: internal blank lines count
+			: ranges include both ends
+			: r, g, b match the default yellow saturation and brightness
+			:
+		# default yellow - l1 l12 l[2-5]
+			: code python l1 l12 l[2-5]
+			:
+			: def summarize(values):
+			:     count = len(values)
+			:     total = sum(values)
+			:     smallest = min(values)
+			:     largest = max(values)
+			:     average = total / count
+			:
+			:     print(count)
+			:     print(smallest)
+			:     print(largest)
+			:     print(average)
+			:     return total
+			:
+			# pastel red, green, blue - l1r l2g l3b
+				: code python l1r l2g l3b
+				:
+				: removed = set(old) - set(new)
+				: added = set(new) - set(old)
+				: unchanged = set(old) & set(new)
+				:
+			# count from the end - El1 El[1-5]
+				: code python El1 El[1-5]
+				:
+				: def save(record):
+				:     validate(record)
+				:     normalize(record)
+				:     persist(record)
+				:     invalidate_cache(record)
+				:     notify(record)
+				:     return record
+				:
+		# combined ranges and colors - last selector wins
+			: code python l[1,3-5]g El[1-2]b El1r
+			:
+			: def refresh(record):
+			:     validate(record)
+			:     normalize(record)
+			:     persist(record)
+			:     invalidate_cache(record)
+			:     return record
+			:
+			# selected Pygments style - plain selector keeps its highlight color
+				: code python style=monokai l1 El1b
+				:
+				: pre_save.connect(capture_cache_dependents)
+				: pre_delete.connect(invalidate_model_responses)
+				:
 	# subgraphs
 		:
 		# sgr'this is title'
