@@ -42,22 +42,23 @@ def _style_color(style, token_type, fallback):
 
 
 def ExtractCodeHighlights(attrline):
-    """Extract standalone, one-based code line selectors from node attributes."""
+    """Extract one-based selectors, using negative indices for end-relative lines."""
     selected = set()
 
     def consume(match):
-        spec = match.group(1).strip("[]")
+        end_relative = bool(match.group(1))
+        spec = match.group(2).strip("[]")
         for part in spec.split(","):
             bounds = part.split("-")
             start = int(bounds[0])
             end = int(bounds[-1])
             if start < 1 or end < start:
                 raise ValueError("invalid code line selector: %s" % match.group(0))
-            selected.update(range(start, end + 1))
+            selected.update(-line if end_relative else line for line in range(start, end + 1))
         return ""
 
     remaining = re.sub(
-        r"(?<!\S)l([0-9]+|\[[0-9]+(?:-[0-9]+)?(?:,[0-9]+(?:-[0-9]+)?)*\])(?!\S)",
+        r"(?<!\S)(E?)l([0-9]+|\[[0-9]+(?:-[0-9]+)?(?:,[0-9]+(?:-[0-9]+)?)*\])(?!\S)",
         consume,
         attrline,
     )
@@ -86,6 +87,14 @@ def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_l
     padding_y = 14
 
     lines = source.splitlines() or [""]
+    content_rows = [index for index, line in enumerate(lines, start=1) if line.strip()]
+    highlighted_rows = set()
+    if content_rows:
+        first, last = content_rows[0], content_rows[-1]
+        for line in highlight_lines:
+            row = first + line - 1 if line > 0 else last + line + 1
+            if line != 0 and first <= row <= last:
+                highlighted_rows.add(row)
     token_lines = [[]]
     for token_type, value in lex(source, lexer):
         parts = value.split("\n")
@@ -114,7 +123,7 @@ def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_l
 
     y = padding_y
     for line_number, line_tokens in enumerate(token_lines, start=1):
-        if line_number in highlight_lines:
+        if line_number in highlighted_rows:
             draw.rectangle(
                 (0, y, width - 1, y + line_height - 1),
                 fill=style.highlight_color or "#ffffcc",
