@@ -61,10 +61,10 @@ class HorizontalRuleSpacingTests(unittest.TestCase):
                         self.assertAlmostEqual(2 * spacing, (heights[spacing] - heights[0]) * 72, places=2)
 
     def test_root_setting_default_zero_and_validation(self):
-        self.assertEqual(2, ResolveRootHrSpacing(['# Root', '\t: fname=out.jpg']))
+        self.assertEqual(4, ResolveRootHrSpacing(['# Root', '\t: fname=out.jpg']))
         self.assertEqual(0, ResolveRootHrSpacing(['# Root', '\t: hr_spacing=0']))
         self.assertEqual(6, ResolveRootHrSpacing(['# Root', '\t: hr_spacing=6']))
-        self.assertEqual(2, ResolveRootHrSpacing(['# Root', '\t# Child', '\t\t: hr_spacing=6']))
+        self.assertEqual(4, ResolveRootHrSpacing(['# Root', '\t# Child', '\t\t: hr_spacing=6']))
         for value in ('-1', '1.5', 'wide'):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 ResolveRootHrSpacing(['# Root', '\t: hr_spacing=' + value])
