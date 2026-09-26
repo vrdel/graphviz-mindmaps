@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from graphviz_mindmaps import constants
-from graphviz_mindmaps.cli import build_runtime
+from graphviz_mindmaps.cli import build_parser, build_runtime
 from graphviz_mindmaps.model.document import RenderSession
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
 from graphviz_mindmaps.render.dot import GenDot
@@ -12,6 +12,17 @@ from graphviz_mindmaps.theme import ApplyTheme, THEME_PALETTES
 
 
 class RootThemeTests(unittest.TestCase):
+    def test_light_themes_work_from_cli_and_root_and_preserve_borderless_images(self):
+        for name in ('solarized-light', 'catppuccin-latte', 'rose-pine-dawn'):
+            with self.subTest(theme=name):
+                args = build_parser().parse_args(['--theme', name])
+                cli_session = self.render(build_runtime(args.theme))
+                root_session = self.render(build_runtime('nord'), 'theme=' + name)
+                self.assertEqual(cli_session.dotbuf, root_session.dotbuf)
+                self.assertEqual(THEME_PALETTES[name]['bg'], root_session.bgcolor)
+                self.assertIn('shape=none', constants.nodetype['img'])
+                self.assertIn('fillcolor="%s"' % THEME_PALETTES[name]['panel'], root_session.dotbuf)
+
     def tearDown(self):
         ApplyTheme('default')
 
