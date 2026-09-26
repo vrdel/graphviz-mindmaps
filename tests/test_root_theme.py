@@ -13,7 +13,8 @@ from graphviz_mindmaps.theme import ApplyTheme, THEME_PALETTES
 
 class RootThemeTests(unittest.TestCase):
     def test_light_themes_work_from_cli_and_root_and_preserve_borderless_images(self):
-        for name in ('solarized-light', 'catppuccin-latte', 'rose-pine-dawn'):
+        for name in ('solarized-light', 'catppuccin-latte', 'rose-pine-dawn',
+                     'github-light', 'one-light', 'gruvbox-light'):
             with self.subTest(theme=name):
                 args = build_parser().parse_args(['--theme', name])
                 cli_session = self.render(build_runtime(args.theme))
