@@ -16,6 +16,20 @@ from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
 
 
 class CodeHighlightTests(unittest.TestCase):
+    def test_background_uses_selected_style_including_unknown_style_fallback(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for name in ('default', 'monokai', 'nord', 'solarized-light', 'nonexistent-style'):
+                with self.subTest(style=name):
+                    style = get_style_by_name('default' if name == 'nonexistent-style' else name)
+                    path = RenderCodeImage('value = 1\nprint(value)', 'python', [tmpdir], name, [1])
+                    with Image.open(path) as image:
+                        background = ImageColor.getrgb(style.background_color)
+                        self.assertEqual(background, image.getpixel((0, 0)))
+                        self.assertEqual(background, image.getpixel((image.width - 1, image.height - 1)))
+                        line_height = (image.height - 28) // 2
+                        self.assertEqual(background, image.getpixel((0, 14 + line_height)))
+                        self.assertEqual(ImageColor.getrgb(style.highlight_color), image.getpixel((0, 14)))
+
     def test_root_code_theme_reaches_pygments_with_local_overrides(self):
         runtime = RenderRuntime({}, '#ffffff')
         try:

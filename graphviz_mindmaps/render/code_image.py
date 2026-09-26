@@ -134,7 +134,7 @@ def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_l
     width = max_width + padding_x * 2
     height = padding_y * 2 + line_height * len(token_lines)
 
-    background = "#f8f8f8"
+    background = style.background_color or "#f8f8f8"
     image = Image.new("RGB", (width, height), background)
     draw = ImageDraw.Draw(image)
     palette = _highlight_palette(style)
