@@ -3,6 +3,8 @@ import re
 import subprocess
 import tempfile
 
+from graphviz_mindmaps.theme import ApplyTheme
+
 from graphviz_mindmaps.fontawesome import FONT_DIR
 from graphviz_mindmaps.render.code_image import ExtractCodeHighlights, RenderCodeImage
 from graphviz_mindmaps.constants import (
@@ -247,7 +249,20 @@ def IsOutlineLeaf(lines, index, level, tabnum):
     return True
 
 
+def ResolveRootTheme(lines):
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        value = ParseInlineAttrLine("theme", line)
+        if value:
+            return value
+    return None
+
+
 def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
+    root_theme = ResolveRootTheme(lines)
+    theme_bgcolor = ApplyTheme(root_theme or runtime.theme_name)
+    default_bgcolor = theme_bgcolor if root_theme else runtime.default_bgcolor
     tree = Tree(
         nodetype,
         vrbtcolors,
@@ -288,7 +303,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     match = re.search(r"(\t|#) (.*)", lines[0])
     title = match.group(2)
 
-    bgcolor = ResolveRootBgcolor(lines, runtime.default_bgcolor)
+    bgcolor = ResolveRootBgcolor(lines, default_bgcolor)
     penwidth = ResolveRootPenwidth(lines)
     rankdir = ResolveRootOrientation(lines)
     tree.subgraph_depth = ResolveRootSubgraphs(lines)

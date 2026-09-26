@@ -88,6 +88,20 @@ gvmm -f notes.otl --theme gruvbox
 
 Supported themes are `default`, `nord`, `papercolor`, `papercolor-dark`, `monokai`, `gruvbox`, and `solarized`.
 
+Choose a theme for an individual mindmap with a root `theme=` attribute:
+
+```text
+# Notes
+    : fname=notes.jpg theme=nord
+    # Themed node
+        : node
+```
+
+Supported themes are `default`, `nord`, `papercolor`, `papercolor-dark`, `monokai`,
+`gruvbox`, and `solarized`. The root theme overrides `--theme` for that mindmap
+only. Without it, the command-line theme applies (or `default`). Explicit root
+background and node color attributes still override theme colors.
+
 Set a default style for untyped leaf nodes from the root attribute line:
 
 ```text
