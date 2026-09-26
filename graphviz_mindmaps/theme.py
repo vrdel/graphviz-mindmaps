@@ -118,7 +118,7 @@ def _apply_palette(palette):
         "impog": "shape=signature fontsize=\"%s\" margin=\"0.25\" style=\"radial\" fillcolor=\"%s\" color=\"%s\" fontcolor=\"%s\"" % (constants.fontsize["l"], palette["green_bg"], green, fg),
         "impob": "shape=signature fontsize=\"%s\" margin=\"0.25\" style=\"radial\" fillcolor=\"%s\" color=\"%s\" fontcolor=\"%s\"" % (constants.fontsize["l"], palette["blue_bg"], blue, fg),
         "impoy": "shape=signature fontsize=\"%s\" margin=\"0.25\" style=\"radial\" fillcolor=\"%s\" color=\"%s\" fontcolor=\"%s\"" % (constants.fontsize["l"], palette["yellow_bg"], yellow, fg),
-        "img": _node(panel, border=border, style="radial", fontcolor=fg),
+        "img": _node(panel, border=border, shape="none", style="radial", fontcolor=fg),
         "imgil": _node(panel, border=border, style="radial", fontcolor=fg),
         "dood": "shape=underline fontcolor=\"%s\" color=\"%s\"" % (fg, border),
         "date": "shape=component gradientangle=\"270\" style=\"filled\" margin=\"0.15,0.15,0.15\" fillcolor=\"%s;0.93:%s\" color=\"%s\" fontcolor=\"%s\"" % (panel, red, border, fg),
