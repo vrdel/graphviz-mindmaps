@@ -11,10 +11,37 @@ from graphviz_mindmaps.render.code_image import ExtractCodeHighlights, RenderCod
 from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
 from graphviz_mindmaps.render.dot import GenDot
+from graphviz_mindmaps.theme import ApplyTheme
 from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
 
 
 class CodeHighlightTests(unittest.TestCase):
+    def test_root_code_theme_reaches_pygments_with_local_overrides(self):
+        runtime = RenderRuntime({}, '#ffffff')
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                for root_attrs, expected in (
+                    ('code_theme=monokai theme=nord', ['monokai', 'friendly', 'default']),
+                    ('code_theme="monokai"', ['monokai', 'friendly', 'default']),
+                    ('', ['default', 'friendly', 'default']),
+                ):
+                    with self.subTest(root_attrs=root_attrs):
+                        blocks = ExtractMindmapBlocks([
+                            '# Root', '\t: fname=out.jpg ' + root_attrs,
+                            '\t# Inherited', '\t\t: code python l1', '\t\t: print(1)',
+                            '\t# Override', '\t\t: code python style=friendly', '\t\t: print(2)',
+                            '\t# Reset', '\t\t: code python style=default', '\t\t: print(3)',
+                        ], ApplyInlineBacktickBold)
+                        session = RenderSession(tmpdir=[tmpdir])
+                        with patch('graphviz_mindmaps.render.code_image.get_style_by_name', wraps=get_style_by_name) as styles:
+                            with patch('graphviz_mindmaps.render.dot.WriteDot'):
+                                GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None), session, runtime)
+                        # Each image resolves its requested style, then the default highlight palette.
+                        self.assertEqual(expected, [call.args[0] for call in styles.call_args_list[::2]])
+                        self.assertEqual('#2e3440' if 'theme=nord' in root_attrs else '#ffffff', session.bgcolor)
+        finally:
+            ApplyTheme('default')
+
     def test_colored_ranges_and_end_relative_selectors(self):
         selected, remaining = ExtractCodeHighlights(
             ': code python l1r l[2-3]g El1b h1r l2f20'

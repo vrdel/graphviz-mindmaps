@@ -177,6 +177,27 @@ Use `cdef` on a block node to select the current theme's default regular-node fi
 
 Code blocks can be highlighted and rendered as image-backed Graphviz nodes:
 
+Set `code_theme` on the root to choose the default Pygments style for every code
+node in that mindmap. A code node's `style=` overrides it, including
+`style=default`. This setting is independent of the mindmap's `theme=` palette.
+
+```text
+# Notes
+    : fname=notes.jpg theme=nord code_theme=monokai
+    # Inherits monokai
+        : code python
+        : print("hello")
+    # Uses its own style
+        : code python style=friendly
+        : print("world")
+```
+
+`code_theme` accepts Pygments style names. If omitted, the style is `default`;
+unrecognized names fall back to `default`, just like node-level `style=`.
+The setting applies only to the current mindmap.
+
+Set a style directly on an individual code node:
+
 ```text
 # Python snippet
     : code python style=monokai
