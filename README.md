@@ -86,7 +86,16 @@ gvmm -f notes.otl --theme nord
 gvmm -f notes.otl --theme gruvbox
 ```
 
-Supported themes are `default`, `nord`, `papercolor`, `papercolor-dark`, `monokai`, `gruvbox`, and `solarized`.
+Supported themes are `default`, `nord`, `papercolor`, `papercolor-dark`, `monokai`,
+`gruvbox`, `solarized`, `solarized-light`, `catppuccin-latte`, and `rose-pine-dawn`.
+
+Additional light themes (adapted with lightly tinted node backgrounds):
+
+- `solarized-light` — warm cream, based on [Solarized](https://ethanschoonover.com/solarized/).
+- `catppuccin-latte` — cool light gray with colorful accents, based on [Catppuccin Latte](https://catppuccin.com/palette/).
+- `rose-pine-dawn` — warm ivory with muted accents, based on [Rosé Pine Dawn](https://github.com/rose-pine/neovim/blob/main/lua/rose-pine/palette.lua).
+
+For example: `gvmm --theme catppuccin-latte -f notes.otl` or `: theme=catppuccin-latte` on the root.
 
 Choose a theme for an individual mindmap with a root `theme=` attribute:
 
@@ -97,8 +106,7 @@ Choose a theme for an individual mindmap with a root `theme=` attribute:
         : node
 ```
 
-Supported themes are `default`, `nord`, `papercolor`, `papercolor-dark`, `monokai`,
-`gruvbox`, and `solarized`. The root theme overrides `--theme` for that mindmap
+All themes listed above work with the root attribute. The root theme overrides `--theme` for that mindmap
 only. Without it, the command-line theme applies (or `default`). Explicit root
 background and node color attributes still override theme colors.
 

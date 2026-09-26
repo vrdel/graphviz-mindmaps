@@ -15,7 +15,7 @@ _DEFAULTS = {
 
 
 def ThemeNames():
-    return ["default", "nord", "papercolor", "papercolor-dark", "monokai", "gruvbox", "solarized"]
+    return ["default", *THEME_PALETTES]
 
 
 def _restore_defaults():
@@ -323,6 +323,80 @@ THEME_PALETTES = {
         "white_bg": "#fdf6e3",
         "verbatim_bg": "#073642",
     },
+    # Published base/accent colors; node fills blend 14% accent into the panel.
+    "solarized-light": {
+        "bg": "#fdf6e3",
+        "fg": "#657b83",
+        "panel": "#eee8d5",
+        "border": "#93a1a1",
+        "muted": "#eee8d5",
+        "accent": "#268bd2",
+        "red": "#dc322f",
+        "green": "#859900",
+        "blue": "#268bd2",
+        "yellow": "#b58900",
+        "cyan": "#2aa198",
+        "purple": "#6c71c4",
+        "orange": "#cb4b16",
+        "red_bg": "#ebcfbe",
+        "green_bg": "#dfddb7",
+        "blue_bg": "#d2dbd5",
+        "yellow_bg": "#e6dbb7",
+        "cyan_bg": "#d3decc",
+        "purple_bg": "#dcd7d3",
+        "orange_bg": "#e9d2ba",
+        "white_bg": "#fdf6e3",
+        "verbatim_bg": "#eee8d5",
+    },
+    "catppuccin-latte": {
+        "bg": "#eff1f5",
+        "fg": "#4c4f69",
+        "panel": "#eff1f5",
+        "border": "#9ca0b0",
+        "muted": "#ccd0da",
+        "accent": "#1e66f5",
+        "red": "#d20f39",
+        "green": "#40a02b",
+        "blue": "#1e66f5",
+        "yellow": "#df8e1d",
+        "cyan": "#179299",
+        "purple": "#8839ef",
+        "orange": "#fe640b",
+        "red_bg": "#ebd1db",
+        "green_bg": "#d6e6d9",
+        "blue_bg": "#d2def5",
+        "yellow_bg": "#ede3d7",
+        "cyan_bg": "#d1e4e8",
+        "purple_bg": "#e1d7f4",
+        "orange_bg": "#f1ddd4",
+        "white_bg": "#eff1f5",
+        "verbatim_bg": "#eff1f5",
+    },
+    "rose-pine-dawn": {
+        "bg": "#faf4ed",
+        "fg": "#464261",
+        "panel": "#fffaf3",
+        "border": "#9893a5",
+        "muted": "#dfdad9",
+        "accent": "#286983",
+        "red": "#b4637a",
+        "green": "#6d8f89",
+        "blue": "#286983",
+        "yellow": "#ea9d34",
+        "cyan": "#56949f",
+        "purple": "#907aa9",
+        "orange": "#d7827e",
+        "red_bg": "#f4e5e2",
+        "green_bg": "#ebebe4",
+        "blue_bg": "#e1e6e3",
+        "yellow_bg": "#fcedd8",
+        "cyan_bg": "#e7ece7",
+        "purple_bg": "#efe8e9",
+        "orange_bg": "#f9e9e3",
+        "white_bg": "#faf4ed",
+        "verbatim_bg": "#fffaf3",
+    },
+
 }
 
 
