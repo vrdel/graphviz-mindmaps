@@ -87,13 +87,17 @@ gvmm -f notes.otl --theme gruvbox
 ```
 
 Supported themes are `default`, `nord`, `papercolor`, `papercolor-dark`, `monokai`,
-`gruvbox`, `solarized`, `solarized-light`, `catppuccin-latte`, and `rose-pine-dawn`.
+`gruvbox`, `solarized`, `solarized-light`, `catppuccin-latte`, `rose-pine-dawn`,
+`github-light`, `one-light`, and `gruvbox-light`.
 
 Additional light themes (adapted with lightly tinted node backgrounds):
 
 - `solarized-light` — warm cream, based on [Solarized](https://ethanschoonover.com/solarized/).
 - `catppuccin-latte` — cool light gray with colorful accents, based on [Catppuccin Latte](https://catppuccin.com/palette/).
 - `rose-pine-dawn` — warm ivory with muted accents, based on [Rosé Pine Dawn](https://github.com/rose-pine/neovim/blob/main/lua/rose-pine/palette.lua).
+- `github-light` — white and pale gray with clear accents, based on [GitHub Primer](https://primer.style/product/primitives/color/).
+- `one-light` — near-white with colorful syntax accents, based on [Atom One Light](https://github.com/atom/one-light-syntax/blob/master/styles/colors.less).
+- `gruvbox-light` — warm cream with earthy accents, based on [Gruvbox Light](https://github.com/morhetz/gruvbox).
 
 For example: `gvmm --theme catppuccin-latte -f notes.otl` or `: theme=catppuccin-latte` on the root.
 
