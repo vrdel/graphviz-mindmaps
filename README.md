@@ -88,7 +88,8 @@ gvmm -f notes.otl --theme gruvbox
 
 Supported themes are `default`, `nord`, `papercolor`, `papercolor-dark`, `monokai`,
 `gruvbox`, `solarized`, `solarized-light`, `catppuccin-latte`, `rose-pine-dawn`,
-`github-light`, `one-light`, and `gruvbox-light`.
+`github-light`, `one-light`, `gruvbox-light`, `dracula`, `catppuccin-mocha`,
+`tokyo-night`, `one-dark`, `rose-pine`, and `kanagawa`.
 
 Additional light themes (adapted with lightly tinted node backgrounds):
 
@@ -98,6 +99,15 @@ Additional light themes (adapted with lightly tinted node backgrounds):
 - `github-light` — white and pale gray with clear accents, based on [GitHub Primer](https://primer.style/product/primitives/color/).
 - `one-light` — near-white with colorful syntax accents, based on [Atom One Light](https://github.com/atom/one-light-syntax/blob/master/styles/colors.less).
 - `gruvbox-light` — warm cream with earthy accents, based on [Gruvbox Light](https://github.com/morhetz/gruvbox).
+
+Additional dark themes (adapted with subdued, tinted node backgrounds):
+
+- `dracula` — charcoal with vivid accents, based on [Dracula](https://draculatheme.com/contribute).
+- `catppuccin-mocha` — dark blue-gray with pastel accents, based on [Catppuccin Mocha](https://catppuccin.com/palette/).
+- `tokyo-night` — deep navy with cool accents, based on [Tokyo Night](https://github.com/folke/tokyonight.nvim).
+- `one-dark` — charcoal with balanced accents, based on [Atom One Dark](https://github.com/atom/one-dark-syntax/blob/master/styles/colors.less).
+- `rose-pine` — deep purple with soft accents, based on [Rosé Pine](https://github.com/rose-pine/neovim/blob/main/lua/rose-pine/palette.lua).
+- `kanagawa` — ink-dark with warm accents, based on [Kanagawa Wave](https://github.com/rebelot/kanagawa.nvim).
 
 For example: `gvmm --theme catppuccin-latte -f notes.otl` or `: theme=catppuccin-latte` on the root.
 
