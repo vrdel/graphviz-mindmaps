@@ -41,6 +41,7 @@ def build_runtime(theme_name):
     return RenderRuntime(
         fontawesome_symb=fontawesome.symb,
         default_bgcolor=default_bgcolor,
+        theme_name=theme_name,
     )
 
 

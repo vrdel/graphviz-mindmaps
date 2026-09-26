@@ -15,3 +15,4 @@ class RenderSession:
 class RenderRuntime:
     fontawesome_symb: dict
     default_bgcolor: str
+    theme_name: str = "default"
