@@ -56,7 +56,7 @@ def ParseFnameLine(keyword, line):
 
 
 def ParseInlineAttrLine(keyword, line):
-    match = re.search(r"%s[ ]*=[ ]*(\"[^\"]*\"|'[^']*'|[^\s]+)" % keyword, line)
+    match = re.search(r"(?<!\w)%s[ ]*=[ ]*(\"[^\"]*\"|'[^']*'|[^\s]+)" % re.escape(keyword), line)
     if not match:
         return None
     return match.group(1).strip().strip("\"'")

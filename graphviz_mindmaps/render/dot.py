@@ -259,8 +259,19 @@ def ResolveRootTheme(lines):
     return None
 
 
+def ResolveRootCodeTheme(lines):
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        value = ParseInlineAttrLine("code_theme", line)
+        if value:
+            return value
+    return "default"
+
+
 def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     root_theme = ResolveRootTheme(lines)
+    root_code_theme = ResolveRootCodeTheme(lines)
     theme_bgcolor = ApplyTheme(root_theme or runtime.theme_name)
     default_bgcolor = theme_bgcolor if root_theme else runtime.default_bgcolor
     tree = Tree(
@@ -378,11 +389,11 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\"(?: style=\"([^\"]+)\")? data=\"([^\"]*)\"/>", label)
             code_source = None
             code_language = None
-            code_style = "default"
+            code_style = root_code_theme
             code_image_path = None
             if code_match:
                 code_language = code_match.group(1)
-                code_style = code_match.group(2) or "default"
+                code_style = code_match.group(2) or root_code_theme
                 code_source = base64.b64decode(code_match.group(3)).decode("utf-8")
                 label = label[:code_match.start()].rstrip()
 
