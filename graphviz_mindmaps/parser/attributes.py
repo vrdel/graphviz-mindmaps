@@ -507,7 +507,7 @@ def ApplyNodeAttributeTokens(
             state.fontname = fontnames[token]
             continue
         keyval_match = re.match(r"([^=]+)=(.*)", token)
-        if keyval_match and keyval_match.group(1) in {"bg", "bgcolor", "fg", "fgcolor", "bc", "bw", "bs", "subgraph", "sgmargin", "sgm"}:
+        if keyval_match and keyval_match.group(1) in {"bg", "bgcolor", "fg", "fgcolor", "bc", "bw", "bs", "subgraph", "sgmargin", "sgm", "hr_style"}:
             key = keyval_match.group(1)
             value = keyval_match.group(2).strip().strip("\"'")
             if key in {"bg", "bgcolor"}:
@@ -520,6 +520,11 @@ def ApplyNodeAttributeTokens(
                 state.borderwidth = value
             elif key == "bs":
                 state.borderstyle = value
+            elif key == "hr_style":
+                value = value.lower()
+                if value not in {"solid", "dashed", "dotted"}:
+                    raise ValueError("hr_style must be solid, dashed, or dotted")
+                state.hr_style = value
             elif key == "subgraph":
                 state.child_subgraphs = value.lower() not in {"0", "false", "no", "off"}
             else:

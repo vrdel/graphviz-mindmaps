@@ -30,6 +30,7 @@ class NodePrepState:
     bordercolor: str | None = None
     borderwidth: str | None = None
     borderstyle: str | None = None
+    hr_style: str | None = None
     child_subgraphs: bool | None = None
     embedded_image_count: int = 0
 
