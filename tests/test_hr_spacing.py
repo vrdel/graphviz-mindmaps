@@ -5,6 +5,7 @@ import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
@@ -13,6 +14,44 @@ from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold, SpaceHo
 
 
 class HorizontalRuleSpacingTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
+    def test_node_style_overrides_root_without_affecting_children_or_siblings(self):
+        blocks = ExtractMindmapBlocks([
+            '# Root', '\t: fname=out.jpg hr_style=dashed',
+            '\t# before; ---; after', '\t\t: node hr_style=solid',
+            '\t\t# child; ---; after', '\t\t\t: node',
+            '\t# Dotted block', '\t\t: block hr_style="DOTTED"',
+            '\t\t: before', '\t\t: ---', '\t\t: after',
+            '\t# inherited; ---; after', '\t\t: node',
+        ], ApplyInlineBacktickBold)
+        session = RenderSession()
+        with patch('graphviz_mindmaps.render.dot.WriteDot'):
+            GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None),
+                   session, RenderRuntime({}, '#ffffff'))
+        svg = subprocess.run(['dot', '-Tsvg'], input=session.dotbuf, check=True, capture_output=True, text=True)
+        self.assertEqual('', svg.stderr)
+        ns = {'s': 'http://www.w3.org/2000/svg'}
+        nodes = {g.findtext('s:title', namespaces=ns): g
+                 for g in ET.fromstring(svg.stdout).findall('.//s:g[@class="node"]', ns)}
+        for name, expected in (('node101', []), ('node10101', ['5,2']),
+                               ('node102', ['1,5']), ('node103', ['5,2'])):
+            with self.subTest(node=name):
+                self.assertEqual(expected, [p.get('stroke-dasharray')
+                                            for p in nodes[name].findall('s:polyline', ns)
+                                            if p.get('stroke-dasharray')])
+        solid_rules = [p for p in nodes['node101'].findall('s:polygon', ns)
+                       if len({point.split(',')[1] for point in p.get('points').split()}) == 1]
+        self.assertEqual(1, len(solid_rules))
+
+    def test_invalid_node_ruler_style_is_rejected(self):
+        blocks = ExtractMindmapBlocks([
+            '# Root', '\t: fname=out.jpg',
+            '\t# before; ---; after', '\t\t: node hr_style=unknown',
+        ], ApplyInlineBacktickBold)
+        with self.assertRaisesRegex(ValueError, 'hr_style'):
+            GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None),
+                   RenderSession(), RenderRuntime({}, '#ffffff'))
+
     def test_root_style_default_override_and_validation(self):
         self.assertEqual('solid', ResolveRootHrStyle(['# Root']))
         for style in ('solid', 'dashed', 'dotted'):

@@ -167,6 +167,23 @@ choose the ruler style (default: `solid`). For example:
         : node
 ```
 
+Override the root ruler style for an individual node with `hr_style=`:
+
+```text
+# Notes
+    : fname=notes.jpg hr_style=dashed
+    # before; ---; after
+        : node hr_style=solid
+    # Block with dotted ruler
+        : block hr_style=dotted
+        : before
+        : ---
+        : after
+```
+
+Node overrides accept `solid`, `dashed`, and `dotted`. They apply only to that
+node; other nodes inherit the root style. Root `hr_spacing` still applies.
+
 Use `cdef` on a block node to select the current theme's default regular-node fill color:
 
 ```text

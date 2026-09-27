@@ -554,6 +554,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 state_obj.bordercolor,
                 state_obj.borderwidth,
                 state_obj.borderstyle,
+                hr_style=state_obj.hr_style,
             )
             if code_image_path:
                 InsertImageRow(parentlist[level]._label, code_image_path)
