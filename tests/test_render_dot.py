@@ -1,8 +1,12 @@
 import base64
+import html
 import re
+import shutil
 import subprocess
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from graphviz_mindmaps import fontawesome
 from graphviz_mindmaps.constants import (
@@ -29,6 +33,73 @@ from graphviz_mindmaps.render.label_html import SpanRowsAcrossImages
 
 
 class RenderDotNodeAttributeTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
+    def test_block_formatting_blank_rows_produces_valid_graphviz_label(self):
+        from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
+        from graphviz_mindmaps.render.dot import GenDot
+
+        for attrs in ('f16 El1it', 'l2f16', 'l2r', 'El2it', 'l[1-3]f16'):
+            with self.subTest(attrs=attrs):
+                blocks = ExtractMindmapBlocks([
+                    '# Root', '\t: fname=out.jpg', '\t# Example',
+                    '\t\t: block cdef ' + attrs,
+                    '\t\t:', '\t\t: First paragraph.', '\t\t:',
+                    '\t\t: Final paragraph.', '\t\t:',
+                ], ApplyInlineBacktickBold)
+                session = RenderSession()
+                with patch('graphviz_mindmaps.render.dot.WriteDot'):
+                    GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None),
+                           session, RenderRuntime({}, '#ffffff'))
+                self.assertNotRegex(session.dotbuf, r'<(?:FONT|I|B|U)\b[^>]*></(?:FONT|I|B|U)>')
+                rendered = subprocess.run(['dot', '-Tsvg'], input=session.dotbuf,
+                                          capture_output=True, text=True)
+                self.assertEqual(0, rendered.returncode, rendered.stderr)
+
+    def test_block_line_colors_count_internal_blank_lines(self):
+        from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
+        from graphviz_mindmaps.render.dot import GenDot
+
+        body = [
+            '',
+            '*check_item(item, options)*',
+            'examines a sample item and determines whether',
+            'another processing step is required.',
+            '',
+            'Possible results:',
+            '- *True* when the item meets the conditions',
+            '  described in the example configuration.',
+            '- *False* when processing can be skipped',
+            '  according to the supplied options.',
+            '',
+            '*process_item()* reads the result and selects',
+            'the next operation for this sample item',
+            'before continuing.',
+            '',
+            'Processing begins',
+            '       │',
+            '       ▼',
+            'Does the item need another step?',
+            '',
+        ]
+        for selector in ('l[11,12,13]r', 'l[11-13]r', 'El[6-8]r'):
+            with self.subTest(selector=selector):
+                blocks = ExtractMindmapBlocks([
+                    '# Root', '\t: fname=out.jpg', '\t# Example explanation',
+                    '\t\t: block ' + selector,
+                ] + ['\t\t: ' + line for line in body], ApplyInlineBacktickBold)
+                session = RenderSession()
+                with patch('graphviz_mindmaps.render.dot.WriteDot'):
+                    GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None),
+                           session, RenderRuntime({}, '#ffffff'))
+                colored = [html.unescape(re.sub(r'<[^>]+>', '', row)).replace('\xa0', ' ').strip()
+                           for row in re.findall(r'<TD\b[^>]*>(.*?)</TD>', session.dotbuf)
+                           if '<FONT COLOR="%s">' % fontcolor['r'] in row]
+                self.assertEqual([
+                    'process_item() reads the result and selects',
+                    'the next operation for this sample item',
+                    'before continuing.',
+                ], colored)
+
     def _tree(self, post_attr_proc_label=None):
         return Tree(
             nodetype,

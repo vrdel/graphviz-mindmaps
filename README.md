@@ -192,6 +192,11 @@ Use `cdef` on a block node to select the current theme's default regular-node fi
     : block body
 ```
 
+For `block`, `verbatim`, and `draw` bodies, line selectors count from the first
+nonblank body line. Internal blank lines count; surrounding blank lines and
+the node header do not. This applies to both `lN` and end-relative `ElN`
+selectors, including ranges such as `l[11-13]r`.
+
 Code blocks can be highlighted and rendered as image-backed Graphviz nodes:
 
 Set `code_theme` on the root to choose the default Pygments style for every code

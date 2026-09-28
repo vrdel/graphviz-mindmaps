@@ -297,15 +297,12 @@ class Tree:
         def _is_header_attr(self, item):
             return bool(self._attr_meta(item).get("header"))
 
-        def _is_end_relative_line_attr(self, item):
-            return int(item[0]) < 0
-
         def _line_fragment_indexes_for_attr(self, item, fragments=None):
             if self._is_header_attr(item):
                 return self._header_line_fragment_indexes(fragments)
             return self._scoped_line_fragment_indexes(
                 fragments,
-                include_internal_blank_rows=self._is_end_relative_line_attr(item),
+                include_internal_blank_rows=True,
             )
 
         def _line_word_indexes_for_attr(self, item):
@@ -585,6 +582,9 @@ class Tree:
             def apply_attr_to_fragment(fragment, item, is_last):
                 if is_separator_row(fragment):
                     return fragment
+                text = re.sub(r"<[^>]+>", "", fragment).replace("&nbsp;", "").strip()
+                if not text:
+                    return fragment
                 fragment = replace_td(fragment, attr_replacement(item))
                 if eattr and not is_last:
                     return fragment + eattr
@@ -629,14 +629,11 @@ class Tree:
                         if li < 1 or li > len(scoped_indexes):
                             continue
                         target_idx = scoped_indexes[li - 1]
-                        self._label[target_idx] = replace_td(
+                        self._label[target_idx] = apply_attr_to_fragment(
                             self._label[target_idx],
-                            attr_replacement(item),
+                            item,
+                            target_idx == len(self._label) - 1,
                         )
-                        if eattr and target_idx < len(self._label) - 1:
-                            self._label[target_idx] = self._label[target_idx] + eattr
-                        elif eattr and target_idx == len(self._label) - 1:
-                            self._label[target_idx] = self._label[target_idx].replace("</TD>", eattr + "</TD>")
                     restore_label_rows(self._label)
 
     def __init__(self, nodetype, vrbtcolors, fontcolor, font, fontsize, fontawesome_symb, resolve_verbatim_fill_color_token, post_attr_proc_label, subgraph_depth=None, default_sgmargin="8"):
