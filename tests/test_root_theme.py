@@ -12,6 +12,38 @@ from graphviz_mindmaps.theme import ApplyTheme, THEME_PALETTES
 
 
 class RootThemeTests(unittest.TestCase):
+    def test_root_colors_override_theme_without_changing_children_or_canvas(self):
+        for theme in ('default', 'nord'):
+            with self.subTest(theme=theme):
+                runtime = build_runtime(theme)
+                plain = self.render(runtime)
+                changed = self.render(runtime, 'root_bg="#123456" root_fg="white"')
+                root = next(line for line in changed.dotbuf.splitlines() if 'node1[' in line)
+                self.assertIn('fillcolor="#123456"', root)
+                self.assertIn('fontcolor="white"', root)
+                self.assertEqual(1, root.count('fillcolor='))
+                self.assertEqual(1, root.count('fontcolor='))
+                self.assertEqual(plain.bgcolor, changed.bgcolor)
+                child = lambda session: next(line for line in session.dotbuf.splitlines() if 'node101[' in line)
+                self.assertEqual(child(plain), child(changed))
+                self.assertEqual(plain.dotbuf, self.render(runtime).dotbuf)
+
+    def test_individual_root_colors_and_child_attributes(self):
+        runtime = build_runtime('nord')
+        for attrs, expected in (('root_bg=navy', 'fillcolor="navy"'),
+                                ('root_fg="#abcdef"', 'fontcolor="#abcdef"')):
+            with self.subTest(attrs=attrs):
+                session = self.render(runtime, attrs)
+                root = next(line for line in session.dotbuf.splitlines() if 'node1[' in line)
+                self.assertIn(expected, root)
+                other = 'fontcolor' if attrs.startswith('root_bg') else 'fillcolor'
+                color = THEME_PALETTES['nord']['fg' if other == 'fontcolor' else 'panel']
+                self.assertIn('%s="%s"' % (other, color), root)
+        plain = self.render(runtime)
+        child_attrs = self.render(runtime, child_attrs='node root_bg=navy root_fg=white')
+        root = lambda session: next(line for line in session.dotbuf.splitlines() if 'node1[' in line)
+        self.assertEqual(root(plain), root(child_attrs))
+
     def test_themes_work_from_cli_and_root_and_preserve_borderless_images(self):
         for name in THEME_PALETTES:
             with self.subTest(theme=name):

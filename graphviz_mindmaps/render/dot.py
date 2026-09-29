@@ -249,6 +249,22 @@ def IsOutlineLeaf(lines, index, level, tabnum):
     return True
 
 
+def ResolveRootNodeColors(lines, attrs):
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        for key, attribute in (("root_bg", "fillcolor"), ("root_fg", "fontcolor")):
+            value = ParseInlineAttrLine(key, line)
+            if value:
+                replacement = '%s="%s"' % (attribute, value)
+                pattern = r'\b%s="[^"]*"' % attribute
+                if re.search(pattern, attrs):
+                    attrs = re.sub(pattern, lambda match: replacement, attrs)
+                else:
+                    attrs += " " + replacement
+    return attrs
+
+
 def ResolveRootTheme(lines):
     for line in lines[1:]:
         if re.search(r"(\t#) (.*)", line):
@@ -350,13 +366,14 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     }
     edge_default_attrs.update(root_edge_defaults)
     edge_default_attr = " ".join('%s="%s"' % (key, value) for key, value in edge_default_attrs.items())
+    root_attrs = ResolveRootNodeColors(lines, nodetype["root"])
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
     dotbuf += "\tedge[%s];\n\n" % edge_default_attr
     dotbuf += "// %s\n" % (match.group(2))
     dotbuf += "\tsubgraph cluster000 {\n\n"
     dotbuf += "\t\tstyle=radial;\n\t\tordering=out;\n\t\tfillcolor=\"%s\";\n\t\tcolor=\"%s\";\n\n" % (bgcolor, bgcolor)
-    dotbuf += "\t\t%s[%s label=<<TABLE CELLBORDER=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>%s</TD></TR></TABLE>>];\n" % (rootnodename, nodetype["root"], match.group(2).replace(";", "<BR/>"))
+    dotbuf += "\t\t%s[%s label=<<TABLE CELLBORDER=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>%s</TD></TR></TABLE>>];\n" % (rootnodename, root_attrs, match.group(2).replace(";", "<BR/>"))
 
     dotname = "%s.dot" % (match.group(2))
     jpgname = "%s.jpg" % (match.group(2))
