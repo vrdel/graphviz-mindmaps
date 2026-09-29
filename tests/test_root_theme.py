@@ -2,7 +2,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from graphviz_mindmaps import constants
+from graphviz_mindmaps import constants, fontawesome
 from graphviz_mindmaps.cli import build_parser, build_runtime
 from graphviz_mindmaps.model.document import RenderSession
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
@@ -12,6 +12,40 @@ from graphviz_mindmaps.theme import ApplyTheme, THEME_PALETTES
 
 
 class RootThemeTests(unittest.TestCase):
+    def test_root_icons_resolve_names_aliases_and_use_default_symbol_color(self):
+        runtime = build_runtime('nord')
+        session = self.render(runtime, 'root_symb="book:quest:missing-icon:lightbulb-o"')
+        root = next(line for line in session.dotbuf.splitlines() if 'node1[' in line)
+        self.assertEqual(3, root.count('FACE="FontAwesome"'))
+        self.assertIn('fontcolor="%s"' % THEME_PALETTES['nord']['fg'], root)
+        self.assertEqual(3, root.count('COLOR="%s"' % constants.fontcolor['r']))
+        previous = -1
+        for name in ('book', 'question-circle', 'lightbulb-o'):
+            position = root.index('>%s</FONT>' % fontawesome.symb[name])
+            self.assertGreater(position, previous)
+            previous = position
+        self.assertIn('</FONT></TD></TR><TR><TD>Root', root)
+        self.assertNotIn('FACE="FontAwesome"', self.render(runtime).dotbuf)
+
+    def test_explicit_root_fg_overrides_title_and_icon_colors(self):
+        for attrs in ('root_fg=white root_symb=book:star',
+                      'root_symb=book:star root_fg="#abcdef"',
+                      'root_symb=book:star\n\t: root_fg="#abcdef"'):
+            with self.subTest(attrs=attrs):
+                color = 'white' if 'white' in attrs else '#abcdef'
+                session = self.render(build_runtime('nord'), attrs)
+                root = next(line for line in session.dotbuf.splitlines() if 'node1[' in line)
+                self.assertIn('fontcolor="%s"' % color, root)
+                self.assertEqual(2, root.count('COLOR="%s"' % color))
+
+    def test_unknown_or_child_root_icons_do_not_change_root(self):
+        runtime = build_runtime('default')
+        plain = self.render(runtime)
+        self.assertEqual(plain.dotbuf, self.render(runtime, 'root_symb=missing-icon').dotbuf)
+        child = self.render(runtime, child_attrs='node root_symb=book')
+        root = lambda session: next(line for line in session.dotbuf.splitlines() if 'node1[' in line)
+        self.assertEqual(root(plain), root(child))
+
     def test_root_colors_override_theme_without_changing_children_or_canvas(self):
         for theme in ('default', 'nord'):
             with self.subTest(theme=theme):

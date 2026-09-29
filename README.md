@@ -142,6 +142,18 @@ These override the theme for the root node only. Named Graphviz colors and hex
 colors are supported. The canvas background is controlled separately by `bg`
 or `bgcolor`; omitted root colors retain their theme defaults.
 
+Add Font Awesome icons above the root title with `root_symb`:
+
+```text
+# Notes
+    : fname=notes.jpg root_symb=book:lightbulb-o root_bg="#334155" root_fg="white"
+```
+
+Use the same icon names as `symb=`, separated by colons. Icons use the same
+default symbol color as `symb=` (the current theme's red) unless `root_fg` is
+explicitly set, in which case it colors both the title and icons. Unknown icon
+names are ignored.
+
 Set a default style for untyped leaf nodes from the root attribute line:
 
 ```text

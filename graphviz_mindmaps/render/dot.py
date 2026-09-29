@@ -249,6 +249,29 @@ def IsOutlineLeaf(lines, index, level, tabnum):
     return True
 
 
+def BuildRootLabel(lines, title, symbol_map):
+    symbols = []
+    symbol_color = fontcolor["r"]
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        value = ParseInlineAttrLine("root_symb", line)
+        if value:
+            symbols = ResolveSymbolNames(value, symbol_map)
+        root_fg = ParseInlineAttrLine("root_fg", line)
+        if root_fg:
+            symbol_color = root_fg
+    label = title.replace(";", "<BR/>")
+    if symbols:
+        icons = "&nbsp;".join(
+            '<FONT FACE="FontAwesome" COLOR="%s" POINT-SIZE="25">%s</FONT>'
+            % (symbol_color, symbol_map[name])
+            for name in symbols
+        )
+        label = icons + "</TD></TR><TR><TD>" + label
+    return label
+
+
 def ResolveRootNodeColors(lines, attrs):
     for line in lines[1:]:
         if re.search(r"(\t#) (.*)", line):
@@ -367,13 +390,14 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     edge_default_attrs.update(root_edge_defaults)
     edge_default_attr = " ".join('%s="%s"' % (key, value) for key, value in edge_default_attrs.items())
     root_attrs = ResolveRootNodeColors(lines, nodetype["root"])
+    root_label = BuildRootLabel(lines, match.group(2), runtime.fontawesome_symb)
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
     dotbuf += "\tedge[%s];\n\n" % edge_default_attr
     dotbuf += "// %s\n" % (match.group(2))
     dotbuf += "\tsubgraph cluster000 {\n\n"
     dotbuf += "\t\tstyle=radial;\n\t\tordering=out;\n\t\tfillcolor=\"%s\";\n\t\tcolor=\"%s\";\n\n" % (bgcolor, bgcolor)
-    dotbuf += "\t\t%s[%s label=<<TABLE CELLBORDER=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>%s</TD></TR></TABLE>>];\n" % (rootnodename, root_attrs, match.group(2).replace(";", "<BR/>"))
+    dotbuf += "\t\t%s[%s label=<<TABLE CELLBORDER=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>%s</TD></TR></TABLE>>];\n" % (rootnodename, root_attrs, root_label)
 
     dotname = "%s.dot" % (match.group(2))
     jpgname = "%s.jpg" % (match.group(2))
