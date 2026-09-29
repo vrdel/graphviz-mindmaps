@@ -16,6 +16,59 @@
 			: : global_bc="#6a6a6a" global_bs=rounded
 			: : global_edge_color="#8a8a8a" global_edge_style=tapered
 			:
+	# themes
+		:
+		# select a theme on the root
+			: block
+			:
+			: : theme=nord
+			: or use --theme nord on the command line
+			: root theme overrides the command-line choice
+			: code_theme selects a separate Pygments style
+			:
+		# default theme
+			: block
+			:
+			: theme=default
+			:
+		# light themes
+			: block
+			:
+			: theme=papercolor
+			: theme=solarized-light
+			: theme=catppuccin-latte
+			: theme=rose-pine-dawn
+			: theme=github-light
+			: theme=one-light
+			: theme=gruvbox-light
+			: theme=everforest-light
+			: theme=ayu-light
+			: theme=dayfox
+			:
+		# dark themes
+			: block
+			:
+			: theme=nord
+			: theme=papercolor-dark
+			: theme=monokai
+			: theme=gruvbox
+			: theme=solarized
+			: theme=dracula
+			: theme=catppuccin-mocha
+			: theme=tokyo-night
+			: theme=one-dark
+			: theme=rose-pine
+			: theme=kanagawa
+			: theme=everforest-dark
+			: theme=ayu-dark
+			: theme=nightfox
+			:
+		# preview filenames
+			: block
+			:
+			: mindmap-01-THEME.jpg
+			: example: mindmap-01-nord.jpg
+			:
 	# edge ends
 		:
 		# edgra
