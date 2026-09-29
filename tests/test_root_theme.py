@@ -12,6 +12,34 @@ from graphviz_mindmaps.theme import ApplyTheme, THEME_PALETTES
 
 
 class RootThemeTests(unittest.TestCase):
+    def test_root_borders_override_defaults_without_affecting_children(self):
+        for theme in ('default', 'nord'):
+            for style in ('solid', 'dashed', 'dotted', 'rounded,dashed'):
+                with self.subTest(theme=theme, style=style):
+                    runtime = build_runtime(theme)
+                    defaults = 'global_bw=7 global_bs=dotted global_bc=red'
+                    plain = self.render(runtime, defaults)
+                    changed = self.render(runtime, defaults +
+                                          ' root_bw=2.5 root_bs="%s" root_bc="#123456" root_bg=navy' % style)
+                    root = next(line for line in changed.dotbuf.splitlines() if 'node1[' in line)
+                    self.assertIn('penwidth="2.5"', root)
+                    self.assertIn('style="radial,%s"' % style, root)
+                    self.assertIn(' color="#123456"', root)
+                    self.assertIn('fillcolor="navy"', root)
+                    self.assertEqual(1, root.count('style='))
+                    child = lambda session: next(line for line in session.dotbuf.splitlines() if 'node101[' in line)
+                    self.assertEqual(child(plain), child(changed))
+                    self.assertEqual(plain.dotbuf, self.render(runtime, defaults).dotbuf)
+
+    def test_root_border_zero_width_and_child_attributes(self):
+        runtime = build_runtime('nord')
+        plain = self.render(runtime)
+        root = lambda session: next(line for line in session.dotbuf.splitlines() if 'node1[' in line)
+        self.assertIn('penwidth="0"', root(self.render(runtime, 'root_bw=0')))
+        self.assertIn(' color="navy"', root(self.render(runtime, 'root_bc=navy')))
+        child = self.render(runtime, child_attrs='node root_bw=0 root_bs=dashed root_bc=red')
+        self.assertEqual(root(plain), root(child))
+
     def test_root_icons_resolve_names_aliases_and_use_default_symbol_color(self):
         runtime = build_runtime('nord')
         session = self.render(runtime, 'root_symb="book:quest:missing-icon:lightbulb-o"')
