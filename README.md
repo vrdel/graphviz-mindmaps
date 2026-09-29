@@ -131,6 +131,17 @@ All themes listed above work with the root attribute. The root theme overrides `
 only. Without it, the command-line theme applies (or `default`). Explicit root
 background and node color attributes still override theme colors.
 
+Use `root_bg` for the root node's fill and `root_fg` for its text color:
+
+```text
+# Notes
+    : fname=notes.jpg theme=nord root_bg="#334155" root_fg="white"
+```
+
+These override the theme for the root node only. Named Graphviz colors and hex
+colors are supported. The canvas background is controlled separately by `bg`
+or `bgcolor`; omitted root colors retain their theme defaults.
+
 Set a default style for untyped leaf nodes from the root attribute line:
 
 ```text
