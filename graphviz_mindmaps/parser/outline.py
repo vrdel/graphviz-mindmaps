@@ -224,6 +224,14 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
         linesbymm = [title, nextline]
 
         scan_index = cursor + 2
+        root_attr_indent = re.match(r"^[ \t]*", nextline).group(0)
+        while scan_index < len(worklines):
+            continuation = re.match(r"^([ \t]*)[:;|](?:\s|$)", worklines[scan_index])
+            if not continuation or continuation.group(1) != root_attr_indent:
+                break
+            linesbymm.append(worklines[scan_index])
+            scan_index += 1
+
         while scan_index < len(worklines) - 1 and level > tabroot:
             level = worklines[scan_index][:ParLoc(worklines[scan_index])].count("\t")
             if "# " in worklines[scan_index] and level > tabroot:
