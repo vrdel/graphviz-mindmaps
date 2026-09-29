@@ -252,6 +252,8 @@ def IsOutlineLeaf(lines, index, level, tabnum):
 def BuildRootLabel(lines, title, symbol_map):
     symbols = []
     symbol_color = fontcolor["r"]
+    symbol_colors = {}
+    symbol_sizes = {}
     for line in lines[1:]:
         if re.search(r"(\t#) (.*)", line):
             break
@@ -261,12 +263,21 @@ def BuildRootLabel(lines, title, symbol_map):
         root_fg = ParseInlineAttrLine("root_fg", line)
         if root_fg:
             symbol_color = root_fg
+        for token in line.split():
+            match = re.fullmatch(r"root_sym([0-9]+|\[[0-9]+(?:,[0-9]+)*\])([rgbycpkt])?(?:f([0-9]+))?", token)
+            if not match:
+                continue
+            for index in map(int, match.group(1).strip("[]").split(",")):
+                if match.group(2):
+                    symbol_colors.setdefault(index, fontcolor[match.group(2)])
+                if match.group(3):
+                    symbol_sizes.setdefault(index, match.group(3))
     label = title.replace(";", "<BR/>")
     if symbols:
         icons = "&nbsp;".join(
-            '<FONT FACE="FontAwesome" COLOR="%s" POINT-SIZE="25">%s</FONT>'
-            % (symbol_color, symbol_map[name])
-            for name in symbols
+            '<FONT FACE="FontAwesome" COLOR="%s" POINT-SIZE="%s">%s</FONT>'
+            % (symbol_colors.get(index, symbol_color), symbol_sizes.get(index, "25"), symbol_map[name])
+            for index, name in enumerate(symbols, start=1)
         )
         label = icons + "</TD></TR><TR><TD>" + label
     return label
