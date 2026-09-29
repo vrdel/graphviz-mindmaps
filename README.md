@@ -131,6 +131,20 @@ All themes listed above work with the root attribute. The root theme overrides `
 only. Without it, the command-line theme applies (or `default`). Explicit root
 background and node color attributes still override theme colors.
 
+Root attributes can span consecutive lines at the same indentation, starting
+with the `fname=` line:
+
+```text
+# root_node
+    : fname=srce-tech-2610.jpg notitle
+    : leaf=node sgmargin=2 theme=github-light
+    : bg=#efefef root_bw=4 root_bs=dashed root_bg=seagreen1
+    : root_symb=check
+```
+
+Use tabs for indentation in `.otl` files. This continuation syntax applies only
+to the root; ordinary child attributes remain on their existing attribute line.
+
 Use `root_bg` for the root node's fill and `root_fg` for its text color:
 
 ```text

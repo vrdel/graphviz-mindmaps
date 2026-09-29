@@ -12,6 +12,35 @@ from graphviz_mindmaps.theme import ApplyTheme, THEME_PALETTES
 
 
 class RootThemeTests(unittest.TestCase):
+    def test_consecutive_root_attribute_lines_match_single_line(self):
+        attrs = [
+            'leaf=node sgmargin=2 theme=github-light',
+            'bg=#efefef root_bw=4 root_bs=dashed root_bg=seagreen1',
+            'root_symb=check',
+        ]
+        runtime = build_runtime('default')
+        single = self.render(runtime, ' '.join(attrs))
+        multiple = self.render(runtime, '\n\t: ' + '\n\t: '.join(attrs))
+        self.assertEqual(single.dotbuf, multiple.dotbuf)
+        self.assertEqual('#efefef', multiple.bgcolor)
+        self.assertIn('fillcolor="seagreen1"', multiple.dotbuf)
+        self.assertIn('penwidth="4"', multiple.dotbuf)
+        self.assertIn('FACE="FontAwesome"', multiple.dotbuf)
+
+    def test_root_continuations_preserved_without_merging_child_attributes(self):
+        lines = [
+            '# Root', '\t: fname=out.jpg notitle',
+            '\t: theme=github-light', '\t: root_symb=check',
+            '\t# Child', '\t\t: node', '\t\t: bg=red root_bg=red',
+            '\t# Sibling', '\t\t: node',
+        ]
+        blocks = ExtractMindmapBlocks(lines, ApplyInlineBacktickBold)
+        self.assertEqual([lines[:6] + lines[7:]], blocks)
+
+    def test_root_only_map_preserves_last_attribute_line(self):
+        lines = ['# Root', '\t: fname=out.jpg', '\t: root_bg=seagreen1']
+        self.assertEqual([lines], ExtractMindmapBlocks(lines, ApplyInlineBacktickBold))
+
     def test_root_borders_override_defaults_without_affecting_children(self):
         for theme in ('default', 'nord'):
             for style in ('solid', 'dashed', 'dotted', 'rounded,dashed'):
@@ -122,7 +151,7 @@ class RootThemeTests(unittest.TestCase):
 
     def render(self, runtime, root_attrs='', child_attrs='node'):
         blocks = ExtractMindmapBlocks([
-            '# Root', '\t: fname=out.jpg ' + root_attrs,
+            '# Root', *('\t: fname=out.jpg ' + root_attrs).splitlines(),
             '\t# Child', '\t\t: ' + child_attrs,
         ], ApplyInlineBacktickBold)
         session = RenderSession()
