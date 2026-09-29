@@ -180,6 +180,22 @@ default symbol color as `symb=` (the current theme's red) unless `root_fg` is
 explicitly set, in which case it colors both the title and icons. Unknown icon
 names are ignored.
 
+Style individual root icons with `root_sym3rf35`: `3` selects the third
+resolved icon (counting from 1), `r` selects the theme's red, and `f35` sets its
+size to 35 points. Use `root_sym1g` for color only, `root_sym1f40` for size only,
+or `root_sym[1,3]gf35` to style several icons. Color codes match child symbols:
+`r`, `g`, `b`, `y`, `c`, `p`, `k`, and `t`.
+
+```text
+# Notes
+    : fname=notes.jpg root_symb=book:star:check
+    : root_sym3rf35
+```
+
+These controls apply only on the root. An icon's explicit color overrides
+`root_fg` without changing the title; other icons retain their default color
+and 25-point size. Out-of-range indices are ignored.
+
 Set a default style for untyped leaf nodes from the root attribute line:
 
 ```text

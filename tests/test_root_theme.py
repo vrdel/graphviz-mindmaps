@@ -12,6 +12,38 @@ from graphviz_mindmaps.theme import ApplyTheme, THEME_PALETTES
 
 
 class RootThemeTests(unittest.TestCase):
+    def test_root_symbol_color_and_size_override_only_selected_icon(self):
+        for theme in ('default', 'github-light', 'nord'):
+            with self.subTest(theme=theme):
+                runtime = build_runtime(theme)
+                attrs = 'root_symb=book:star:check root_fg=white'
+                plain = self.render(runtime, attrs)
+                changed = self.render(runtime, attrs + '\n\t: root_sym3rf35')
+                root = next(line for line in changed.dotbuf.splitlines() if 'node1[' in line)
+                self.assertIn('fontcolor="white"', root)
+                self.assertIn('<FONT FACE="FontAwesome" COLOR="%s" POINT-SIZE="35">%s</FONT>'
+                              % (constants.fontcolor['r'], fontawesome.symb['check']), root)
+                self.assertEqual(2, root.count('COLOR="white" POINT-SIZE="25"'))
+                child = lambda session: next(line for line in session.dotbuf.splitlines() if 'node101[' in line)
+                self.assertEqual(child(plain), child(changed))
+
+    def test_root_symbol_partial_and_group_controls(self):
+        session = self.render(build_runtime('nord'),
+                              'root_sym[1,3]gf35 root_sym2f40 root_sym2b\n\t: '
+                              'root_symb=book:star:check root_fg=white')
+        root = next(line for line in session.dotbuf.splitlines() if 'node1[' in line)
+        self.assertEqual(2, root.count('COLOR="%s" POINT-SIZE="35"' % constants.fontcolor['g']))
+        self.assertIn('COLOR="%s" POINT-SIZE="40"' % constants.fontcolor['b'], root)
+
+    def test_child_and_out_of_range_controls_do_not_style_root_symbols(self):
+        runtime = build_runtime('default')
+        attrs = 'root_symb=book:star:check'
+        plain = self.render(runtime, attrs)
+        self.assertEqual(plain.dotbuf, self.render(runtime, attrs + ' root_sym0gf35 root_sym4gf35').dotbuf)
+        changed = self.render(runtime, attrs, child_attrs='node root_sym3gf35')
+        root = lambda session: next(line for line in session.dotbuf.splitlines() if 'node1[' in line)
+        self.assertEqual(root(plain), root(changed))
+
     def test_consecutive_root_attribute_lines_match_single_line(self):
         attrs = [
             'leaf=node sgmargin=2 theme=github-light',
