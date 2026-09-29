@@ -272,16 +272,24 @@ def BuildRootLabel(lines, title, symbol_map):
     return label
 
 
-def ResolveRootNodeColors(lines, attrs):
+def ResolveRootNodeAttributes(lines, attrs):
     for line in lines[1:]:
         if re.search(r"(\t#) (.*)", line):
             break
-        for key, attribute in (("root_bg", "fillcolor"), ("root_fg", "fontcolor")):
+        for key, attribute in (("root_bg", "fillcolor"), ("root_fg", "fontcolor"),
+                               ("root_bw", "penwidth"), ("root_bs", "style"),
+                               ("root_bc", "color")):
             value = ParseInlineAttrLine(key, line)
             if value:
+                pattern = r'\b%s=(?:"([^"]*)"|([^\s]+))' % attribute
+                existing = re.search(pattern, attrs)
+                if attribute == "style" and existing:
+                    styles = (existing.group(1) or existing.group(2) or "").split(",")
+                    styles = [style.strip() for style in styles
+                              if style.strip() and style.strip() not in {"solid", "dashed", "dotted"}]
+                    value = ",".join(dict.fromkeys(styles + value.split(",")))
                 replacement = '%s="%s"' % (attribute, value)
-                pattern = r'\b%s="[^"]*"' % attribute
-                if re.search(pattern, attrs):
+                if existing:
                     attrs = re.sub(pattern, lambda match: replacement, attrs)
                 else:
                     attrs += " " + replacement
@@ -389,7 +397,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     }
     edge_default_attrs.update(root_edge_defaults)
     edge_default_attr = " ".join('%s="%s"' % (key, value) for key, value in edge_default_attrs.items())
-    root_attrs = ResolveRootNodeColors(lines, nodetype["root"])
+    root_attrs = ResolveRootNodeAttributes(lines, nodetype["root"])
     root_label = BuildRootLabel(lines, match.group(2), runtime.fontawesome_symb)
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)

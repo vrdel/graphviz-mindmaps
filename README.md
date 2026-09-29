@@ -142,6 +142,18 @@ These override the theme for the root node only. Named Graphviz colors and hex
 colors are supported. The canvas background is controlled separately by `bg`
 or `bgcolor`; omitted root colors retain their theme defaults.
 
+Use `root_bw` for the root border width, `root_bs` for its style (such as
+`solid`, `dashed`, or `dotted`), and `root_bc` for its color:
+
+```text
+# Notes
+    : fname=notes.jpg root_bw=3 root_bs=dashed root_bc="#88c0d0"
+```
+
+These affect only the root node and override its border settings. The border
+style preserves the root fill; `root_bw=0` hides the border. Omitted attributes
+keep the existing defaults.
+
 Add Font Awesome icons above the root title with `root_symb`:
 
 ```text
