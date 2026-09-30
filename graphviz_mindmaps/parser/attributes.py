@@ -283,7 +283,7 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
 
     m = re.search(
         r'^(%s)'
-        r'((?:(?:f[maed])|(?:f[0-9]+)|(?:ld|ul|st|it))+)$',
+        r'((?:(?:f[maed])|(?:f[0-9]+)|(?:ld|ul|st|it))+)$' % line_selector,
         k,
     )
     if m and m.group(1):

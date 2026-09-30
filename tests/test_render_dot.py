@@ -33,6 +33,36 @@ from graphviz_mindmaps.render.label_html import SpanRowsAcrossImages
 
 
 class RenderDotNodeAttributeTests(unittest.TestCase):
+    def test_multiline_list_font_selector_counts_separator(self):
+        from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
+        from graphviz_mindmaps.parser.attributes import fontface
+        from graphviz_mindmaps.render.dot import GenDot
+
+        for selector in ('l[4,5]fm', 'l[4-5]fm', 'El[1,2]fm'):
+            with self.subTest(selector=selector):
+                blocks = ExtractMindmapBlocks([
+                    '# Root', '\t: fname=out.jpg',
+                    '\t# funkcija postavlja dva atributa',
+                    '\t# nad model instancom', '\t# ---',
+                    '\t# instance._cache_user_changed',
+                    '\t# instance._cache_usage_accounts',
+                    '\t\t: list ' + selector,
+                ], ApplyInlineBacktickBold)
+                session = RenderSession()
+                with patch('graphviz_mindmaps.render.dot.WriteDot'):
+                    GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None),
+                           session, RenderRuntime({}, '#ffffff'))
+                mono_rows = [html.unescape(re.sub(r'<[^>]+>', '', row)).replace('\xa0', ' ').strip()
+                             for row in re.findall(r'<TD\b[^>]*>(.*?)</TD>', session.dotbuf)
+                             if '<FONT FACE="%s">' % fontface['fm'] in row]
+                self.assertEqual(['instance._cache_user_changed',
+                                  'instance._cache_usage_accounts'], mono_rows)
+                self.assertIn('<HR/>', session.dotbuf)
+                if shutil.which('dot'):
+                    rendered = subprocess.run(['dot', '-Tsvg'], input=session.dotbuf,
+                                              capture_output=True, text=True)
+                    self.assertEqual(0, rendered.returncode, rendered.stderr)
+
     @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
     def test_block_formatting_blank_rows_produces_valid_graphviz_label(self):
         from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
