@@ -26,11 +26,17 @@
 			: root theme overrides the command-line choice
 			: code_theme selects a separate Pygments style
 			:
-		# default theme
-			: block
-			:
-			: theme=default
-			:
+			# default theme
+				: block
+				:
+				: theme=default
+				:
+			# preview filenames
+				: block
+				:
+				: mindmap-01-THEME.jpg
+				: example: mindmap-01-nord.jpg
+				:
 		# light themes
 			: block
 			:
@@ -45,30 +51,24 @@
 			: theme=ayu-light
 			: theme=dayfox
 			:
-		# dark themes
-			: block
-			:
-			: theme=nord
-			: theme=papercolor-dark
-			: theme=monokai
-			: theme=gruvbox
-			: theme=solarized
-			: theme=dracula
-			: theme=catppuccin-mocha
-			: theme=tokyo-night
-			: theme=one-dark
-			: theme=rose-pine
-			: theme=kanagawa
-			: theme=everforest-dark
-			: theme=ayu-dark
-			: theme=nightfox
-			:
-		# preview filenames
-			: block
-			:
-			: mindmap-01-THEME.jpg
-			: example: mindmap-01-nord.jpg
-			:
+			# dark themes
+				: block
+				:
+				: theme=nord
+				: theme=papercolor-dark
+				: theme=monokai
+				: theme=gruvbox
+				: theme=solarized
+				: theme=dracula
+				: theme=catppuccin-mocha
+				: theme=tokyo-night
+				: theme=one-dark
+				: theme=rose-pine
+				: theme=kanagawa
+				: theme=everforest-dark
+				: theme=ayu-dark
+				: theme=nightfox
+				:
 	# edge ends
 		:
 		# edgra
@@ -463,12 +463,20 @@
 			:     invalidate_cache(record)
 			:     return record
 			:
-			# selected Pygments style - plain selector keeps its highlight color
-				: code python style=monokai l1 El1b
+			# selected Pygments style *perldoc*
+			# plain selector keeps its highlight color
+				: code python style=perldoc l1 El1b
 				:
-				: pre_save.connect(capture_cache_dependents)
-				: pre_delete.connect(invalidate_model_responses)
+				: def main():
+				:   pre_save.connect(capture_cache_dependents)
+				:   pre_delete.connect(invalidate_model_responses)
+				:   foo = "bar"
 				:
+				:   if (foo):
+				:     print("baz")
+				:
+				# https://pygments.org/styles/
+					: link
 	# subgraphs
 		:
 		# sgr'this is title'
