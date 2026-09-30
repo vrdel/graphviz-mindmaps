@@ -2,3 +2,4 @@
 .ropeproject/
 *.pyc
 galapix-docker/galapix-container*
+templates/Single/mindmap-01-*.jpg
