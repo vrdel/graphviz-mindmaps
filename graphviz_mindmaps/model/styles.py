@@ -7,6 +7,7 @@ class NodePrepState:
     wordcolor: list = field(default_factory=list)
     wordfsize: list = field(default_factory=list)
     wordfstyle: list = field(default_factory=list)
+    wordfont: list = field(default_factory=list)
     linecolor: list = field(default_factory=list)
     linefsize: list = field(default_factory=list)
     linefstyle: list = field(default_factory=list)

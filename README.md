@@ -60,6 +60,18 @@ The repo also contains a local helper script:
 
 ## Usage
 
+Apply a font to a selected word with `l1w2fmld` (first line, second word,
+monospace, bold):
+
+```text
+# za models.User ide posebna logika
+    : commen l1w2fmld
+```
+
+Line and word numbers start at 1. Word font selectors accept `fm` (monospace),
+`fa` (sans serif), `fe` (serif), and `fd` (default comic font), combined with
+size and emphasis such as `l1w2fmf20ld`. Use tabs for `.otl` indentation.
+
 Create template projects:
 
 ```bash

@@ -138,7 +138,7 @@ def ResolveSymbolNames(spec, symbol_map):
     return resolved
 
 
-def ParseAttributeLine(k, tonode, bgcolor, *args):
+def ParseAttributeLine(k, tonode, bgcolor, *args, wordfont=None):
     (
         wordcolor, wordfsize, wordfstyle,
         linecolor, linefsize, linefstyle, linefont,
@@ -341,8 +341,10 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
                 entry.append(meta)
             linedate.append(entry)
 
-    m = re.search(r'(%s)?((?:E?w)(?:[0-9]+)|(?:E?w)(?:\[[0-9,\-]+\]))?([rgbycpkt])?(f[0-9]+)?((?:ld|ul|st|it)+)?' % line_selector, k)
-    if m.group(2):
+    m = re.fullmatch(
+        r'(%s)?((?:E?w)(?:[0-9]+|\[[0-9,\-]+\]))([rgbycpkt])?'
+        r'((?:f[maed]|f[0-9]+|ld|ul|st|it)*)' % line_selector, k)
+    if m:
         header = False
         if m.group(1):
             lineidx, header = ParseLineIdxSpec(m.group(1))
@@ -355,11 +357,14 @@ def ParseAttributeLine(k, tonode, bgcolor, *args):
             for wi in wordidx:
                 if m.group(3):
                     wordcolor.append([wi, fontcolor[m.group(3)], lmeta])
-                if m.group(4):
-                    wordfsize.append([wi, m.group(4)[1:], lmeta])
-                if m.group(5):
-                    for si in range(0, len(m.group(5)), 2):
-                        wordfstyle.append([wi, fontstyle[m.group(5)[si:si+2]], lmeta])
+                for suffix in re.findall(r'f[maed]|f[0-9]+|ld|ul|st|it', m.group(4)):
+                    if suffix in fontface:
+                        if wordfont is not None:
+                            wordfont.append([wi, fontface[suffix], lmeta])
+                    elif suffix.startswith('f'):
+                        wordfsize.append([wi, suffix[1:], lmeta])
+                    else:
+                        wordfstyle.append([wi, fontstyle[suffix], lmeta])
 
     m = re.search(r'(sym(?:[0-9]+)|sym(?:\[[0-9,]+\]))?([rgbycpkt])?(f[0-9]+)?', k)
     if m.group(1):
@@ -559,6 +564,7 @@ def ApplyNodeAttributeTokens(
                 state.symbcolor,
                 state.symbsize,
                 state.linedate,
+                wordfont=state.wordfont,
             )
 
         image_match = re.match(r"^(%s)[=:](.+)$" % IMAGE_TRANSFORM_KEY_PATTERN, token)
