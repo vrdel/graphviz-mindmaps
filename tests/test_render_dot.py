@@ -33,6 +33,30 @@ from graphviz_mindmaps.render.label_html import SpanRowsAcrossImages
 
 
 class RenderDotNodeAttributeTests(unittest.TestCase):
+    def test_word_font_and_bold_target_second_word_of_first_line(self):
+        from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
+        from graphviz_mindmaps.render.dot import GenDot
+
+        for selector in ('l1w2fmld', 'l1w[2]fmld', 'l1Ew4fmld'):
+            with self.subTest(selector=selector):
+                blocks = ExtractMindmapBlocks([
+                    '# Root', '\t: fname=out.jpg',
+                    '\t# za models.User ide posebna logika',
+                    '\t# druga linija ostaje nepromijenjena',
+                    '\t\t: commen ' + selector,
+                ], ApplyInlineBacktickBold)
+                session = RenderSession()
+                with patch('graphviz_mindmaps.render.dot.WriteDot'):
+                    GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None),
+                           session, RenderRuntime({}, '#ffffff'))
+                self.assertIn('<B><FONT FACE="%s">models.User</FONT></B>' % font['mono'], session.dotbuf)
+                self.assertEqual(1, session.dotbuf.count('<FONT FACE="%s">' % font['mono']))
+                self.assertNotIn('<B>za', session.dotbuf)
+                if shutil.which('dot'):
+                    rendered = subprocess.run(['dot', '-Tsvg'], input=session.dotbuf,
+                                              capture_output=True, text=True)
+                    self.assertEqual(0, rendered.returncode, rendered.stderr)
+
     def test_multiline_list_font_selector_counts_separator(self):
         from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
         from graphviz_mindmaps.parser.attributes import fontface

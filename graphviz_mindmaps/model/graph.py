@@ -687,7 +687,7 @@ class Tree:
         p._child.insert(0, c)
         return c
 
-    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None, sgmargin=None, bordercolor=None, borderwidth=None, borderstyle=None, hr_style=None):
+    def addchild_rev(self, nodename, tabs, ntype, label, p, wordcolor=None, linecolor=None, wordfsize=None, linefsize=None, wordfstyle=None, linefstyle=None, linefont=None, linedate=None, sgcolor=None, sgtitle=None, sgstyle=None, vrbt=False, draw=False, textleft=False, fontname=None, bgcolor=None, fgcolor=None, child_subgraphs=None, sgmargin=None, bordercolor=None, borderwidth=None, borderstyle=None, hr_style=None, wordfont=None):
         sgattr = ""
         enable_subgraphs = self._subgraphs_enabled_for_tabs(tabs, p)
         sgmargin = sgmargin if sgmargin is not None else self.default_sgmargin
@@ -699,6 +699,7 @@ class Tree:
         if enable_subgraphs and sgtitle:
             self._addchild_rev("", ["label = <<TABLE CELLBORDER=\"0\" CELLPADDING=\"3\" CELLSPACING=\"3\" BORDER=\"0\"><TR><TD BGCOLOR=\"#E9ED5F\" COLOR=\"#000000\"><U>%s</U></TD></TR></TABLE>>" % (sgtitle)], tabs, "sgwrap", p)
         c = self._addchild_rev(nodename, label, tabs, ntype, p, wordcolor, linecolor, wordfsize, linefsize, wordfstyle, linefstyle, linefont, linedate, vrbt, draw, fontname, bgcolor, fgcolor, child_subgraphs, bordercolor, borderwidth, borderstyle, hr_style)
+        c._wordattr(wordfont or [], "<FONT FACE=", "</FONT>")
         c.wordfsize()
         c.wordfstyle()
         c.linefsize()
@@ -707,7 +708,7 @@ class Tree:
         c.linefont()
         c.colorifylines()
         c.linedate()
-        c._apply_default_verbatim_header_style((wordcolor, wordfsize, wordfstyle, linecolor, linefsize, linefstyle, linefont, linedate))
+        c._apply_default_verbatim_header_style((wordcolor, wordfsize, wordfstyle, wordfont, linecolor, linefsize, linefstyle, linefont, linedate))
         c._remove_verbatim_body_boundary()
 
         self.post_attr_proc_label(c._label, ntype, vrbt, draw, textleft)
