@@ -219,6 +219,16 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
             continue
 
         title = worklines[cursor]
+        title_start = cursor
+        root_heading = re.match(r"^(\t*)# ", title)
+        if root_heading:
+            heading_prefix = root_heading.group(0)
+            while title_start > 0 and worklines[title_start - 1].startswith(heading_prefix):
+                title_start -= 1
+            title = worklines[title_start].rstrip() + ''.join(
+                '; ' + line[len(heading_prefix):].rstrip()
+                for line in worklines[title_start + 1:cursor + 1]
+            )
         tabroot = level
         level += 1
         linesbymm = [title, nextline]

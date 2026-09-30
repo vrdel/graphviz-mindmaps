@@ -249,11 +249,12 @@ def IsOutlineLeaf(lines, index, level, tabnum):
     return True
 
 
-def BuildRootLabel(lines, title, symbol_map):
+def BuildRootLabel(lines, title, symbol_map, tree):
     symbols = []
     symbol_color = fontcolor["r"]
     symbol_colors = {}
     symbol_sizes = {}
+    text_tokens = []
     for line in lines[1:]:
         if re.search(r"(\t#) (.*)", line):
             break
@@ -263,6 +264,10 @@ def BuildRootLabel(lines, title, symbol_map):
         root_fg = ParseInlineAttrLine("root_fg", line)
         if root_fg:
             symbol_color = root_fg
+        text_tokens.extend(
+            token for token in TokenizeNodeAttributeLine(line)
+            if re.match(r"^(?:E?[lhw])(?:[0-9]|\[|l[0-9]|l\[)", token)
+        )
         for token in line.split():
             match = re.fullmatch(r"root_sym([0-9]+|\[[0-9]+(?:,[0-9]+)*\])([rgbycpkt])?(?:f([0-9]+))?", token)
             if not match:
@@ -272,14 +277,41 @@ def BuildRootLabel(lines, title, symbol_map):
                     symbol_colors.setdefault(index, fontcolor[match.group(2)])
                 if match.group(3):
                     symbol_sizes.setdefault(index, match.group(3))
-    label = title.replace(";", "<BR/>")
+    labelhtml, _, _ = BuildNodeLabelHtml(
+        title, False, False, html_larrow1, html_rarrow1,
+        html_larrow2, html_rarrow2, GenImgPath,
+    )
+    state = NodePrepState(ntype="root")
+    ApplyNodeAttributeTokens(
+        text_tokens, "node1", state, labelhtml, [], {},
+        lambda token: None, ResolveSymbolNames, GenImgPath,
+        symbol_map, [], tempfile, subprocess, "",
+    )
+    label_node = Tree.Node(
+        tree, "node1", label=labelhtml, ntype="root",
+        wordcolor=state.wordcolor, wordfsize=state.wordfsize,
+        wordfstyle=state.wordfstyle, linecolor=state.linecolor,
+        linefsize=state.linefsize, linefstyle=state.linefstyle,
+        linefont=state.linefont, linedate=state.linedate,
+    )
+    label_node._wordattr(state.wordfont, "<FONT FACE=", "</FONT>")
+    label_node.wordfsize()
+    label_node.wordfstyle()
+    label_node.linefsize()
+    label_node.colorifywords()
+    label_node.linefstyle()
+    label_node.linefont()
+    label_node.colorifylines()
+    label_node.linedate()
+    PostAttrProcLabel(label_node._label, "root", False, False, False)
+    label = "".join(label_node._label)
     if symbols:
         icons = "&nbsp;".join(
             '<FONT FACE="FontAwesome" COLOR="%s" POINT-SIZE="%s">%s</FONT>'
             % (symbol_colors.get(index, symbol_color), symbol_sizes.get(index, "25"), symbol_map[name])
             for index, name in enumerate(symbols, start=1)
         )
-        label = icons + "</TD></TR><TR><TD>" + label
+        label = label.replace("<TR>", "<TR><TD>" + icons + "</TD></TR><TR>", 1)
     return label
 
 
@@ -409,14 +441,14 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     edge_default_attrs.update(root_edge_defaults)
     edge_default_attr = " ".join('%s="%s"' % (key, value) for key, value in edge_default_attrs.items())
     root_attrs = ResolveRootNodeAttributes(lines, nodetype["root"])
-    root_label = BuildRootLabel(lines, match.group(2), runtime.fontawesome_symb)
+    root_label = BuildRootLabel(lines, match.group(2), runtime.fontawesome_symb, tree)
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
     dotbuf += "\tedge[%s];\n\n" % edge_default_attr
     dotbuf += "// %s\n" % (match.group(2))
     dotbuf += "\tsubgraph cluster000 {\n\n"
     dotbuf += "\t\tstyle=radial;\n\t\tordering=out;\n\t\tfillcolor=\"%s\";\n\t\tcolor=\"%s\";\n\n" % (bgcolor, bgcolor)
-    dotbuf += "\t\t%s[%s label=<<TABLE CELLBORDER=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>%s</TD></TR></TABLE>>];\n" % (rootnodename, root_attrs, root_label)
+    dotbuf += "\t\t%s[%s label=<%s>];\n" % (rootnodename, root_attrs, root_label)
 
     dotname = "%s.dot" % (match.group(2))
     jpgname = "%s.jpg" % (match.group(2))

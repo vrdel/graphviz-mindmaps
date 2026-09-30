@@ -157,6 +157,22 @@ with the `fname=` line:
 Use tabs for indentation in `.otl` files. This continuation syntax applies only
 to the root; ordinary child attributes remain on their existing attribute line.
 
+Root titles can also span consecutive `#` lines at the same indentation.
+Use the usual word and line selectors on the root attribute lines:
+
+```text
+# za models.User ide posebna logika
+# druga linija naslova
+    : fname=notes.jpg notitle root_symb=check
+    : l1w2fmld l2f30 l2b
+```
+
+This renders `models.User` in bold monospace and the second title line in
+30-point blue text. Semicolon-separated titles still work. Selectors count
+title lines and words from 1, excluding root icons, and affect only the root.
+Font, size, color, emphasis, ranges, and end-relative selectors work as they
+do on child labels.
+
 Use `root_bg` for the root node's fill and `root_fg` for its text color:
 
 ```text
