@@ -1,4 +1,6 @@
 import unittest
+import shutil
+import subprocess
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -12,6 +14,67 @@ from graphviz_mindmaps.theme import ApplyTheme, THEME_PALETTES
 
 
 class RootThemeTests(unittest.TestCase):
+    def test_multiline_root_headings_match_semicolon_titles(self):
+        titles = ['za models.User ide posebna logika', 'druga linija']
+        attrs = ['fname=out.jpg notitle root_symb=check root_sym1gf35',
+                 'l1w2fmld l1mr l2fe l2f30 l2b El1it']
+
+        def render(headings, formatting=attrs):
+            blocks = ExtractMindmapBlocks(
+                ['# ' + title for title in headings] +
+                ['\t: ' + attr for attr in formatting] +
+                ['\t# Child', '\t\t: node'], ApplyInlineBacktickBold)
+            self.assertEqual(1, len(blocks))
+            session = RenderSession()
+            with patch('graphviz_mindmaps.render.dot.WriteDot'):
+                GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None),
+                       session, build_runtime('default'))
+            return session
+
+        multiline = render(titles)
+        self.assertEqual(multiline.dotbuf, render(['; '.join(titles)]).dotbuf)
+        root = next(line for line in multiline.dotbuf.splitlines() if 'node1[' in line)
+        self.assertIn('<B><FONT FACE="%s">models.User</FONT></B>' % constants.font['mono'], root)
+        self.assertIn('FACE="Dejavu Serif"', root)
+        self.assertIn('POINT-SIZE="30"', root)
+        self.assertIn('<I>', root)
+        self.assertIn('COLOR="%s"' % constants.fontcolor['b'], root)
+        self.assertIn('FACE="FontAwesome"', root)
+        self.assertIn('POINT-SIZE="35"', root)
+        self.assertLess(root.index('FACE="FontAwesome"'), root.index('BGCOLOR='))
+        plain = render(titles, [attrs[0]])
+        child = lambda session: next(line for line in session.dotbuf.splitlines() if 'node101[' in line)
+        self.assertEqual(child(plain), child(multiline))
+        if shutil.which('dot'):
+            result = subprocess.run(['dot', '-Tsvg'], input=multiline.dotbuf, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_multiline_root_extraction_keeps_maps_and_indentation_separate(self):
+        for indent in ('', '\t'):
+            with self.subTest(indent=indent):
+                lines = [indent + line for line in [
+                    '# First', '# continued # text', '\t: fname=first.jpg',
+                    '\t: l2fm', '# Second', '# final line', '\t: fname=second.jpg',
+                ]]
+                blocks = ExtractMindmapBlocks(lines, ApplyInlineBacktickBold)
+                self.assertEqual(2, len(blocks))
+                self.assertEqual(indent + '# First; continued # text', blocks[0][0])
+                self.assertEqual(indent + '# Second; final line', blocks[1][0])
+                self.assertEqual(indent + '\t: l2fm', blocks[0][-1])
+
+    def test_root_word_selectors_ignore_icon_row(self):
+        for selector in ('w2fm', 'l1w2fm', 'l1Ew2fm'):
+            with self.subTest(selector=selector):
+                blocks = ExtractMindmapBlocks([
+                    '# first second third', '\t: fname=out.jpg root_symb=check ' + selector,
+                ], ApplyInlineBacktickBold)
+                session = RenderSession()
+                with patch('graphviz_mindmaps.render.dot.WriteDot'):
+                    GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None),
+                           session, build_runtime('default'))
+                self.assertIn('<FONT FACE="%s">second</FONT>' % constants.font['mono'], session.dotbuf)
+                self.assertEqual(1, session.dotbuf.count('<FONT FACE="%s">' % constants.font['mono']))
+
     def test_root_symbol_color_and_size_override_only_selected_icon(self):
         for theme in ('default', 'github-light', 'nord'):
             with self.subTest(theme=theme):
