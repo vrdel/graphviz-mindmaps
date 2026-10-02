@@ -2,6 +2,7 @@ import base64
 import os
 import re
 import unicodedata
+from itertools import groupby
 
 from graphviz_mindmaps.render.image_transform import IMAGE_TRANSFORM_KEY_PATTERN
 
@@ -206,6 +207,18 @@ def _CollectCodeNodeLine(lines, node_line_index, language, style_name=None, head
 
 
 def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
+    from graphviz_mindmaps.parser.markdown import PrepareMarkdownBodies
+
+    blocks = []
+    # File boundaries must close bodies even if consecutive files have identical names.
+    for _, source in groupby(linesall, lambda line: (getattr(line, "filename", "<input>"),
+                                                    getattr(line, "document", 0))):
+        blocks.extend(_ExtractMindmapBlocks(
+            PrepareMarkdownBodies(list(source)), apply_inline_backtick_bold))
+    return blocks
+
+
+def _ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
     blocks = []
     worklines = list(linesall)
     cursor = 0

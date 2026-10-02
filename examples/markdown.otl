@@ -1,0 +1,42 @@
+# Markdown nodes
+	: fname=markdown.jpg notitle theme=github-light
+	: root_symb=book root_sym1bf30
+	# node with markdown
+		: md md_width=380 bg="#f5f5f5" bw=1 bc="#8a8a8a"
+		:
+		: # header title 1
+		:
+		: i'm text of **bolded** text of paragraph.
+		:
+		: A paragraph can span
+		: several source lines and wrap at the configured width.
+		:
+		: ## Technical notes
+		:
+		: Inline `models.User` is monospace; *emphasis* and ~~strikethrough~~ work too.
+		:
+		: 3. Ordered lists keep their starting number.
+		: 4. A longer item wraps with a hanging indent instead of starting beneath the number.
+		:    - Nested list item
+		:    - [x] Implemented
+		:    - [ ] Next task
+		:
+		: > A blockquote with **bold text**.
+		:
+		: ```python
+		: # A comment is not an outline node.
+		: if user.is_active:
+		:     update(user)
+		: ```
+		:
+		: | Feature | State |
+		: | :--- | ---: |
+		: | Heading | **Ready** |
+		: | Code | `python` |
+		:
+		: [CommonMark](https://spec.commonmark.org/) is shown as a styled link.
+	# za models.User ide posebna logika
+		: md hl1w2fmld md_width=320
+		: The outer title uses a header selector. The body uses **Markdown**.
+	# Ordinary sibling
+		: node
