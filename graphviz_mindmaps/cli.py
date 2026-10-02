@@ -4,7 +4,7 @@ import argparse
 import sys
 
 from graphviz_mindmaps import fontawesome
-from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
+from graphviz_mindmaps.model.document import RenderRuntime, RenderSession, SourceLine
 from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
 from graphviz_mindmaps.render.dot import GenDot
 from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
@@ -27,12 +27,13 @@ def build_parser():
 def read_input_lines(files):
     linesall = []
     if files:
-        for fil in files:
+        for document, fil in enumerate(files):
             with open(fil) as fo:
-                for line in fo:
-                    linesall.append(line.rstrip())
+                for number, line in enumerate(fo, 1):
+                    linesall.append(SourceLine(line.rstrip("\r\n"), fil, number, document))
     else:
-        linesall = sys.stdin.read().splitlines()
+        linesall = [SourceLine(line, number=number)
+                    for number, line in enumerate(sys.stdin.read().splitlines(), 1)]
     return linesall
 
 
