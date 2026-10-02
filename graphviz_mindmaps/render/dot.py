@@ -7,6 +7,8 @@ from graphviz_mindmaps.theme import ApplyTheme
 
 from graphviz_mindmaps.fontawesome import FONT_DIR
 from graphviz_mindmaps.render.code_image import ExtractCodeHighlights, RenderCodeImage
+from graphviz_mindmaps.parser.markdown import DecodeMarkdownBody
+from graphviz_mindmaps.render.markdown import AppendMarkdownLabel, RenderMarkdown
 from graphviz_mindmaps.constants import (
     MAXDEPTH,
     edgetype,
@@ -360,6 +362,8 @@ def ResolveRootCodeTheme(lines):
 
 
 def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
+    root_heading, root_markdown = DecodeMarkdownBody(lines[0])
+    lines = [root_heading, *lines[1:]]
     root_theme = ResolveRootTheme(lines)
     root_code_theme = ResolveRootCodeTheme(lines)
     theme_bgcolor = ApplyTheme(root_theme or runtime.theme_name)
@@ -442,6 +446,18 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     edge_default_attr = " ".join('%s="%s"' % (key, value) for key, value in edge_default_attrs.items())
     root_attrs = ResolveRootNodeAttributes(lines, nodetype["root"])
     root_label = BuildRootLabel(lines, match.group(2), runtime.fontawesome_symb, tree)
+    if root_markdown is not None:
+        root_options = []
+        for attr in lines[1:]:
+            if re.match(r"^\t*# ", attr):
+                break
+            root_options.append(attr)
+        root_options = ' '.join(root_options)
+        root_label = AppendMarkdownLabel(root_label, RenderMarkdown(
+            root_markdown, tmpdir, ParseInlineAttrLine('md_width', root_options) or 420,
+            foreground=ParseInlineAttrLine('root_fg', root_options),
+            code_theme=root_code_theme,
+        ))
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
     dotbuf += "\tedge[%s];\n\n" % edge_default_attr
@@ -468,16 +484,15 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             if re.search("otlname", line):
                 title = ParseOtlname("otlname", line) + "  -  " + title
 
-        if lines.index(line) < len(lines) - 1:
-            nextline = lines[lines.index(line) + 1]
-        else:
-            nextline = lines[lines.index(line)]
+        nextline = lines[line_index + 1] if line_index + 1 < len(lines) else line
 
         if re.search(r"(\t#) (.*)", line):
             level = line[:line.find("#")].count("\t") - tabnum
 
             match = re.search(r"(\t|#) (.*)", line)
             label = match.group(2)
+            label, markdown_body = DecodeMarkdownBody(label)
+            markdown_width = ParseInlineAttrLine('md_width', nextline) or 420
             code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\"(?: style=\"([^\"]+)\")? data=\"([^\"]*)\"/>", label)
             code_source = None
             code_language = None
@@ -561,7 +576,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
             ntype = state_obj.ntype
             if not ntype:
-                if code_source is not None:
+                if code_source is not None or markdown_body is not None:
                     ntype = "node"
                 elif IsOutlineLeaf(lines, line_index, level, tabnum):
                     ntype = leaf_ntype
@@ -651,6 +666,18 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             )
             if code_image_path:
                 InsertImageRow(parentlist[level]._label, code_image_path)
+            if markdown_body is not None:
+                node = parentlist[level]
+                attrs = node._apply_node_overrides(nodetype[ntype])
+                body_label = RenderMarkdown(
+                    markdown_body, tmpdir, markdown_width,
+                    face=state_obj.fontname or ParseInlineAttrLine('fontname', attrs),
+                    foreground=state_obj.fgcolor or ParseInlineAttrLine('fontcolor', attrs),
+                    size=next((entry[1] for entry in state_obj.linefsize if entry[0] == 0),
+                              ParseInlineAttrLine('fontsize', attrs) or fontsize['m']),
+                    code_theme=root_code_theme,
+                )
+                node._label = [AppendMarkdownLabel(''.join(node._label), body_label)]
 
             nodelevel[level - 1] += 1
             for index in range(level, len(nodelevel) - 1):

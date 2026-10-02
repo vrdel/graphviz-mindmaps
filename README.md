@@ -445,3 +445,69 @@ Open [fontawesome-codes.html](fontawesome-codes.html) to view the rendered icon 
 
 Licensed under the Apache License, Version 2.0.
 See [LICENSE](/home/daniel/my_work/git.graphviz-mindmaps/graphviz-mindmaps/LICENSE).
+
+## Markdown nodes
+
+Add `md` (or `markdown`) on a node's attribute line. Every following body line
+uses `:` at the same tab indentation as that attribute line:
+
+```text
+# Markdown examples
+	: fname=markdown.jpg notitle
+	# node with markdown
+		: md md_width=420
+		:
+		: # header title 1
+		:
+		: i'm text of **bolded** text of paragraph.
+	# normal sibling
+		: node
+```
+
+The outer node title is retained. Markdown headings stay inside the node;
+an unprefixed outline heading ends the body. Remove only the colon prefix and
+one separator space when reading a body: extra indentation and trailing spaces
+remain significant. Use a bare `:` for Markdown blank lines. Nest Markdown lists
+with spaces **after** the colon, rather than additional outline tabs.
+
+The supported profile is CommonMark with explicit strikethrough and table rules,
+plus static task-list markers. It renders headings, paragraphs, emphasis, inline
+code, nested lists, quotes, separators, fenced/indented code, tables, and explicit
+or reference links. Soft breaks become spaces; two trailing spaces or a trailing
+backslash produce a hard break. Raw HTML is literal text. Links are styled text,
+not clickable links in JPG output. Code is syntax-highlighted through Pygments
+and embedded as an image; unknown languages fall back to plain text. The root
+`code_theme=` selects the code style.
+
+`md_width=420` sets the target body width in points. Prose wraps while retaining
+inline styles; lists use hanging indentation and table columns share the available
+width. An indivisible word or inline-code span may exceed that width. Code and
+local images are scaled down to fit. Markdown image syntax is supported for one
+image in its own paragraph; relative paths resolve against the `.otl` file.
+Remote images are not downloaded. Missing images produce a source-located error.
+
+Normal node colors, borders, icons, and edges still work. Use `hl1w2fmld`, for
+example, to style the second word of the first **outer title** line. Body line/word
+selectors (`l...` and `w...`) are rejected on Markdown nodes: use Markdown markup
+for the body. The existing selector behavior on ordinary nodes is unchanged.
+`md`, `code`, `block`, and `draw` cannot be combined on the same node.
+
+Root Markdown uses the same body syntax. The attribute line containing `md` ends
+the root's attribute group; subsequent colon-prefixed lines are body text:
+
+```text
+# Root title
+# second title line
+	: fname=notes.jpg notitle
+	: theme=github-light root_symb=book
+	: md hl2fm md_width=400
+	: ## Heading inside the root
+	:
+	: A **Markdown** paragraph.
+	# Child
+		: node
+```
+
+See [examples/markdown.otl](examples/markdown.otl) for a complete example. Render it
+from the example directory with `gvmm -f markdown.otl`, or choose an explicit
+output with `gvmm -f examples/markdown.otl -i /tmp/markdown.jpg`.
