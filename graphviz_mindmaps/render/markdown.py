@@ -183,7 +183,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 listrows = []
                 markers = [f'{block.start + index}.' if kind == 'ordered_list' else '•'
                            for index in range(len(block.children))]
-                marker_width = max([_measure(m, face, size) for m in markers] + [size]) + 8
+                marker_width = max([_measure(m, face, size) for m in markers] + [size]) + 2
                 for index, item in enumerate(block.children):
                     children = list(item.children)
                     marker = markers[index]
@@ -195,7 +195,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                             children[0] = replace(children[0], runs=[replace(first, text=first.text[task.end():])] + children[0].runs[1:])
                     content = render(children, max(1, available - marker_width - 6))
                     content_width = max(1, math.ceil(available - marker_width - 6))
-                    listrows.append(f'<TR><TD VALIGN="TOP" ALIGN="LEFT" WIDTH="{math.ceil(marker_width)}">{escape(marker)}</TD><TD ALIGN="LEFT" WIDTH="{content_width}">{content}</TD></TR>')
+                    listrows.append(f'<TR><TD VALIGN="TOP" ALIGN="RIGHT" WIDTH="{math.ceil(marker_width)}">{escape(marker)}</TD><TD ALIGN="LEFT" CELLPADDING="0" WIDTH="{content_width}">{content}</TD></TR>')
                 rows.append(textrow(table(listrows)))
             elif kind == 'table':
                 matrix = [row for section in block.children for row in section.children]
