@@ -149,7 +149,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
         rows = []
         for block in items:
             kind = block.kind
-            if kind == 'heading':
+            if kind == 'heading' and block is not blocks[0]:
                 gap = max(4, round(size * 0.5))
                 rows.append(f'<TR><TD HEIGHT="{gap}" CELLPADDING="0"><FONT POINT-SIZE="1">&#160;</FONT></TD></TR>')
             if kind in {'paragraph', 'heading'}:
