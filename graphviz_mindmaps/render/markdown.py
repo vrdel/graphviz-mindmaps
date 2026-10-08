@@ -64,7 +64,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
         for enabled, tag in ((run.bold or bold, 'B'), (run.italic, 'I'), (run.strike, 'S')):
             if enabled:
                 value = f'<{tag}>{value}</{tag}>'
-        color = fontcolor['b'] if run.link else foreground
+        color = ('#174ea6' if run.link else '#202020') if run.highlight else (
+            fontcolor['b'] if run.link else foreground)
         family = font['mono'] if run.code else face
         return f'<FONT FACE="{escape(family, quote=True)}" POINT-SIZE="{points:g}" COLOR="{escape(color, quote=True)}">{value}</FONT>'
 
@@ -98,11 +99,13 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     word.append(replace(run, text=piece))
         if word:
             groups.append(('word', word))
-        rows, row, used, space = [], '', 0.0, False
+        rows, row, used, space = [], [], 0.0, False
+        widths = []
         for kind, parts in groups:
             if kind == 'break':
-                rows.append(row or '&#160;')
-                row, used, space = '', 0.0, False
+                rows.append(row)
+                widths.append(used)
+                row, used, space = [], 0.0, False
             elif kind == 'space':
                 space = bool(row)
             else:
@@ -112,17 +115,39 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 # A little slack accounts for differences in Graphviz/Pillow metrics.
                 if row and used + gap + length > available * .94:
                     rows.append(row)
-                    row, used, space = '', 0.0, False
+                    widths.append(used)
+                    row, used, space = [], 0.0, False
                     gap = 0
                 if space:
-                    row += ' '
-                row += ''.join(run_html(r, r.text, points, bold) for r in parts)
+                    row.append(('&#160;', row[-1][1] and parts[0].highlight))
+                row.extend((run_html(r, r.text, points, bold), r.highlight) for r in parts)
                 used += gap + length
                 space = False
         if row or not rows:
-            rows.append(row or '&#160;')
+            rows.append(row)
+            widths.append(used)
+        if any(marked for row in rows for _, marked in row):
+            # Graphviz FONT has no background attribute. Group adjacent marked
+            # runs into table cells, retaining the same word wrapping as prose.
+            lines = []
+            for row, row_width in zip(rows, widths):
+                cells = []
+                for value, marked in row or [('&#160;', False)]:
+                    if cells and cells[-1][1] == marked:
+                        cells[-1][0] += value
+                    else:
+                        cells.append([value, marked])
+                content = ''.join(
+                    '<TD ALIGN="LEFT"' + (' BGCOLOR="#fff2a8"' if marked else '') + '>' + value + '</TD>'
+                    for value, marked in cells)
+                lines.append(f'<TR><TD ALIGN="{align}"><TABLE BORDER="0" CELLBORDER="0" '
+                             f'FIXEDSIZE="TRUE" WIDTH="{max(1, math.ceil(row_width * 1.12 + 4))}" HEIGHT="{math.ceil(points * 1.5)}" '
+                             f'CELLSPACING="0" CELLPADDING="0" ALIGN="{align}"><TR>' + content + '</TR></TABLE></TD></TR>')
+            return (f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" ALIGN="{align}">'
+                    + ''.join(lines) + '</TABLE>')
         # Graphviz aligns the line *preceding* BR, including the final line.
-        return ''.join(row + f'<BR ALIGN="{align}"/>' for row in rows)
+        return ''.join((''.join(value for value, _ in row) or '&#160;')
+                       + f'<BR ALIGN="{align}"/>' for row in rows)
 
     def table(rows, border=0):
         return f'<TABLE BORDER="{border}" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" ALIGN="LEFT">' + ''.join(rows) + '</TABLE>'

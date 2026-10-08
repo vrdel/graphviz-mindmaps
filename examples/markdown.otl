@@ -8,6 +8,8 @@
 		:
 		: i'm text of **bolded** text of paragraph.
 		:
+		: Use ==highlighted text== or ==highlighted **bold** text== for emphasis.
+		:
 		: A paragraph can span
 		: several source lines and wrap at the configured width.
 		:

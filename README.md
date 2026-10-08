@@ -470,7 +470,7 @@ one separator space when reading a body: extra indentation and trailing spaces
 remain significant. Use a bare `:` for Markdown blank lines. Nest Markdown lists
 with spaces **after** the colon, rather than additional outline tabs.
 
-The supported profile is CommonMark with explicit strikethrough and table rules,
+The supported profile is CommonMark with explicit strikethrough, highlight, and table rules,
 plus static task-list markers. It renders headings, paragraphs, emphasis, inline
 code, nested lists, quotes, separators, fenced/indented code, tables, and explicit
 or reference links. Soft breaks become spaces; two trailing spaces or a trailing
@@ -478,6 +478,12 @@ backslash produce a hard break. Raw HTML is literal text. Links are styled text,
 not clickable links in JPG output. Code is syntax-highlighted through Pygments
 and embedded as an image; unknown languages fall back to plain text. The root
 `code_theme=` selects the code style.
+
+Use `==highlighted text==` for a pale yellow background with dark text in the
+Markdown body. Highlights can contain other inline formatting, for example
+`==important **bold** text==`, and wrap across lines. Use exactly two equals signs
+on each side, without spaces just inside the markers. Escaped markers
+(`\=\=literal\=\=`), unmatched markers, and markers inside code remain literal.
 
 `md_width=420` sets the target body width in points. Prose wraps while retaining
 inline styles; lists use hanging indentation and table columns share the available
