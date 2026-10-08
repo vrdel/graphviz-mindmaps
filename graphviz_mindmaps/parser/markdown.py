@@ -107,6 +107,7 @@ class Run:
     link: str = ''
     hardbreak: bool = False
     image: str = ''
+    highlight: bool = False
 
 
 @dataclass
@@ -122,14 +123,51 @@ class Block:
     align: str = 'left'
 
 
+def _highlight_tokenize(state, silent):
+    """Pair exact == delimiters using Markdown's normal flanking rules."""
+    if silent or state.src[state.pos] != '=':
+        return False
+    from markdown_it.rules_inline.state_inline import Delimiter
+
+    scanned = state.scanDelims(state.pos, True)
+    token = state.push('text', '', 0)
+    token.content = '=' * scanned.length
+    if scanned.length == 2:
+        state.delimiters.append(Delimiter(
+            marker=ord('='), length=0, token=len(state.tokens) - 1,
+            end=-1, open=scanned.can_open, close=scanned.can_close))
+    state.pos += scanned.length
+    return True
+
+
+def _highlight_postprocess(state):
+    groups = [state.delimiters] + [meta['delimiters'] for meta in state.tokens_meta
+                                 if meta and 'delimiters' in meta]
+    for delimiters in groups:
+        for delimiter in delimiters:
+            if delimiter.marker != ord('=') or delimiter.end == -1:
+                continue
+            closing = delimiters[delimiter.end]
+            for index, suffix, nesting in ((delimiter.token, 'open', 1),
+                                           (closing.token, 'close', -1)):
+                token = state.tokens[index]
+                token.type = 'mark_' + suffix
+                token.tag = 'mark'
+                token.nesting = nesting
+                token.markup = '=='
+                token.content = ''
+
+
 def ParseMarkdown(body):
-    """CommonMark plus explicit table/strikethrough rules, no HTML or linkify."""
+    """CommonMark plus tables, strikethrough and ==marks==, without HTML."""
     from markdown_it import MarkdownIt
     from markdown_it.tree import SyntaxTreeNode
 
     parser = MarkdownIt('commonmark', {'html': False, 'linkify': False,
                                       'typographer': False, 'breaks': False})
     parser.enable(['strikethrough', 'table'])
+    parser.inline.ruler.before('emphasis', 'highlight', _highlight_tokenize)
+    parser.inline.ruler2.before('emphasis', 'highlight', _highlight_postprocess)
     tree = SyntaxTreeNode(parser.parse(body.source, env={}))
 
     def inline(nodes, style=Run('')):
@@ -140,8 +178,9 @@ def ParseMarkdown(body):
                 result.append(replace(style, text=node.content))
             elif kind == 'code_inline':
                 result.append(replace(style, text=node.content, code=True))
-            elif kind in {'strong', 'em', 's', 'link'}:
+            elif kind in {'strong', 'em', 's', 'link', 'mark'}:
                 changes = {'strong': {'bold': True}, 'em': {'italic': True},
+                           'mark': {'highlight': True},
                            's': {'strike': True}, 'link': {'link': node.attrs.get('href', '')}}[kind]
                 result.extend(inline(node.children, replace(style, **changes)))
             elif kind == 'softbreak':

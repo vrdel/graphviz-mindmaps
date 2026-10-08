@@ -198,6 +198,46 @@ if ready:
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'md_width'):
                 self.render(self.outline('text', 'md md_width=' + value))
 
+    def test_highlight_parsing_and_literal_markers(self):
+        source = '==plain **bold** *italic* `code` [link](https://example.org)=='
+        runs = ParseMarkdown(MarkdownBody(source, '<test>', 'title', 1))[0].runs
+        self.assertTrue(all(run.highlight for run in runs))
+        for attr in ('bold', 'italic', 'code', 'link'):
+            self.assertTrue(any(getattr(run, attr) for run in runs))
+        for source in (r'\=\=literal\=\=', '`==code==`', '==unclosed',
+                       '== spaced ==', '===literal===', 'a = b'):
+            with self.subTest(source=source):
+                runs = ParseMarkdown(MarkdownBody(source, '<test>', 'title', 1))[0].runs
+                self.assertFalse(any(run.highlight for run in runs))
+        runs = ParseMarkdown(MarkdownBody('**==nested==** and ==next==', '<test>', 'title', 1))[0].runs
+        self.assertTrue(any(run.bold and run.highlight for run in runs))
+        self.assertEqual(['nested', 'next'], [run.text for run in runs if run.highlight])
+
+    def test_highlight_rendering_wraps_and_nested_blocks(self):
+        source = '''# ==Heading==
+
+Before ==several **bold** words that wrap across lines== after.
+
+==first\x20\x20
+second==
+
+- ==list item==
+
+> ==quote==
+
+| left | right |
+| :--- | ---: |
+| ==cell== | plain |
+'''
+        for theme in ('github-light', 'nord'):
+            with self.subTest(theme=theme):
+                dot = self.render(self.outline(source, 'md md_width=160'), theme)
+                self.assertIn('BGCOLOR="#fff2a8"', dot)
+                self.assertIn('COLOR="#202020"', dot)
+                self.assertIn('<B>bold</B>', dot)
+                self.assertNotIn('==', dot)
+                self.graphviz(dot)
+
     def test_header_word_font_ignores_symbols_and_does_not_change_body(self):
         from graphviz_mindmaps.constants import font
         for style in ('', 'symb=check', 'quest'):
