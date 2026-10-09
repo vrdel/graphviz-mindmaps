@@ -193,21 +193,13 @@ def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larro
             HtmlCompositeArrow("->", html_rarrow1, token, token_index, labelhtml)
             HtmlCompositeArrow("<-", html_larrow1, token, token_index, labelhtml)
         else:
-            if "__GVMM_LARROW1__" in labelhtml[token_index]:
-                labelhtml[token_index] = labelhtml[token_index].replace("__GVMM_LARROW1__", "<-")
-                HtmlCompositeArrow("<-", html_larrow1, labelhtml[token_index], token_index, labelhtml)
-
-            if "__GVMM_LARROW2__" in labelhtml[token_index]:
-                labelhtml[token_index] = labelhtml[token_index].replace("__GVMM_LARROW2__", "<=")
-                HtmlCompositeArrow("<=", html_larrow2, labelhtml[token_index], token_index, labelhtml)
-
-            if "__GVMM_RARROW1__" in labelhtml[token_index]:
-                labelhtml[token_index] = labelhtml[token_index].replace("__GVMM_RARROW1__", "->")
-                HtmlCompositeArrow("->", html_rarrow1, labelhtml[token_index], token_index, labelhtml)
-
-            if "__GVMM_RARROW2__" in labelhtml[token_index]:
-                labelhtml[token_index] = labelhtml[token_index].replace("__GVMM_RARROW2__", "=>")
-                HtmlCompositeArrow("=>", html_rarrow2, labelhtml[token_index], token_index, labelhtml)
+            for marker, htmlcode in (
+                ("__GVMM_LARROW1__", html_larrow1),
+                ("__GVMM_LARROW2__", html_larrow2),
+                ("__GVMM_RARROW1__", html_rarrow1),
+                ("__GVMM_RARROW2__", html_rarrow2),
+            ):
+                labelhtml[token_index] = labelhtml[token_index].replace(marker, htmlcode)
 
             if '<-' in labelhtml[token_index]:
                 labelhtml[token_index] = re.sub("<-", "&lt;-", labelhtml[token_index])

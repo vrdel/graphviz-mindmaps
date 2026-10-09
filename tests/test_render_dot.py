@@ -1015,6 +1015,39 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertNotIn("__GVMM_LARROW", rendered)
         self.assertNotIn("__GVMM_RARROW", rendered)
 
+    def test_block_arrow_chains_replace_every_arrow_unless_rawmarkers(self):
+        for mode in ('block', 'verbatim', 'block rawmarkers'):
+            for arrow, htmlcode in (
+                ('->', html_rarrow1), ('=>', html_rarrow2),
+                ('<-', html_larrow1), ('<=', html_larrow2),
+            ):
+                with self.subTest(mode=mode, arrow=arrow):
+                    blocks = ExtractMindmapBlocks(
+                        [
+                            '# Root', '\t: fname=out.jpg',
+                            '\t# Mon 05-10-2026',
+                            '\t\t: hl1date ' + mode + ' cwhite',
+                            '\t\t:',
+                            '\t\t: 4.7 {0} 5 {0} 4.5 {0} 5.2'.format(arrow),
+                            '\t\t: {0} 5.5 {0} 4.4'.format(arrow),
+                            '\t\t:',
+                        ],
+                        ApplyInlineBacktickBold,
+                    )
+                    label = blocks[0][2].split('# ', 1)[1]
+                    labelhtml, _, _ = BuildNodeLabelHtml(
+                        label, True, False,
+                        html_larrow1, html_rarrow1, html_larrow2, html_rarrow2,
+                        lambda image, image_key='img': image,
+                    )
+                    rendered = ''.join(labelhtml)
+                    literal = arrow.replace('<', '&lt;').replace('>', '&gt;')
+                    raw = 'rawmarkers' in mode
+                    self.assertEqual(0 if raw else 5, rendered.count(htmlcode))
+                    self.assertEqual(5 if raw else 0, rendered.count(literal))
+                    self.assertNotIn('__GVMM_RARROW', rendered)
+                    self.assertNotIn('__GVMM_LARROW', rendered)
+
     def test_verbatim_rawmarkers_keeps_arrows_literal(self):
         blocks = ExtractMindmapBlocks(
             [
