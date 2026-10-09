@@ -548,7 +548,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
             if not re.search(r"(\t#) (.*)", nextline) and state_obj.ntype != "img":
                 attrline = StripCodeDirective(nextline) if code_source is not None else nextline
-                if vrbt or draw:
+                if vrbt or draw or markdown_body is not None:
                     verbatim_fill_token = ExtractVerbatimFillToken(attrline)
                     if verbatim_fill_token:
                         attrline = re.sub(r"(?<!\S)%s(?!\S)" % re.escape(verbatim_fill_token), "", attrline, count=1)
@@ -569,7 +569,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     subprocess,
                     bgcolor,
                 )
-                if verbatim_fill_token and state_obj.ntype in {"", "def"}:
+                if verbatim_fill_token and markdown_body is None and state_obj.ntype in {"", "def"}:
                     state_obj.ntype = verbatim_fill_token
 
             InsertSymbolRows(labelhtml, state_obj.symblist, state_obj.symbcolor, state_obj.symbsize, runtime.fontawesome_symb, fontcolor)
@@ -629,6 +629,16 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     SkipPositive(state_obj.linefstyle, s=1)
                 if state_obj.linefont and not state_obj.linefont[0][0] == 0:
                     SkipPositive(state_obj.linefont, s=1)
+
+            if markdown_body is not None:
+                state_obj.bgcolor = state_obj.bgcolor or (
+                    ResolveVerbatimFillColorToken(verbatim_fill_token or ntype, vrbtcolors)
+                    or vrbtcolors["def"]
+                )
+                state_obj.bordercolor = (
+                    state_obj.bordercolor or tree.default_bordercolor
+                    or ParseInlineAttrLine('color', nodetype['verbatim'])
+                )
 
             edgeattrs = state_obj.edgeattrs()
             AppendNodeEdge(edge, tabs, fromnode, tonode, ntype, edgeattrs, edgetype)
