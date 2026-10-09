@@ -538,6 +538,32 @@
 					: commen sgmargin=18
 	# node text
 		:
+		# horizontal rulers
+			:
+			# hr_style=solid; ---; Lorem ipsum
+				: node hr_style=solid
+			# hr_style=dashed; ---; Lorem ipsum
+				: node hr_style=dashed
+			# hr_style=dotted; ---; Lorem ipsum
+				: node hr_style=dotted
+			# block ruler
+				: block hr_style=dotted
+				:
+				: Lorem ipsum
+				: ---
+				: Dolor sit amet
+				:
+			# syntax and root defaults
+				: block rawmarkers
+				:
+				: Regular node: before; ---; after
+				: Block node: --- on its own body line
+				: Node or root: hr_style=solid|dashed|dotted
+				: Root only: hr_spacing=4 (default, in points)
+				: hr_spacing=0 removes extra space
+				: hr_spacing accepts any nonnegative integer
+				: Nodes inherit root style unless overridden
+				:
 		# implication
 			:
 			# arrow ->
