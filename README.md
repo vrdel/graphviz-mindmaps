@@ -491,7 +491,25 @@ uses `:` at the same tab indentation as that attribute line:
 		: node
 ```
 
-The outer node title is retained. Markdown headings stay inside the node;
+The outer node title is retained by default. Add `noheader` to an `md`/`markdown`
+or `block`/`verbatim` attribute line to show only the body. Attached `symb` icons
+remain visible above the body, including their color and size settings:
+
+```text
+# Body-only examples
+	: fname=body-only.jpg
+	# Hidden Markdown heading
+		: md noheader symb=book cteal
+		: A **Markdown** body with an icon above it.
+	# Hidden block heading
+		: block noheader symb=star cpeach
+		: Plain block body text.
+```
+
+Keep the outline heading to identify the node; `noheader` hides it in the rendered
+node. Block body selectors such as `l1r` still address the first body line.
+
+Markdown headings stay inside the node;
 an unprefixed outline heading ends the body. Remove only the colon prefix and
 one separator space when reading a body: extra indentation and trailing spaces
 remain significant. Use a bare `:` for Markdown blank lines. Nest Markdown lists

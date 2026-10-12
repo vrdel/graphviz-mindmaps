@@ -93,6 +93,48 @@ class MarkdownTests(unittest.TestCase):
         for lines in (self.outline(''), ['# Root', '\t: fname=out.jpg', '\t# empty', '\t\t: md']):
             self.graphviz(self.render(lines))
 
+    def test_noheader_preserves_body_and_optional_symbols(self):
+        for mode in ('md', 'markdown', 'block', 'verbatim'):
+            for symbols in ('', ' symb=book:star sym1gf35'):
+                for theme in ('default', 'nord'):
+                    with self.subTest(mode=mode, symbols=symbols, theme=theme):
+                        attrs = mode + ' noheader cteal' + symbols
+                        dot = self.render(self.outline('Body text', attrs, 'Hidden; heading'), theme)
+                        self.assertNotIn('Hidden', dot)
+                        self.assertNotIn('heading', dot)
+                        self.assertIn('Body', dot)
+                        self.assertNotIn('GVMM_BODY_BOUNDARY', dot)
+                        self.assertEqual(2 if symbols else 0, dot.count('FACE="FontAwesome"'))
+                        if symbols:
+                            self.assertIn('POINT-SIZE="35"', dot)
+                        else:
+                            self.assertNotIn('<TR><TD></TD></TR>', dot)
+                        self.graphviz(dot)
+
+    def test_noheader_empty_body_and_sibling(self):
+        for mode in ('md', 'block'):
+            for symbols in ('', ' symb=book'):
+                with self.subTest(mode=mode, symbols=symbols):
+                    lines = self.outline('', mode + ' noheader' + symbols, 'Hidden')
+                    lines += ['\t# Visible sibling', '\t\t: node']
+                    dot = self.render(lines)
+                    self.assertNotIn('Hidden', dot)
+                    self.assertIn('Visible', dot)
+                    self.graphviz(dot)
+
+    def test_noheader_keeps_block_body_line_formatting(self):
+        dot = self.render(self.outline('First\nSecond', 'block noheader l1r hl1b'))
+        self.assertNotIn('Markdown', dot)
+        self.assertIn('First', dot)
+        self.assertIn('Second', dot)
+        self.assertIn('<FONT COLOR="#B30000">', dot)
+        plain = self.render(self.outline('First\nSecond', 'block l1r hl1b'))
+        body_rows = lambda rendered: [row.split('</TR>', 1)[0]
+                                      for row in rendered.split('<TR>')
+                                      if 'First' in row or 'Second' in row]
+        self.assertEqual(body_rows(plain), body_rows(dot))
+        self.graphviz(dot)
+
     def test_invalid_prefix_and_modes_have_diagnostics(self):
         for bad in ('\t\t\t: misindented', 'unprefixed body'):
             with self.assertRaisesRegex(ValueError, r'<input>:6:.*expected a colon'):

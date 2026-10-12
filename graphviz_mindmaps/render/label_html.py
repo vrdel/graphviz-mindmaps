@@ -248,6 +248,24 @@ def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larro
     return labelhtml, ntype, label
 
 
+def HideNodeHeader(label, allow_empty=False):
+    """Remove heading rows after formatting, retaining icons and body rows."""
+    merged = "".join(label)
+    boundary = merged.find("__GVMM_BODY_BOUNDARY__")
+    if boundary >= 0:
+        end = merged.index("</TR>", boundary) + len("</TR>")
+    else:
+        end = merged.rindex("</TABLE>")
+    start = merged.index("<TR>")
+    icons = "".join(row for row in re.findall(r"<TR>.*?</TR>", merged[start:end], re.S)
+                    if 'FACE="FontAwesome"' in row)
+    body = merged[end:]
+    # Graphviz requires at least one row, including for an empty body.
+    if not allow_empty and not icons and body.startswith("</TABLE>"):
+        icons = "<TR><TD></TD></TR>"
+    label[:] = [merged[:start] + icons + body]
+
+
 def InsertSymbolRows(labelhtml, symblist, symbcolor, symbsize, symbol_map, fontcolor):
     if not symblist:
         return
