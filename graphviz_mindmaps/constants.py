@@ -1,6 +1,13 @@
 MAXDEPTH = 32
 DEFAULT_BGCOLOR = "#efefef"
 
+CALLOUT_COLORS = {
+    "!": "#F2B8B8",
+    "?": "#F1E6A8",
+    "$": "#B8E3B4",
+    "@": "#B4E4E3",
+}
+
 fontcolor = {
     "def": "#000000",
     "r": "#B30000",

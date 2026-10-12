@@ -20,6 +20,7 @@ class MarkdownBody:
     attribute_line: int
     # (original line number, payload column), including prefixed blank lines.
     locations: list = field(default_factory=list)
+    rawmarkers: bool = False
 
     def error(self, message, source_line=None):
         line = self.attribute_line

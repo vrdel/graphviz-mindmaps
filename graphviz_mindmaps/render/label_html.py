@@ -1,5 +1,7 @@
 import re
 
+from graphviz_mindmaps.constants import CALLOUT_COLORS
+
 from graphviz_mindmaps.render.image_transform import IMAGE_TRANSFORM_KEY_PATTERN
 
 
@@ -95,10 +97,10 @@ def EscapeResidualHtmlAngles(text):
 
 def ApplyVerbatimCalloutRows(labelhtml):
     colors = {
-        "RED": "#F2B8B8",
-        "YELLOW": "#F1E6A8",
-        "GREEN": "#B8E3B4",
-        "CYAN": "#B4E4E3",
+        "RED": CALLOUT_COLORS["!"],
+        "YELLOW": CALLOUT_COLORS["?"],
+        "GREEN": CALLOUT_COLORS["$"],
+        "CYAN": CALLOUT_COLORS["@"],
     }
 
     def row_content(row):
