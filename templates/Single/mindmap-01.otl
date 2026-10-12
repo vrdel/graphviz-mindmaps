@@ -169,10 +169,10 @@
 					: cmint-10
 					# cmint-20
 						: cmint-20
-			# clavender
+			# clavender / claven
 				: clavender
-				# clavender10
-					: clavender10
+				# claven10
+					: claven10
 					# clavender20
 						: clavender20
 				# clavender-10
@@ -199,6 +199,66 @@
 					: csand-10
 					# csand-20
 						: csand-20
+			# ccoral
+				: ccoral
+				# ccoral10
+					: ccoral10
+					# ccoral20
+						: ccoral20
+				# ccoral-10
+					: ccoral-10
+					# ccoral-20
+						: ccoral-20
+			# csalmon / csalmo
+				: csalmon
+				# csalmo10
+					: csalmo10
+					# csalmo20
+						: csalmo20
+				# csalmon-10
+					: csalmon-10
+					# csalmon-20
+						: csalmon-20
+			# cturquoise / cturqu
+				: cturquoise
+				# cturqu10
+					: cturqu10
+					# cturqu20
+						: cturqu20
+				# cturquoise-10
+					: cturquoise-10
+					# cturquoise-20
+						: cturquoise-20
+			# cviolet / cviole
+				: cviolet
+				# cviole10
+					: cviole10
+					# cviole20
+						: cviole20
+				# cviolet-10
+					: cviolet-10
+					# cviolet-20
+						: cviolet-20
+			# colive
+				: colive
+				# colive10
+					: colive10
+					# colive20
+						: colive20
+				# colive-10
+					: colive-10
+					# colive-20
+						: colive-20
+			# cbeige
+				: cbeige
+				# cbeige10
+					: cbeige10
+					# cbeige20
+						: cbeige20
+				# cbeige-10
+					: cbeige-10
+					# cbeige-20
+						: cbeige-20
 			# cgreen
 				: cgreen
 				# cgreen10
@@ -239,8 +299,8 @@
 					: ccyan-10
 					# ccyan-20
 						: ccyan-20
-			# corang
-				: corang
+			# corange / corang
+				: corange
 				# corang10
 					: corang10
 					# corang20
@@ -249,8 +309,8 @@
 					: corang-10
 					# corang-20
 						: corang-20
-			# cyello
-				: cyello
+			# cyellow / cyello
+				: cyellow
 				# cyello10
 					: cyello10
 					# cyello20
@@ -413,13 +473,13 @@
 				:
 				: Lorem ipsum dolor sit amet.
 				:
-		# block clavender
+		# block clavender / claven
 			: block clavender
 			:
 			: Lorem ipsum dolor sit amet.
 			:
-			# block clavender10
-				: block clavender10
+			# block claven10
+				: block claven10
 				:
 				: Lorem ipsum dolor sit amet.
 				:
@@ -455,6 +515,96 @@
 				:
 			# block csand-10
 				: block csand-10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+		# block ccoral
+			: block ccoral
+			:
+			: Lorem ipsum dolor sit amet.
+			:
+			# block ccoral10
+				: block ccoral10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+			# block ccoral-10
+				: block ccoral-10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+		# block csalmon / csalmo
+			: block csalmon
+			:
+			: Lorem ipsum dolor sit amet.
+			:
+			# block csalmo10
+				: block csalmo10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+			# block csalmon-10
+				: block csalmon-10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+		# block cturquoise / cturqu
+			: block cturquoise
+			:
+			: Lorem ipsum dolor sit amet.
+			:
+			# block cturqu10
+				: block cturqu10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+			# block cturquoise-10
+				: block cturquoise-10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+		# block cviolet / cviole
+			: block cviolet
+			:
+			: Lorem ipsum dolor sit amet.
+			:
+			# block cviole10
+				: block cviole10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+			# block cviolet-10
+				: block cviolet-10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+		# block colive
+			: block colive
+			:
+			: Lorem ipsum dolor sit amet.
+			:
+			# block colive10
+				: block colive10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+			# block colive-10
+				: block colive-10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+		# block cbeige
+			: block cbeige
+			:
+			: Lorem ipsum dolor sit amet.
+			:
+			# block cbeige10
+				: block cbeige10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+			# block cbeige-10
+				: block cbeige-10
 				:
 				: Lorem ipsum dolor sit amet.
 				:
