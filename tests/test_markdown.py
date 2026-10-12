@@ -304,6 +304,63 @@ if ready:
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'md_width'):
                 self.render(self.outline('text', 'md md_width=' + value))
 
+    def test_list_layout_options_validate_for_child_and_root(self):
+        for option in ('md_list_spacing', 'md_list_indent'):
+            for value in ('bad', '-1', 'nan', 'inf', '""'):
+                for root in (False, True):
+                    with self.subTest(option=option, value=value, root=root):
+                        attrs = 'md ' + option + '=' + value
+                        lines = (['# Root', '\t: fname=out.jpg ' + attrs, '\t: * item']
+                                 if root else self.outline('* item', attrs))
+                        with self.assertRaisesRegex(ValueError, option):
+                            self.render(lines)
+
+    def test_list_layout_options_preserve_callouts_and_nested_lists(self):
+        source = '* ! **warning**\n  - nested\n  - [x] task\n* plain\n\n1. ordered\n2. second'
+        for spacing in (0, 12):
+            with self.subTest(spacing=spacing):
+                dot = self.render(self.outline(source,
+                    f'md noheader symb=book md_list_spacing={spacing} md_list_indent=48'))
+                self.assertIn('WIDTH="42"', dot)
+                self.assertEqual(2, dot.count('BGCOLOR="#F2B8B8"'))
+                self.assertIn('☑', dot)
+                self.assertIn('FACE="FontAwesome"', dot)
+                self.assertEqual(3 if spacing else 0,
+                                 dot.count('COLSPAN="2" HEIGHT="12"'))
+                self.graphviz(dot)
+        root = self.render(['# Root', '\t: fname=out.jpg md md_list_spacing=12 md_list_indent=48',
+                            '\t: * first', '\t: * second'])
+        self.assertIn('COLSPAN="2" HEIGHT="12"', root)
+        self.assertIn('WIDTH="42"', root)
+        self.graphviz(root)
+
+    @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
+    def test_list_spacing_changes_rendered_height(self):
+        heights = []
+        for spacing in (0, 8, 20):
+            dot = self.render(self.outline('* first\n* second\n* third',
+                                          f'md md_list_spacing={spacing}'))
+            result = subprocess.run(['dot', '-Tpng'], input=dot.encode(), capture_output=True, check=True)
+            with Image.open(io.BytesIO(result.stdout)) as picture:
+                heights.append(picture.height)
+        self.assertLess(heights[0], heights[1])
+        self.assertLess(heights[1], heights[2])
+
+    @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
+    def test_list_indent_changes_nested_text_position(self):
+        from xml.etree import ElementTree
+        offsets = []
+        for indent in (0, 48):
+            dot = self.render(self.outline('* Outer\n  - Nested',
+                                          f'md md_list_indent={indent} md_list_spacing=0'))
+            result = subprocess.run(['dot', '-Tsvg'], input=dot.encode(), capture_output=True, check=True)
+            root = ElementTree.fromstring(result.stdout)
+            positions = {text.text: float(text.attrib['x'])
+                         for text in root.iter('{http://www.w3.org/2000/svg}text')
+                         if text.text in ('Outer', 'Nested')}
+            offsets.append(positions['Nested'] - positions['Outer'])
+        self.assertGreater(offsets[1], offsets[0])
+
     def test_highlight_parsing_and_literal_markers(self):
         source = '==plain **bold** *italic* `code` [link](https://example.org)=='
         runs = ParseMarkdown(MarkdownBody(source, '<test>', 'title', 1))[0].runs
