@@ -507,6 +507,9 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
 
             ntype = ""
             vrbt, draw, textleft = ResolveNodeRenderFlags(nextline)
+            noheader = (vrbt or markdown_body is not None) and bool(
+                re.search(r"(?<!\S)noheader(?!\S)", nextline)
+            )
 
             if code_source is not None:
                 highlight_lines, nextline = ExtractCodeHighlights(nextline)
@@ -674,6 +677,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 state_obj.borderstyle,
                 hr_style=state_obj.hr_style,
                 wordfont=state_obj.wordfont,
+                noheader=noheader,
             )
             if code_image_path:
                 InsertImageRow(parentlist[level]._label, code_image_path)
