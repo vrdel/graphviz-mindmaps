@@ -20,7 +20,10 @@ class RootThemeTests(unittest.TestCase):
             runtime = build_runtime(theme)
             for canonical, alias in (('corang', 'corange'),
                                      ('clavender', 'claven'),
-                                     ('cyello', 'cyellow')):
+                                     ('cyello', 'cyellow'),
+                                     ('csalmon', 'csalmo'),
+                                     ('cturquoise', 'cturqu'),
+                                     ('cviolet', 'cviole')):
                 for suffix in ('', '10', '-10'):
                     for mode in ('', 'block ', 'verbatim ', 'md '):
                         with self.subTest(theme=theme, alias=alias, suffix=suffix, mode=mode):
@@ -36,7 +39,8 @@ class RootThemeTests(unittest.TestCase):
 
         for theme in ('default', *THEME_PALETTES):
             ApplyTheme(theme)
-            for token in ('cteal', 'cmint', 'clavender', 'cpeach', 'csand'):
+            for token in ('cteal', 'cmint', 'clavender', 'cpeach', 'csand',
+                          'ccoral', 'csalmon', 'cturquoise', 'cviolet', 'colive', 'cbeige'):
                 with self.subTest(theme=theme, token=token):
                     regular = re.search(r'fillcolor="([^"]+)"', constants.nodetype[token]).group(1)
                     block = constants.vrbtcolors[token]
@@ -55,7 +59,8 @@ class RootThemeTests(unittest.TestCase):
 
     def test_extra_colors_render_in_regular_block_and_markdown_nodes(self):
         for theme in ('default', 'github-light', 'nord'):
-            for token in ('cteal', 'cmint', 'clavender', 'cpeach', 'csand'):
+            for token in ('cteal', 'cmint', 'clavender', 'cpeach', 'csand',
+                          'ccoral', 'csalmon', 'cturquoise', 'cviolet', 'colive', 'cbeige'):
                 for mode in ('', 'block ', 'verbatim ', 'md '):
                     with self.subTest(theme=theme, token=token, mode=mode):
                         session = self.render(build_runtime(theme), child_attrs=mode + token + '\n\t\t: Lorem ipsum')

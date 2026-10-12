@@ -167,15 +167,21 @@ def _apply_palette(palette):
 
     # Related theme hues keep the extra colors consistent with each palette.
     # Block fills lean toward the panel color for a subtler appearance.
-    for token, (first, second) in {
-        "cteal": ("cyan", "green"),
-        "cmint": ("green", "white"),
-        "clavender": ("purple", "blue"),
-        "cpeach": ("orange", "red"),
-        "csand": ("yellow", "orange"),
+    for token, (first, second, weight) in {
+        "cteal": ("cyan", "green", 0.5),
+        "cmint": ("green", "white", 0.5),
+        "clavender": ("purple", "blue", 0.5),
+        "cpeach": ("orange", "red", 0.5),
+        "csand": ("yellow", "orange", 0.5),
+        "ccoral": ("red", "orange", 0.75),
+        "csalmon": ("red", "purple", 0.75),
+        "cturquoise": ("cyan", "green", 0.8),
+        "cviolet": ("purple", "blue", 0.8),
+        "colive": ("green", "yellow", 0.5),
+        "cbeige": ("orange", "white", 0.75),
     }.items():
-        fill = _blend_colors(palette[first + "_bg"], palette[second + "_bg"])
-        edge = _blend_colors(palette[first], palette.get(second, muted))
+        fill = _blend_colors(palette[first + "_bg"], palette[second + "_bg"], weight)
+        edge = _blend_colors(palette[first], palette.get(second, muted), weight)
         constants.nodetype[token] = _node(fill, border=edge, fontcolor=fg)
         constants.vrbtcolors[token] = _blend_colors(fill, panel, 0.25)
         constants.edgetype[token] = 'color="%s"' % edge
