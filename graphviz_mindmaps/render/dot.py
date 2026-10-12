@@ -458,6 +458,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             root_markdown, tmpdir, ParseInlineAttrLine('md_width', root_options) or 420,
             foreground=ParseInlineAttrLine('root_fg', root_options),
             code_theme=root_code_theme,
+            list_spacing=ParseInlineAttrLine('md_list_spacing', root_options),
+            list_indent=ParseInlineAttrLine('md_list_indent', root_options),
         ))
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
@@ -494,6 +496,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             label = match.group(2)
             label, markdown_body = DecodeMarkdownBody(label)
             markdown_width = ParseInlineAttrLine('md_width', nextline) or 420
+            markdown_list_spacing = ParseInlineAttrLine('md_list_spacing', nextline)
+            markdown_list_indent = ParseInlineAttrLine('md_list_indent', nextline)
             code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\"(?: style=\"([^\"]+)\")? data=\"([^\"]*)\"/>", label)
             code_source = None
             code_language = None
@@ -691,6 +695,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     size=next((entry[1] for entry in state_obj.linefsize if entry[0] == 0),
                               ParseInlineAttrLine('fontsize', attrs) or fontsize['m']),
                     code_theme=root_code_theme,
+                    list_spacing=markdown_list_spacing,
+                    list_indent=markdown_list_indent,
                 )
                 node._label = [AppendMarkdownLabel(''.join(node._label), body_label)]
 

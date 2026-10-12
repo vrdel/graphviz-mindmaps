@@ -550,6 +550,23 @@ Markdown body. Highlights can contain other inline formatting, for example
 on each side, without spaces just inside the markers. Escaped markers
 (`\=\=literal\=\=`), unmatched markers, and markers inside code remain literal.
 
+Use `md_list_spacing` to set the vertical gap between list items in points:
+`0` makes a compact list, while `8` adds an eight-point gap. `md_list_indent`
+sets the horizontal space reserved for the marker and its gap at each list
+level, also in points; larger values indent nested lists further. A minimum
+width is retained so the bullet or number fits. Both options accept nonnegative
+numbers (fractional values round up) and apply to bullet, numbered, and task
+lists, including nested lists and callouts. Omit them to retain the existing
+automatic indentation and padding. They also work on root Markdown nodes.
+
+```text
+	# Compact list
+		: md noheader md_list_spacing=0 md_list_indent=20
+		: * First item
+		:   - Nested item
+		: * Second item
+```
+
 `md_width=420` sets the target body width in points. Prose wraps while retaining
 inline styles; lists use hanging indentation and table columns share the available
 width. An indivisible word or inline-code span may exceed that width. Code and

@@ -40,13 +40,26 @@ def AppendMarkdownLabel(label, body_label):
     return head + '<TR><TD ALIGN="LEFT" CELLPADDING="6">' + body_label + '</TD></TR></TABLE>' + closing
 
 
-def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default'):
+def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None):
     try:
         width = float(width)
     except (TypeError, ValueError):
         raise body.error('md_width must be a positive finite number of points') from None
     if not math.isfinite(width) or width <= 0:
         raise body.error('md_width must be a positive finite number of points')
+    def list_option(value, name):
+        if value is None:
+            return None
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            raise body.error(f'{name} must be a nonnegative finite number of points') from None
+        if not math.isfinite(number) or number < 0:
+            raise body.error(f'{name} must be a nonnegative finite number of points')
+        return math.ceil(number)
+
+    list_spacing = list_option(list_spacing, 'md_list_spacing')
+    list_indent = list_option(list_indent, 'md_list_indent')
     face = face or font['comic']
     foreground = foreground or fontcolor['def']
     size = max(1, float(size))
@@ -149,8 +162,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
         return ''.join((''.join(value for value, _ in row) or '&#160;')
                        + f'<BR ALIGN="{align}"/>' for row in rows)
 
-    def table(rows, border=0):
-        return f'<TABLE BORDER="{border}" CELLBORDER="0" CELLSPACING="0" CELLPADDING="3" ALIGN="LEFT">' + ''.join(rows) + '</TABLE>'
+    def table(rows, border=0, padding=3):
+        return f'<TABLE BORDER="{border}" CELLBORDER="0" CELLSPACING="0" CELLPADDING="{padding}" ALIGN="LEFT">' + ''.join(rows) + '</TABLE>'
 
     def textrow(value):
         return '<TR><TD ALIGN="LEFT">' + value + '</TD></TR>'
@@ -170,7 +183,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
             raise body.error(f'cannot read image {path}: {exc}', line) from exc
         return '<IMG SRC="%s"/>' % escape(str(path), quote=True)
 
-    def render(items, available):
+    def render(items, available, item_content=False):
         rows = []
         for block in items:
             kind = block.kind
@@ -208,27 +221,43 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 listrows = []
                 markers = [f'{block.start + index}.' if kind == 'ordered_list' else '•'
                            for index in range(len(block.children))]
-                marker_width = max([_measure(m, face, size) for m in markers] + [size]) + 2
+                original_markers = list(markers)
+                task_prefixes = {}
                 for index, item in enumerate(block.children):
+                    if kind != 'bullet_list' or not item.children or item.children[0].kind != 'paragraph' or not item.children[0].runs:
+                        continue
+                    first = item.children[0].runs[0]
+                    task = re.match(r'^\[([ xX])\][ \t]+', first.text)
+                    if task and not any((first.code, first.bold, first.italic, first.strike, first.link)):
+                        task_prefixes[index] = task.end()
+                        markers[index] = '☑' if task.group(1).lower() == 'x' else '☐'
+                explicit_layout = list_spacing is not None or list_indent is not None
+                width_markers = markers if explicit_layout else original_markers
+                marker_width = max([_measure(m, face, size) for m in width_markers] + [size]) + 2
+                if list_indent is not None:
+                    marker_width = max(max(_measure(m + ' ', face, size) for m in markers) + 2,
+                                       list_indent - 6)
+                for index, item in enumerate(block.children):
+                    if index and list_spacing:
+                        listrows.append(f'<TR><TD COLSPAN="2" HEIGHT="{list_spacing}" CELLPADDING="0"><FONT POINT-SIZE="1">&#160;</FONT></TD></TR>')
                     children = list(item.children)
                     marker = markers[index]
-                    if children and children[0].kind == 'paragraph' and children[0].runs:
+                    if index in task_prefixes:
                         first = children[0].runs[0]
-                        task = re.match(r'^\[([ xX])\][ \t]+', first.text)
-                        if task and kind == 'bullet_list' and not any((first.code, first.bold, first.italic, first.strike, first.link)):
-                            marker = '☑' if task.group(1).lower() == 'x' else '☐'
-                            children[0] = replace(children[0], runs=[replace(first, text=first.text[task.end():])] + children[0].runs[1:])
+                        children[0] = replace(children[0], runs=[replace(first, text=first.text[task_prefixes[index]:])] + children[0].runs[1:])
                     # Only the marked paragraph and its wrapped continuation
                     # share the callout. A blank line or nested bullet ends it.
                     highlighted = children[:1] if item.callout else children
-                    content = render(highlighted, max(1, available - marker_width - 6))
+                    content = render(highlighted, max(1, available - marker_width - 6), item_content=True)
                     content_width = max(1, math.ceil(available - marker_width - 6))
                     background = f' BGCOLOR="{item.callout}"' if item.callout else ''
-                    listrows.append(f'<TR><TD{background} VALIGN="TOP" ALIGN="RIGHT" WIDTH="{math.ceil(marker_width)}">{escape(marker)}</TD><TD{background} ALIGN="LEFT" CELLPADDING="0" WIDTH="{content_width}">{content}</TD></TR>')
+                    padding = ' CELLPADDING="0"' if list_spacing is not None else ''
+                    marker_label = escape(marker) + ('&#160;' if explicit_layout else '')
+                    listrows.append(f'<TR><TD{background}{padding} VALIGN="TOP" ALIGN="RIGHT" WIDTH="{math.ceil(marker_width)}">{marker_label}</TD><TD{background} ALIGN="LEFT" CELLPADDING="0" WIDTH="{content_width}">{content}</TD></TR>')
                     if item.callout and len(children) > 1:
-                        rest = render(children[1:], max(1, available - marker_width - 6))
+                        rest = render(children[1:], max(1, available - marker_width - 6), item_content=True)
                         listrows.append(f'<TR><TD></TD><TD ALIGN="LEFT" CELLPADDING="0">{rest}</TD></TR>')
-                rows.append(textrow(table(listrows)))
+                rows.append(textrow(table(listrows, padding=0 if list_spacing is not None else 3)))
             elif kind == 'table':
                 matrix = [row for section in block.children for row in section.children]
                 columns = max((len(row.children) for row in matrix), default=1)
@@ -247,7 +276,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 raise body.error(f'unsupported layout block: {kind}', block.source_line)
         if not rows:
             rows.append(textrow('&#160;'))
-        return table(rows)
+        return table(rows, padding=0 if item_content and list_spacing is not None else 3)
 
     # Inherit explicit node defaults for markers as well as prose runs.
     return '<FONT FACE="%s" POINT-SIZE="%g" COLOR="%s">%s</FONT>' % (
