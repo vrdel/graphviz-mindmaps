@@ -286,6 +286,12 @@ Additional color nodes provide softer alternatives to the primary colors:
 | `clavender` | Lavender | `#d6bdf1` | `#eee5fa` |
 | `cpeach` | Peach | `#f6c5ab` | `#fce9df` |
 | `csand` | Sand | `#e6d5aa` | `#f5efdf` |
+| `ccoral` | Coral | `#f5aaa0` | `#fbe3df` |
+| `csalmon` / `csalmo` | Salmon | `#efb5b1` | `#fae7e5` |
+| `cturquoise` / `cturqu` | Turquoise | `#99dedf` | `#dcf3f3` |
+| `cviolet` / `cviole` | Violet | `#c3a6e8` | `#eae0f7` |
+| `colive` | Olive | `#cbd39b` | `#edf0dd` |
+| `cbeige` | Beige | `#dfc9b0` | `#f3eade` |
 
 Use `: cteal` for a regular node, `: block cteal` for a block, or
 `: md cteal` for Markdown. Block, verbatim, and Markdown nodes share the

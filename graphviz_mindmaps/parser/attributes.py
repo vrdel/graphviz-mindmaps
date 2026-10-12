@@ -56,8 +56,9 @@ def RenderTransformedImage(image, transform_key, gen_img_path, tmpdir, tempfile_
 
 
 def NormalizeColorToken(token):
-    aliases = {"corange": "corang", "claven": "clavender", "cyellow": "cyello"}
-    match = re.fullmatch(r"(corange|claven|cyellow)(-?[0-9]+)?", token)
+    aliases = {"corange": "corang", "claven": "clavender", "cyellow": "cyello",
+               "csalmo": "csalmon", "cturqu": "cturquoise", "cviole": "cviolet"}
+    match = re.fullmatch(r"(corange|claven|cyellow|csalmo|cturqu|cviole)(-?[0-9]+)?", token)
     if match:
         return aliases[match.group(1)] + (match.group(2) or "")
     return token
@@ -70,7 +71,7 @@ def ResolveColorNodeTypeToken(token, nodetype):
 
     aliases = {"nodes": "node"}
     match = re.match(
-        r"^(c(?:green|cyan|blue|pink|red|yello|orang|black|grey|teal|mint|lavender|peach|sand)|impor|impog|impob|impoy|quest|commen|check|todo|title|node|nodes)(-?[0-9]+)$",
+        r"^(c(?:green|cyan|blue|pink|red|yello|orang|black|grey|teal|mint|lavender|peach|sand|coral|salmon|turquoise|violet|olive|beige)|impor|impog|impob|impoy|quest|commen|check|todo|title|node|nodes)(-?[0-9]+)$",
         token,
     )
     if not match:
@@ -100,7 +101,7 @@ def ResolveVerbatimFillColorToken(token, vrbtcolors):
         return vrbtcolors[token]
 
     match = re.match(
-        r"^(c(?:def|green|cyan|blue|pink|red|yello|orang|white|teal|mint|lavender|peach|sand))(-?[0-9]+)$",
+        r"^(c(?:def|green|cyan|blue|pink|red|yello|orang|white|teal|mint|lavender|peach|sand|coral|salmon|turquoise|violet|olive|beige))(-?[0-9]+)$",
         token,
     )
     if not match:

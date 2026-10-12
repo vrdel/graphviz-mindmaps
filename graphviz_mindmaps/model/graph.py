@@ -41,7 +41,7 @@ def EmitTreeNodes(tree, nodetype, fontsize):
             continue
 
         if not node.is_leaf():
-            if ntype in {"cred", "cgreen", "ccyan", "cblue", "cpink", "cyello", "corang", "cblack", "cgrey", "cteal", "cmint", "clavender", "cpeach", "csand"}:
+            if ntype in {"cred", "cgreen", "ccyan", "cblue", "cpink", "cyello", "corang", "cblack", "cgrey", "cteal", "cmint", "clavender", "cpeach", "csand", "ccoral", "csalmon", "cturquoise", "cviolet", "colive", "cbeige"}:
                 rendered = node.element().replace(
                     "shape=box",
                     "margin=\"0.2,0.3\" shape=box fontsize=\"%s\"" % (fontsize["l"]) + "\n",

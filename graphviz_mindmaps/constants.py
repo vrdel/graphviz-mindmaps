@@ -49,6 +49,12 @@ vrbtcolors = {
     "clavender": "#eee5fa",
     "cpeach": "#fce9df",
     "csand": "#f5efdf",
+    "ccoral": "#fbe3df",
+    "csalmon": "#fae7e5",
+    "cturquoise": "#dcf3f3",
+    "cviolet": "#eae0f7",
+    "colive": "#edf0dd",
+    "cbeige": "#f3eade",
     "cwhite": "#fdfdfd",
     "def": "#dfeafd",
 }
@@ -106,6 +112,12 @@ nodetype = {
     "clavender": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#d6bdf1\" color=\"#8a8a8a\"" % (fontsize["l"]),
     "cpeach": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#f6c5ab\" color=\"#8a8a8a\"" % (fontsize["l"]),
     "csand": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#e6d5aa\" color=\"#8a8a8a\"" % (fontsize["l"]),
+    "ccoral": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#f5aaa0\" color=\"#8a8a8a\"" % (fontsize["l"]),
+    "csalmon": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#efb5b1\" color=\"#8a8a8a\"" % (fontsize["l"]),
+    "cturquoise": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#99dedf\" color=\"#8a8a8a\"" % (fontsize["l"]),
+    "cviolet": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#c3a6e8\" color=\"#8a8a8a\"" % (fontsize["l"]),
+    "colive": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#cbd39b\" color=\"#8a8a8a\"" % (fontsize["l"]),
+    "cbeige": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#dfc9b0\" color=\"#8a8a8a\"" % (fontsize["l"]),
     "cblack": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#2b2b2b\" color=\"#8a8a8a\"" % (fontsize["l"]),
 }
 
@@ -126,6 +138,12 @@ edgetype = {
     "clavender": "color=\"#8861b0\"",
     "cpeach": "color=\"#b77c59\"",
     "csand": "color=\"#9c8954\"",
+    "ccoral": "color=\"#b9685c\"",
+    "csalmon": "color=\"#b56e73\"",
+    "cturquoise": "color=\"#328f94\"",
+    "cviolet": "color=\"#7953a6\"",
+    "colive": "color=\"#828d49\"",
+    "cbeige": "color=\"#9b8061\"",
 }
 
 edgecolors = {
