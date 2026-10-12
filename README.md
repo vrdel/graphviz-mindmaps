@@ -293,6 +293,11 @@ softer fills. These colors adapt to the active theme; themed block fills blend
 toward the panel background. Brightness suffixes work in both palettes:
 `cteal10` lightens the fill and `cteal-10` darkens it.
 
+Full color names and their six-letter forms are interchangeable: `corange` /
+`corang`, `clavender` / `claven`, and `cyellow` / `cyello`. Both forms support
+brightness suffixes, for example `corange10`, `corang10`, `clavender-10`, and
+`claven-10`, on regular, block, verbatim, and Markdown nodes.
+
 Use `cdef` on a block node to select the current theme's default regular-node fill color:
 
 ```text
