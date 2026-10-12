@@ -44,6 +44,11 @@ vrbtcolors = {
     "cyello": "#fcfddf",
     "corang": "#fdecdf",
     "cpink": "#fddff3",
+    "cteal": "#ddf3ef",
+    "cmint": "#e5f7eb",
+    "clavender": "#eee5fa",
+    "cpeach": "#fce9df",
+    "csand": "#f5efdf",
     "cwhite": "#fdfdfd",
     "def": "#dfeafd",
 }
@@ -96,6 +101,11 @@ nodetype = {
     "cyello": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#fefb88\" color=\"#8a8a8a\"" % (fontsize["l"]),
     "corang": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#ffc990\" color=\"#8a8a8a\"" % (fontsize["l"]),
     "cgrey": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#9e9e9e\" color=\"#8a8a8a\"" % (fontsize["l"]),
+    "cteal": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#a8dfd5\" color=\"#8a8a8a\"" % (fontsize["l"]),
+    "cmint": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#c1ebcf\" color=\"#8a8a8a\"" % (fontsize["l"]),
+    "clavender": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#d6bdf1\" color=\"#8a8a8a\"" % (fontsize["l"]),
+    "cpeach": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#f6c5ab\" color=\"#8a8a8a\"" % (fontsize["l"]),
+    "csand": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#e6d5aa\" color=\"#8a8a8a\"" % (fontsize["l"]),
     "cblack": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"#2b2b2b\" color=\"#8a8a8a\"" % (fontsize["l"]),
 }
 
@@ -111,6 +121,11 @@ edgetype = {
     "cyello": "color=\"#A6A037\"",
     "cpink": "color=\"#A837A0\"",
     "corang": "color=\"#AD7339\"",
+    "cteal": "color=\"#398c80\"",
+    "cmint": "color=\"#57996e\"",
+    "clavender": "color=\"#8861b0\"",
+    "cpeach": "color=\"#b77c59\"",
+    "csand": "color=\"#9c8954\"",
 }
 
 edgecolors = {

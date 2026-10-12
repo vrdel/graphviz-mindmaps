@@ -61,7 +61,7 @@ def ResolveColorNodeTypeToken(token, nodetype):
 
     aliases = {"nodes": "node"}
     match = re.match(
-        r"^(c(?:green|cyan|blue|pink|red|yello|orang|black|grey)|impor|impog|impob|impoy|quest|commen|check|todo|title|node|nodes)(-?[0-9]+)$",
+        r"^(c(?:green|cyan|blue|pink|red|yello|orang|black|grey|teal|mint|lavender|peach|sand)|impor|impog|impob|impoy|quest|commen|check|todo|title|node|nodes)(-?[0-9]+)$",
         token,
     )
     if not match:
@@ -90,7 +90,7 @@ def ResolveVerbatimFillColorToken(token, vrbtcolors):
         return vrbtcolors[token]
 
     match = re.match(
-        r"^(c(?:def|green|cyan|blue|pink|red|yello|orang|white))(-?[0-9]+)$",
+        r"^(c(?:def|green|cyan|blue|pink|red|yello|orang|white|teal|mint|lavender|peach|sand))(-?[0-9]+)$",
         token,
     )
     if not match:

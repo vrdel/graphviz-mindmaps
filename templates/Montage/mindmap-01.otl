@@ -96,6 +96,16 @@
 		# ---
 		# edgt
 			: edgt
+			# cteal
+				: cteal
+			# cmint
+				: cmint
+			# clavender
+				: clavender
+			# cpeach
+				: cpeach
+			# csand
+				: csand
 			# cgreen
 				: cgreen
 				# cgreen10
@@ -280,6 +290,31 @@
 		:
 	# block nodes
 		:
+		# block cteal
+			: block cteal
+			:
+			: Lorem ipsum dolor sit amet.
+			:
+		# block cmint
+			: block cmint
+			:
+			: Lorem ipsum dolor sit amet.
+			:
+		# block clavender
+			: block clavender
+			:
+			: Lorem ipsum dolor sit amet.
+			:
+		# block cpeach
+			: block cpeach
+			:
+			: Lorem ipsum dolor sit amet.
+			:
+		# block csand
+			: block csand
+			:
+			: Lorem ipsum dolor sit amet.
+			:
 		# block cgreen
 			: block cgreen
 			:

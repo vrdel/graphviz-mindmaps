@@ -54,6 +54,14 @@ def _component(fill, border="#4c566a", fontname=None):
     return " ".join(attrs)
 
 
+def _blend_colors(first, second, weight=0.5):
+    return "#" + "".join(
+        "%02x" % round(int(first[i:i + 2], 16) * (1 - weight)
+                       + int(second[i:i + 2], 16) * weight)
+        for i in (1, 3, 5)
+    )
+
+
 def _apply_palette(palette):
     fg = palette["fg"]
     bg = palette["bg"]
@@ -156,6 +164,21 @@ def _apply_palette(palette):
         "cpink": "color=\"%s\"" % purple,
         "corang": "color=\"%s\"" % orange,
     })
+
+    # Related theme hues keep the extra colors consistent with each palette.
+    # Block fills lean toward the panel color for a subtler appearance.
+    for token, (first, second) in {
+        "cteal": ("cyan", "green"),
+        "cmint": ("green", "white"),
+        "clavender": ("purple", "blue"),
+        "cpeach": ("orange", "red"),
+        "csand": ("yellow", "orange"),
+    }.items():
+        fill = _blend_colors(palette[first + "_bg"], palette[second + "_bg"])
+        edge = _blend_colors(palette[first], palette.get(second, muted))
+        constants.nodetype[token] = _node(fill, border=edge, fontcolor=fg)
+        constants.vrbtcolors[token] = _blend_colors(fill, panel, 0.25)
+        constants.edgetype[token] = 'color="%s"' % edge
 
     constants.edgecolors.update({
         "r": "color=\"%s\"" % red,

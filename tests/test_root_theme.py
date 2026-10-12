@@ -1,4 +1,5 @@
 import unittest
+import re
 import shutil
 import subprocess
 from types import SimpleNamespace
@@ -14,6 +15,41 @@ from graphviz_mindmaps.theme import ApplyTheme, THEME_PALETTES
 
 
 class RootThemeTests(unittest.TestCase):
+    def test_extra_color_nodes_have_distinct_block_fills_in_every_theme(self):
+        from graphviz_mindmaps.parser.attributes import (
+            ResolveColorNodeTypeToken, ResolveVerbatimFillColorToken,
+        )
+
+        for theme in ('default', *THEME_PALETTES):
+            ApplyTheme(theme)
+            for token in ('cteal', 'cmint', 'clavender', 'cpeach', 'csand'):
+                with self.subTest(theme=theme, token=token):
+                    regular = re.search(r'fillcolor="([^"]+)"', constants.nodetype[token]).group(1)
+                    block = constants.vrbtcolors[token]
+                    self.assertNotEqual(regular, block)
+                    self.assertIn(token, constants.edgetype)
+                    for delta in (-10, 10):
+                        adjusted = token + str(delta)
+                        self.assertEqual(adjusted, ResolveColorNodeTypeToken(adjusted, constants.nodetype))
+                        for base, actual in (
+                            (regular, re.search(r'fillcolor="([^"]+)"', constants.nodetype[adjusted]).group(1)),
+                            (block, ResolveVerbatimFillColorToken(adjusted, constants.vrbtcolors)),
+                        ):
+                            expected = '#' + ''.join('%02x' % min(255, max(0, int(base[i:i + 2], 16) + delta))
+                                                     for i in (1, 3, 5))
+                            self.assertEqual(expected, actual)
+
+    def test_extra_colors_render_in_regular_block_and_markdown_nodes(self):
+        for theme in ('default', 'github-light', 'nord'):
+            for token in ('cteal', 'cmint', 'clavender', 'cpeach', 'csand'):
+                for mode in ('', 'block ', 'verbatim ', 'md '):
+                    with self.subTest(theme=theme, token=token, mode=mode):
+                        session = self.render(build_runtime(theme), child_attrs=mode + token + '\n\t\t: Lorem ipsum')
+                        fill = (constants.vrbtcolors[token] if mode else
+                                re.search(r'fillcolor="([^"]+)"', constants.nodetype[token]).group(1))
+                        child = next(line for line in session.dotbuf.splitlines() if 'node101[' in line)
+                        self.assertIn('fillcolor="%s"' % fill, child)
+
     def test_multiline_root_headings_match_semicolon_titles(self):
         titles = ['za models.User ide posebna logika', 'druga linija']
         attrs = ['fname=out.jpg notitle root_symb=check root_sym1gf35',
