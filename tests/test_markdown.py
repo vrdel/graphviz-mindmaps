@@ -93,6 +93,58 @@ class MarkdownTests(unittest.TestCase):
         for lines in (self.outline(''), ['# Root', '\t: fname=out.jpg', '\t# empty', '\t\t: md']):
             self.graphviz(self.render(lines))
 
+    def test_list_callouts_keep_markdown_formatting_and_symbols(self):
+        source = ('* ! **Red** item\n  continued text\n'
+                  '- ? Yellow *item*\n- $ Green `code`\n- @ Cyan item\n'
+                  '- Plain item')
+        dot = self.render(self.outline(source, 'md noheader symb=book md_width=180'))
+        for color in ('#F2B8B8', '#F1E6A8', '#B8E3B4', '#B4E4E3'):
+            self.assertEqual(2, dot.count('BGCOLOR="' + color + '"'))
+        self.assertIn('<B>Red</B>', dot)
+        self.assertIn('<I>item</I>', dot)
+        self.assertIn('continued', dot)
+        self.assertIn('FACE="FontAwesome"', dot)
+        for marker in ('!', '?', '$', '@'):
+            self.assertNotIn('>' + marker + '</FONT>', dot)
+        self.graphviz(dot)
+
+    def test_callouts_stop_at_blank_lines_and_nested_items(self):
+        source = '* ! warning\n  continuation\n\n  plain paragraph\n  - nested plain\n  - @ nested cyan\n* plain sibling'
+        body = MarkdownBody(source, '<input>', 'test', 1)
+        items = ParseMarkdown(body)[0].children
+        self.assertEqual('#F2B8B8', items[0].callout)
+        self.assertEqual('', items[1].callout)
+        nested = items[0].children[-1].children
+        self.assertEqual('', nested[0].callout)
+        self.assertEqual('#B4E4E3', nested[1].callout)
+        dot = self.render(self.outline(source))
+        self.assertEqual(2, dot.count('BGCOLOR="#F2B8B8"'))
+        self.assertEqual(2, dot.count('BGCOLOR="#B4E4E3"'))
+        self.assertIn('plain', dot)
+        self.graphviz(dot)
+
+    def test_callout_markers_are_literal_outside_bullet_prefixes(self):
+        source = ('! ordinary paragraph\n\n* \\! escaped\n* `?` code\n'
+                  '* **$** bold\n* @word\n\n1. ! ordered\n\n'
+                  '```text\n* ! literal code\n```')
+        def walk(blocks):
+            for block in blocks:
+                yield block
+                yield from walk(block.children)
+        body = MarkdownBody(source, '<input>', 'test', 1)
+        self.assertTrue(all(not block.callout for block in walk(ParseMarkdown(body))))
+        for mode in ('md', 'markdown'):
+            dot = self.render(self.outline('* ! literal\n* @ literal', mode + ' rawmarkers'))
+            self.assertNotIn('BGCOLOR="#F2B8B8"', dot)
+            self.assertNotIn('BGCOLOR="#B4E4E3"', dot)
+            self.assertIn('>!</FONT>', dot)
+            self.graphviz(dot)
+
+    def test_root_markdown_callout(self):
+        dot = self.render(['# Root', '\t: fname=out.jpg md', '\t: * $ Success'])
+        self.assertEqual(2, dot.count('BGCOLOR="#B8E3B4"'))
+        self.graphviz(dot)
+
     def test_noheader_preserves_body_and_optional_symbols(self):
         for mode in ('md', 'markdown', 'block', 'verbatim'):
             for symbols in ('', ' symb=book:star sym1gf35'):
@@ -120,6 +172,18 @@ class MarkdownTests(unittest.TestCase):
                     dot = self.render(lines)
                     self.assertNotIn('Hidden', dot)
                     self.assertIn('Visible', dot)
+                    self.graphviz(dot)
+
+    def test_noheader_empty_heading_keeps_body_and_symbols(self):
+        for mode in ('md', 'block'):
+            for title in ('', ' '):
+                with self.subTest(mode=mode, title=title):
+                    lines = self.outline('Body text', mode + ' noheader symb=book:star', title)
+                    lines += ['\t# Sibling', '\t\t: node']
+                    dot = self.render(lines)
+                    self.assertIn('Body', dot)
+                    self.assertIn('Sibling', dot)
+                    self.assertEqual(2, dot.count('FACE="FontAwesome"'))
                     self.graphviz(dot)
 
     def test_noheader_keeps_block_body_line_formatting(self):

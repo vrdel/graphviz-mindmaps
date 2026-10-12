@@ -509,6 +509,26 @@ remain visible above the body, including their color and size settings:
 Keep the outline heading to identify the node; `noheader` hides it in the rendered
 node. Block body selectors such as `l1r` still address the first body line.
 
+Markdown bullet lists support the same callouts as block nodes: put `!` (red),
+`?` (yellow), `$` (green), or `@` (cyan) immediately after the bullet, followed by
+a space. The marker is hidden and the bullet and paragraph receive a colored
+background. Markdown formatting and wrapped continuation lines are preserved;
+a blank line or nested bullet ends the highlight.
+
+```text
+	# Callouts
+		: md noheader symb=book
+		: * ! **Warning:** avoid unnecessary queries.
+		:   This continuation shares the red background.
+		: * ? Check whether a join is needed.
+		: * $ One query is sufficient.
+		: * @ Additional information.
+```
+
+Use `md rawmarkers` to leave callout markers literal, or escape an individual
+marker (`* \! literal`). Markers inside code, ordinary paragraphs, and numbered
+lists remain literal.
+
 Markdown headings stay inside the node;
 an unprefixed outline heading ends the body. Remove only the colon prefix and
 one separator space when reading a body: extra indentation and trailing spaces

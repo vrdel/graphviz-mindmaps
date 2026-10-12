@@ -220,7 +220,9 @@ def ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
 
 def _ExtractMindmapBlocks(linesall, apply_inline_backtick_bold):
     blocks = []
-    worklines = list(linesall)
+    # Keep empty headings recognizable after Markdown preparation strips trailing
+    # whitespace. Body-only block nodes still need their outline entry.
+    worklines = [re.sub(r"^(\t*)#\s*$", r"\1# ", line) for line in linesall]
     cursor = 0
 
     while cursor < len(worklines) - 1:

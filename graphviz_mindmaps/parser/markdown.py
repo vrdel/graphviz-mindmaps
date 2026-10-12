@@ -5,6 +5,7 @@ import json
 import re
 
 from graphviz_mindmaps.model.document import MarkdownBody
+from graphviz_mindmaps.constants import CALLOUT_COLORS
 
 HEADING = re.compile(r"^(\t*)#(?:[ \t]+|$)(.*)$")
 PAYLOAD = re.compile(r'<GVMM_MARKDOWN data="([A-Za-z0-9+/=]+)"/>$')
@@ -68,6 +69,7 @@ def PrepareMarkdownBodies(lines):
         title = '; '.join(HEADING.match(line).group(2).rstrip() for line in lines[i:j])
         body = MarkdownBody('', getattr(lines[md_index], 'filename', '<input>'), title,
                             getattr(lines[md_index], 'number', md_index + 1))
+        body.rawmarkers = 'rawmarkers' in _tokens(lines[md_index])
         for attr in lines[j:end]:
             for token in _tokens(attr):
                 if token in {'block', 'verbatim', 'verbat', 'draw'} or re.match(r'^code(?:$|[=:])', token):
@@ -121,6 +123,7 @@ class Block:
     source: str = ''
     language: str = ''
     align: str = 'left'
+    callout: str = ''
 
 
 def _highlight_tokenize(state, silent):
@@ -211,6 +214,17 @@ def ParseMarkdown(body):
             result.children = [convert(child) for child in node.children]
             if node.type == 'ordered_list':
                 result.start = int(node.attrs.get('start', 1))
+            if (node.type == 'list_item' and node.parent.type == 'bullet_list'
+                    and not body.rawmarkers and node.children
+                    and node.children[0].type == 'paragraph'):
+                paragraph = node.children[0]
+                source = paragraph.children[0].content
+                marker = re.match(r'^([!?$@])(?=\s|$)', source)
+                if marker and result.children[0].runs:
+                    first = result.children[0].runs[0]
+                    result.children[0].runs[0] = replace(
+                        first, text=re.sub(r'^[!?$@][ \t]*', '', first.text, count=1))
+                    result.callout = CALLOUT_COLORS[marker.group(1)]
         elif node.type != 'hr':
             raise body.error(f'unsupported Markdown block: {node.type}', line)
         return result

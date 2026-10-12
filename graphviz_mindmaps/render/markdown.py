@@ -218,9 +218,16 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                         if task and kind == 'bullet_list' and not any((first.code, first.bold, first.italic, first.strike, first.link)):
                             marker = '☑' if task.group(1).lower() == 'x' else '☐'
                             children[0] = replace(children[0], runs=[replace(first, text=first.text[task.end():])] + children[0].runs[1:])
-                    content = render(children, max(1, available - marker_width - 6))
+                    # Only the marked paragraph and its wrapped continuation
+                    # share the callout. A blank line or nested bullet ends it.
+                    highlighted = children[:1] if item.callout else children
+                    content = render(highlighted, max(1, available - marker_width - 6))
                     content_width = max(1, math.ceil(available - marker_width - 6))
-                    listrows.append(f'<TR><TD VALIGN="TOP" ALIGN="RIGHT" WIDTH="{math.ceil(marker_width)}">{escape(marker)}</TD><TD ALIGN="LEFT" CELLPADDING="0" WIDTH="{content_width}">{content}</TD></TR>')
+                    background = f' BGCOLOR="{item.callout}"' if item.callout else ''
+                    listrows.append(f'<TR><TD{background} VALIGN="TOP" ALIGN="RIGHT" WIDTH="{math.ceil(marker_width)}">{escape(marker)}</TD><TD{background} ALIGN="LEFT" CELLPADDING="0" WIDTH="{content_width}">{content}</TD></TR>')
+                    if item.callout and len(children) > 1:
+                        rest = render(children[1:], max(1, available - marker_width - 6))
+                        listrows.append(f'<TR><TD></TD><TD ALIGN="LEFT" CELLPADDING="0">{rest}</TD></TR>')
                 rows.append(textrow(table(listrows)))
             elif kind == 'table':
                 matrix = [row for section in block.children for row in section.children]
