@@ -98,14 +98,54 @@
 			: edgt
 			# cteal
 				: cteal
+				# cteal10
+					: cteal10
+					# cteal20
+						: cteal20
+				# cteal-10
+					: cteal-10
+					# cteal-20
+						: cteal-20
 			# cmint
 				: cmint
+				# cmint10
+					: cmint10
+					# cmint20
+						: cmint20
+				# cmint-10
+					: cmint-10
+					# cmint-20
+						: cmint-20
 			# clavender
 				: clavender
+				# clavender10
+					: clavender10
+					# clavender20
+						: clavender20
+				# clavender-10
+					: clavender-10
+					# clavender-20
+						: clavender-20
 			# cpeach
 				: cpeach
+				# cpeach10
+					: cpeach10
+					# cpeach20
+						: cpeach20
+				# cpeach-10
+					: cpeach-10
+					# cpeach-20
+						: cpeach-20
 			# csand
 				: csand
+				# csand10
+					: csand10
+					# csand20
+						: csand20
+				# csand-10
+					: csand-10
+					# csand-20
+						: csand-20
 			# cgreen
 				: cgreen
 				# cgreen10
@@ -295,26 +335,76 @@
 			:
 			: Lorem ipsum dolor sit amet.
 			:
+			# block cteal10
+				: block cteal10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+			# block cteal-10
+				: block cteal-10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
 		# block cmint
 			: block cmint
 			:
 			: Lorem ipsum dolor sit amet.
 			:
+			# block cmint10
+				: block cmint10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+			# block cmint-10
+				: block cmint-10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
 		# block clavender
 			: block clavender
 			:
 			: Lorem ipsum dolor sit amet.
 			:
+			# block clavender10
+				: block clavender10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+			# block clavender-10
+				: block clavender-10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
 		# block cpeach
 			: block cpeach
 			:
 			: Lorem ipsum dolor sit amet.
 			:
+			# block cpeach10
+				: block cpeach10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+			# block cpeach-10
+				: block cpeach-10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
 		# block csand
 			: block csand
 			:
 			: Lorem ipsum dolor sit amet.
 			:
+			# block csand10
+				: block csand10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
+			# block csand-10
+				: block csand-10
+				:
+				: Lorem ipsum dolor sit amet.
+				:
 		# block cgreen
 			: block cgreen
 			:
