@@ -42,6 +42,7 @@ from graphviz_mindmaps.parser.attributes import (
     RenderTransformedImage,
     ResolveBaseNodeTypeToken,
     ResolveColorNodeTypeToken,
+    NormalizeColorToken,
     ResolveSymbolNames,
     ResolveVerbatimFillColorToken,
 )
@@ -570,7 +571,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     bgcolor,
                 )
                 if verbatim_fill_token and markdown_body is None and state_obj.ntype in {"", "def"}:
-                    state_obj.ntype = verbatim_fill_token
+                    state_obj.ntype = NormalizeColorToken(verbatim_fill_token)
 
             InsertSymbolRows(labelhtml, state_obj.symblist, state_obj.symbcolor, state_obj.symbsize, runtime.fontawesome_symb, fontcolor)
 

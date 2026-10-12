@@ -55,7 +55,16 @@ def RenderTransformedImage(image, transform_key, gen_img_path, tmpdir, tempfile_
     return output
 
 
+def NormalizeColorToken(token):
+    aliases = {"corange": "corang", "claven": "clavender", "cyellow": "cyello"}
+    match = re.fullmatch(r"(corange|claven|cyellow)(-?[0-9]+)?", token)
+    if match:
+        return aliases[match.group(1)] + (match.group(2) or "")
+    return token
+
+
 def ResolveColorNodeTypeToken(token, nodetype):
+    token = NormalizeColorToken(token)
     if token in nodetype:
         return token
 
@@ -86,6 +95,7 @@ def ResolveColorNodeTypeToken(token, nodetype):
 
 
 def ResolveVerbatimFillColorToken(token, vrbtcolors):
+    token = NormalizeColorToken(token)
     if token in vrbtcolors:
         return vrbtcolors[token]
 

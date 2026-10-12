@@ -15,6 +15,20 @@ from graphviz_mindmaps.theme import ApplyTheme, THEME_PALETTES
 
 
 class RootThemeTests(unittest.TestCase):
+    def test_full_and_short_color_names_render_identically(self):
+        for theme in ('default', *THEME_PALETTES):
+            runtime = build_runtime(theme)
+            for canonical, alias in (('corang', 'corange'),
+                                     ('clavender', 'claven'),
+                                     ('cyello', 'cyellow')):
+                for suffix in ('', '10', '-10'):
+                    for mode in ('', 'block ', 'verbatim ', 'md '):
+                        with self.subTest(theme=theme, alias=alias, suffix=suffix, mode=mode):
+                            body = '\n\t\t: Lorem ipsum'
+                            expected = self.render(runtime, child_attrs=mode + canonical + suffix + body)
+                            actual = self.render(runtime, child_attrs=mode + alias + suffix + body)
+                            self.assertEqual(expected.dotbuf, actual.dotbuf)
+
     def test_extra_color_nodes_have_distinct_block_fills_in_every_theme(self):
         from graphviz_mindmaps.parser.attributes import (
             ResolveColorNodeTypeToken, ResolveVerbatimFillColorToken,
