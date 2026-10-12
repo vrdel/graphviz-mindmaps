@@ -277,6 +277,22 @@ Override the root ruler style for an individual node with `hr_style=`:
 Node overrides accept `solid`, `dashed`, and `dotted`. They apply only to that
 node; other nodes inherit the root style. Root `hr_spacing` still applies.
 
+Additional color nodes provide softer alternatives to the primary colors:
+
+| Token | Color | Regular fill (default theme) | Block fill (default theme) |
+| --- | --- | --- | --- |
+| `cteal` | Teal | `#a8dfd5` | `#ddf3ef` |
+| `cmint` | Mint | `#c1ebcf` | `#e5f7eb` |
+| `clavender` | Lavender | `#d6bdf1` | `#eee5fa` |
+| `cpeach` | Peach | `#f6c5ab` | `#fce9df` |
+| `csand` | Sand | `#e6d5aa` | `#f5efdf` |
+
+Use `: cteal` for a regular node, `: block cteal` for a block, or
+`: md cteal` for Markdown. Block, verbatim, and Markdown nodes share the
+softer fills. These colors adapt to the active theme; themed block fills blend
+toward the panel background. Brightness suffixes work in both palettes:
+`cteal10` lightens the fill and `cteal-10` darkens it.
+
 Use `cdef` on a block node to select the current theme's default regular-node fill color:
 
 ```text
