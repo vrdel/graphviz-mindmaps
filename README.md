@@ -475,6 +475,31 @@ See [LICENSE](/home/daniel/my_work/git.graphviz-mindmaps/graphviz-mindmaps/LICEN
 
 ## Markdown nodes
 
+Text emoticons render as emoji in node headings, regular labels, block bodies,
+and Markdown text. Supported forms include:
+
+| Expression | Emoticons | Emoji |
+| --- | --- | --- |
+| Smile / neutral / sad | `:-)` `:)` / `:-\|` `:\|` / `:-(` `:(` | 🙂 😐 🙁 |
+| Wink | `;-)` `;)` | 😉 |
+| Grin / laugh | `:-D` `:D` / `XD` `xD` `X-D` `x-D` | 😃 😆 |
+| Tongue / playful wink | `:-P` `:P` / `;-P` `;P` | 😛 😜 |
+| Surprise | `:-O` `:O` | 😮 |
+| Unsure | `:-/` `:/` `:-\` `:\` | 😕 |
+| Cry / happy tears | `:'-(` `:'(` / `:'-)` `:')` | 😢 😂 |
+| Sunglasses | `8-)` `8)` `B-)` `B)` | 😎 |
+| Kiss | `:-*` `:*` | 😗 |
+| Angel | `O:-)` `O:)` `0:-)` `0:)` | 😇 |
+| Devil / angry | `>:-)` `>:)` / `>:-(` `>:(` | 😈 😠 |
+| Sealed lips / embarrassed | `:-X` `:X` / `:-$` `:$` | 🤐 😳 |
+| Heart / broken heart | `<3` `</3` | ❤️ 💔 |
+
+The `D`, `P`, `O`, and `X` mouth forms also accept lowercase letters.
+Markdown inline code and fenced code
+retain literal emoticons. Use `rawmarkers` with `md` or `block` to keep body
+emoticons literal; `draw` also preserves them. Emoticons embedded in words or
+path segments are left unchanged.
+
 Add `md` (or `markdown`) on a node's attribute line. Every following body line
 uses `:` at the same tab indentation as that attribute line:
 

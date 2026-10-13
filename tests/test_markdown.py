@@ -93,6 +93,73 @@ class MarkdownTests(unittest.TestCase):
         for lines in (self.outline(''), ['# Root', '\t: fname=out.jpg', '\t# empty', '\t\t: md']):
             self.graphviz(self.render(lines))
 
+    def test_emoticons_render_in_headings_and_body_modes(self):
+        for mode in ('md', 'block', 'verbatim'):
+            with self.subTest(mode=mode):
+                dot = self.render(self.outline('Happy :-) Neutral :-|', mode, 'Heading :-)'))
+                self.assertEqual(2, dot.count('🙂'))
+                self.assertIn('😐', dot)
+                self.assertNotIn(':-)', dot)
+                self.assertNotIn(':-|', dot)
+                self.graphviz(dot)
+        dot = self.render(['# Root :-)', '\t: fname=out.jpg', '\t# Neutral :-|', '\t\t: node'])
+        self.assertIn('Root&nbsp;🙂', dot)
+        self.assertIn('😐', dot)
+        self.graphviz(dot)
+
+    def test_markdown_emoticons_preserve_code_and_link_targets(self):
+        body = MarkdownBody('**:-)** *:-|* `:-)` [:-)](<https://example.org/:-)>)\n\n'
+                            '```text\n:-) :-|\n```', '<input>', 'test', 1)
+        blocks = ParseMarkdown(body)
+        runs = blocks[0].runs
+        self.assertTrue(any(run.text == '🙂' and run.bold for run in runs))
+        self.assertTrue(any(run.text == '😐' and run.italic for run in runs))
+        self.assertTrue(any(run.text == ':-)' and run.code for run in runs))
+        self.assertTrue(any(run.text == '🙂' and run.link == 'https://example.org/:-)' for run in runs))
+        self.assertEqual(':-) :-|\n', blocks[1].source)
+
+    def test_rawmarkers_preserves_emoticons(self):
+        for mode in ('md rawmarkers', 'block rawmarkers', 'draw'):
+            with self.subTest(mode=mode):
+                dot = self.render(self.outline('Happy :-) Neutral :-|', mode))
+                self.assertIn(':-)', dot)
+                self.assertIn(':-|', dot)
+                self.assertNotIn('🙂', dot)
+                self.assertNotIn('😐', dot)
+
+    def test_emoticons_respect_word_and_path_boundaries(self):
+        from graphviz_mindmaps.parser.emoticons import ReplaceEmoticons
+        self.assertEqual('🙂, 😐!', ReplaceEmoticons(':-), :-|!'))
+        literal = 'word:-) :-|word /tmp/:-)/file https://example.org/:-)'
+        self.assertEqual(literal, ReplaceEmoticons(literal))
+
+    def test_extended_emoticons_across_body_modes(self):
+        source = 'Faces :) :( ;-) :-D XD :-p ;-P :-O :-/ :-( :\'( :\') 8-) :-* O:-) >:-) >:( :-X :-$ <3 </3'
+        expected = '🙂 🙁 😉 😃 😆 😛 😜 😮 😕 🙁 😢 😂 😎 😗 😇 😈 😠 🤐 😳 ❤️ 💔'.split()
+        for mode in ('md', 'block', 'verbatim'):
+            with self.subTest(mode=mode):
+                dot = self.render(self.outline(source, mode))
+                for emoji in expected:
+                    self.assertIn(emoji, dot)
+                self.graphviz(dot)
+        # Emoticons that contain stars must be converted before legacy bolding.
+        dot = self.render(self.outline('', 'node', 'Kisses :-* and :-*; wink ;-)'))
+        self.assertEqual(2, dot.count('😗'))
+        self.assertIn('😉', dot)
+        self.graphviz(dot)
+
+    def test_extended_emoticons_preserve_markdown_code_and_rawmarkers(self):
+        text = 'Faces ;-) :-* XD <3 </3 >:( :-/'
+        for mode in ('md rawmarkers', 'block rawmarkers', 'draw'):
+            dot = self.render(self.outline(text, mode))
+            for emoji in ('😉', '😗', '😆', '❤️', '💔', '😠', '😕'):
+                self.assertNotIn(emoji, dot)
+        body = MarkdownBody('Kiss :-* and :-* with **:-D** and `XD <3`', '<test>', 'test', 1)
+        runs = ParseMarkdown(body)[0].runs
+        self.assertEqual(2, ''.join(run.text for run in runs).count('😗'))
+        self.assertTrue(any(run.text == '😃' and run.bold for run in runs))
+        self.assertTrue(any(run.text == 'XD <3' and run.code for run in runs))
+
     def test_list_callouts_keep_markdown_formatting_and_symbols(self):
         source = ('* ! **Red** item\n  continued text\n'
                   '- ? Yellow *item*\n- $ Green `code`\n- @ Cyan item\n'
