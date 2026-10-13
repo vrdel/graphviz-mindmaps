@@ -4,6 +4,8 @@ import re
 import unicodedata
 from itertools import groupby
 
+from graphviz_mindmaps.parser.emoticons import ReplaceEmoticons
+
 from graphviz_mindmaps.render.image_transform import IMAGE_TRANSFORM_KEY_PATTERN
 
 
@@ -111,6 +113,8 @@ def _EscapeVerbatimBodyLine(text, apply_inline_backtick_bold, normalize_markers=
     }
 
     text = NormalizeVerbatimWhitespace(text)
+    if normalize_markers:
+        text = ReplaceEmoticons(text)
     if normalize_markers and re.match(r"^[ \t]*-{3,}[ \t]*$", text):
         return "__GVMM_HR__<BR/> "
     if normalize_markers:

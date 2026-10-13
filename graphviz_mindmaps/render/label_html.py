@@ -1,6 +1,7 @@
 import re
 
 from graphviz_mindmaps.constants import CALLOUT_COLORS
+from graphviz_mindmaps.parser.emoticons import ReplaceEmoticons
 
 from graphviz_mindmaps.render.image_transform import IMAGE_TRANSFORM_KEY_PATTERN
 
@@ -159,9 +160,6 @@ def ApplyVerbatimCalloutRows(labelhtml):
 def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larrow2, html_rarrow2, img_path_resolver):
     ntype = ""
 
-    if not vrbt and not draw and ("`" in label or "*" in label):
-        label = ApplyInlineBacktickBold(label)
-
     image_pattern = IMAGE_TRANSFORM_KEY_PATTERN
     if re.match(image_pattern + r"[ ]*[=:]", label):
         match = re.match(r"(" + image_pattern + r")(?:[  ]*[=:][  ]*)(.*)", label)
@@ -174,6 +172,15 @@ def BuildNodeLabelHtml(label, vrbt, draw, html_larrow1, html_rarrow1, html_larro
             ]
             return labelhtml, "img", label
 
+    # Block bodies are converted before escaping, where rawmarkers/draw can
+    # preserve literal text. Here convert only their heading, or a normal label.
+    heading, boundary, body = label.partition("__GVMM_BODY_BOUNDARY__")
+    parts = re.split(r'(<\/?(?:B|I|U|FONT|BR|TAB|WHITESP)\b[^>]*>)', heading)
+    heading = ''.join(part if index % 2 else ReplaceEmoticons(part)
+                      for index, part in enumerate(parts))
+    label = heading + boundary + body
+    if not vrbt and not draw and ("`" in label or "*" in label):
+        label = ApplyInlineBacktickBold(label)
     labelhtml = label.split()
     token_index = 0
     in_verbatim_header = bool(vrbt or draw)

@@ -6,6 +6,7 @@ import re
 
 from graphviz_mindmaps.model.document import MarkdownBody
 from graphviz_mindmaps.constants import CALLOUT_COLORS
+from graphviz_mindmaps.parser.emoticons import MatchEmoticon, ReplaceEmoticons
 
 HEADING = re.compile(r"^(\t*)#(?:[ \t]+|$)(.*)$")
 PAYLOAD = re.compile(r'<GVMM_MARKDOWN data="([A-Za-z0-9+/=]+)"/>$')
@@ -171,6 +172,19 @@ def ParseMarkdown(body):
     parser.enable(['strikethrough', 'table'])
     parser.inline.ruler.before('emphasis', 'highlight', _highlight_tokenize)
     parser.inline.ruler2.before('emphasis', 'highlight', _highlight_postprocess)
+    if not body.rawmarkers:
+        def emoticon(state, silent):
+            match = MatchEmoticon(state.src, state.pos)
+            if not match:
+                return False
+            if not silent:
+                token = state.push('text', '', 0)
+                token.content = ReplaceEmoticons(match.group(0))
+            state.pos = match.end()
+            return True
+        # Before text consumes letter/number prefixes, and before emphasis can
+        # interpret the star in a kiss. Code and link destinations stay opaque.
+        parser.inline.ruler.before('text', 'emoticon', emoticon)
     tree = SyntaxTreeNode(parser.parse(body.source, env={}))
 
     def inline(nodes, style=Run('')):
@@ -178,7 +192,8 @@ def ParseMarkdown(body):
         for node in nodes:
             kind = node.type
             if kind == 'text':
-                result.append(replace(style, text=node.content))
+                text = node.content if body.rawmarkers else ReplaceEmoticons(node.content)
+                result.append(replace(style, text=text))
             elif kind == 'code_inline':
                 result.append(replace(style, text=node.content, code=True))
             elif kind in {'strong', 'em', 's', 'link', 'mark'}:
