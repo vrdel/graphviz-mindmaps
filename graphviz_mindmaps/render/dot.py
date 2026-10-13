@@ -363,7 +363,7 @@ def ResolveRootCodeTheme(lines):
 
 
 def ResolveMarkdownOption(name, line):
-    aliases = {'md_width': 'mdw', 'md_list_spacing': 'mdlp', 'md_list_indent': 'mdli'}
+    aliases = {'md_width': 'mdw', 'md_list_spacing': 'mdls', 'md_list_indent': 'mdli'}
     value = ParseInlineAttrLine(name, line)
     return value if value is not None else ParseInlineAttrLine(aliases[name], line)
 

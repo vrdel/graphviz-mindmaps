@@ -559,9 +559,9 @@ numbers (fractional values round up) and apply to bullet, numbered, and task
 lists, including nested lists and callouts. Omit them to retain the existing
 automatic indentation and padding. They also work on root Markdown nodes.
 
-Short aliases are available: `mdlp` for `md_list_spacing`, `mdli` for
+Short aliases are available: `mdls` for `md_list_spacing`, `mdli` for
 `md_list_indent`, and `mdw` for `md_width`. For example,
-`md mdw=420 mdlp=0 mdli=20`. If both forms are supplied, the full name takes
+`md mdw=420 mdls=0 mdli=20`. If both forms are supplied, the full name takes
 precedence.
 
 ```text
