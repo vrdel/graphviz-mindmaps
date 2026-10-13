@@ -304,6 +304,28 @@ if ready:
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'md_width'):
                 self.render(self.outline('text', 'md md_width=' + value))
 
+    def test_markdown_layout_aliases(self):
+        source = '* ! First item\n  - nested item\n* Second item'
+        for root in (False, True):
+            def render(attrs):
+                if root:
+                    return self.render(['# Root', '\t: fname=out.jpg md ' + attrs] +
+                                       ['\t: ' + line for line in source.splitlines()])
+                return self.render(self.outline(source, 'md noheader symb=book ' + attrs))
+            for long, short, value in (('md_width', 'mdw', '180'),
+                                       ('md_list_spacing', 'mdlp', '0'),
+                                       ('md_list_indent', 'mdli', '48')):
+                with self.subTest(root=root, option=short):
+                    expected = render(long + '=' + value)
+                    self.assertEqual(expected, render(short + '=' + value))
+                    for attrs in (f'{short}=99 {long}={value}', f'{long}={value} {short}=99'):
+                        self.assertEqual(expected, render(attrs))
+                    with self.assertRaisesRegex(ValueError, long):
+                        render(short + '=-1')
+            dot = render('mdw=180 mdlp=8 mdli=32')
+            self.assertEqual(render('md_width=180 md_list_spacing=8 md_list_indent=32'), dot)
+            self.graphviz(dot)
+
     def test_list_layout_options_validate_for_child_and_root(self):
         for option in ('md_list_spacing', 'md_list_indent'):
             for value in ('bad', '-1', 'nan', 'inf', '""'):

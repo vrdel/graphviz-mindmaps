@@ -362,6 +362,12 @@ def ResolveRootCodeTheme(lines):
     return "default"
 
 
+def ResolveMarkdownOption(name, line):
+    aliases = {'md_width': 'mdw', 'md_list_spacing': 'mdlp', 'md_list_indent': 'mdli'}
+    value = ParseInlineAttrLine(name, line)
+    return value if value is not None else ParseInlineAttrLine(aliases[name], line)
+
+
 def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     root_heading, root_markdown = DecodeMarkdownBody(lines[0])
     lines = [root_heading, *lines[1:]]
@@ -455,11 +461,11 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             root_options.append(attr)
         root_options = ' '.join(root_options)
         root_label = AppendMarkdownLabel(root_label, RenderMarkdown(
-            root_markdown, tmpdir, ParseInlineAttrLine('md_width', root_options) or 420,
+            root_markdown, tmpdir, ResolveMarkdownOption('md_width', root_options) or 420,
             foreground=ParseInlineAttrLine('root_fg', root_options),
             code_theme=root_code_theme,
-            list_spacing=ParseInlineAttrLine('md_list_spacing', root_options),
-            list_indent=ParseInlineAttrLine('md_list_indent', root_options),
+            list_spacing=ResolveMarkdownOption('md_list_spacing', root_options),
+            list_indent=ResolveMarkdownOption('md_list_indent', root_options),
         ))
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
@@ -495,9 +501,9 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             match = re.search(r"(\t|#) (.*)", line)
             label = match.group(2)
             label, markdown_body = DecodeMarkdownBody(label)
-            markdown_width = ParseInlineAttrLine('md_width', nextline) or 420
-            markdown_list_spacing = ParseInlineAttrLine('md_list_spacing', nextline)
-            markdown_list_indent = ParseInlineAttrLine('md_list_indent', nextline)
+            markdown_width = ResolveMarkdownOption('md_width', nextline) or 420
+            markdown_list_spacing = ResolveMarkdownOption('md_list_spacing', nextline)
+            markdown_list_indent = ResolveMarkdownOption('md_list_indent', nextline)
             code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\"(?: style=\"([^\"]+)\")? data=\"([^\"]*)\"/>", label)
             code_source = None
             code_language = None
