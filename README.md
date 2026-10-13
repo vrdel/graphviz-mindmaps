@@ -277,6 +277,12 @@ Override the root ruler style for an individual node with `hr_style=`:
 Node overrides accept `solid`, `dashed`, and `dotted`. They apply only to that
 node; other nodes inherit the root style. Root `hr_spacing` still applies.
 
+Block and verbatim nodes accept `symb=book` (or multiple icons such as
+`symb=book:star`) on their attribute line. Icons appear above the heading and
+retain their own `sym1g`/`sym1f30` color and size settings. Body formatting such
+as `f16`, `l1r`, and `El1it` does not affect the icon row; header selectors such
+as `hl1r` address the heading text. `noheader` hides the heading but keeps icons.
+
 Additional color nodes provide softer alternatives to the primary colors:
 
 | Token | Color | Regular fill (default theme) | Block fill (default theme) |
@@ -316,6 +322,9 @@ For `block`, `verbatim`, and `draw` bodies, line selectors count from the first
 nonblank body line. Internal blank lines count; surrounding blank lines and
 the node header do not. This applies to both `lN` and end-relative `ElN`
 selectors, including ranges such as `l[11-13]r`.
+Line-specific font sizes override the body default regardless of attribute
+order: `block f16 l[1,5,10]f10fm` renders those three body lines at 10 points
+in monospace and the other lines at 16 points.
 
 Code blocks can be highlighted and rendered as image-backed Graphviz nodes:
 
