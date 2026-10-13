@@ -313,7 +313,7 @@ if ready:
                                        ['\t: ' + line for line in source.splitlines()])
                 return self.render(self.outline(source, 'md noheader symb=book ' + attrs))
             for long, short, value in (('md_width', 'mdw', '180'),
-                                       ('md_list_spacing', 'mdlp', '0'),
+                                       ('md_list_spacing', 'mdls', '0'),
                                        ('md_list_indent', 'mdli', '48')):
                 with self.subTest(root=root, option=short):
                     expected = render(long + '=' + value)
@@ -322,7 +322,7 @@ if ready:
                         self.assertEqual(expected, render(attrs))
                     with self.assertRaisesRegex(ValueError, long):
                         render(short + '=-1')
-            dot = render('mdw=180 mdlp=8 mdli=32')
+            dot = render('mdw=180 mdls=8 mdli=32')
             self.assertEqual(render('md_width=180 md_list_spacing=8 md_list_indent=32'), dot)
             self.graphviz(dot)
 
