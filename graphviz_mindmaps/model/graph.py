@@ -433,6 +433,8 @@ class Tree:
                 del line_indexes[0]
             while line_indexes and not line_indexes[-1]:
                 line_indexes.pop()
+            line_indexes = [row for row in line_indexes
+                            if not any('FACE="FontAwesome"' in self._label[index] for index in row)]
             return line_indexes
 
         def _scoped_line_fragment_indexes(self, fragments=None, include_internal_blank_rows=False):
@@ -485,7 +487,9 @@ class Tree:
             else:
                 indexes = list(range(1))
 
-            indexes = [idx for idx in indexes if idx < len(fragments) and has_visible_content(fragments[idx])]
+            indexes = [idx for idx in indexes if idx < len(fragments)
+                       and has_visible_content(fragments[idx])
+                       and 'FACE="FontAwesome"' not in fragments[idx]]
             return fragments, indexes
 
         def _body_boundary_fragment_index(self, fragments):
@@ -592,9 +596,26 @@ class Tree:
                     return fragment.replace("</TD>", eattr + "</TD>")
                 return fragment
 
+            if value and (self._verbatim or self._draw):
+                # Specific selectors must remain inside the default FONT tags
+                # so their size/color overrides the default. Later selectors
+                # take precedence when multiple selectors target the same row.
+                self._label = split_label_rows()
+                scoped = [item for item in value if item[0] != 0]
+                defaults = [item for item in value if item[0] == 0]
+                for item in list(reversed(scoped)) + list(reversed(defaults)):
+                    _, indexes = self._line_fragment_indexes_for_attr(item, self._label)
+                    if item[0] != 0 and indexes:
+                        indexes = [indexes[self._resolve_line_sel(int(item[0]), len(indexes)) - 1]]
+                    for index in indexes:
+                        self._label[index] = apply_attr_to_fragment(
+                            self._label[index], item, index == len(self._label) - 1)
+                restore_label_rows(self._label)
+                return
+
             if len(value) > 0:
                 if value[0][0] == 0:
-                    if "FontAwesome" not in self._label[1]:
+                    if self._verbatim or self._draw or "FontAwesome" not in self._label[1]:
                         self._label = split_label_rows()
                         for item in value:
                             if item[0] != 0:

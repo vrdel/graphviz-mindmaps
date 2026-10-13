@@ -241,6 +241,60 @@ class MarkdownTests(unittest.TestCase):
                     self.assertIn('Visible', dot)
                     self.graphviz(dot)
 
+    def test_block_header_symbols_with_font_size_and_blank_lines(self):
+        body = '\n* First sample\n  continued sample\n* Second sample\n  - final detail\n'
+        for mode in ('block', 'verbatim'):
+            for header in ('', ' noheader'):
+                with self.subTest(mode=mode, header=header):
+                    attrs = mode + ' csand10 f16 fontcomic El1it symb=book:star sym1gf30' + header
+                    dot = self.render(self.outline(body, attrs, 'Sample heading'))
+                    self.assertEqual(2, dot.count('FACE="FontAwesome"'))
+                    self.assertIn('POINT-SIZE="30"', dot)
+                    self.assertIn('First', dot)
+                    self.assertNotIn('<FONT POINT-SIZE="16"></FONT>', dot)
+                    if header:
+                        self.assertNotIn('Sample', dot)
+                    else:
+                        self.assertIn('<B><U><FONT>Sample', dot)
+                    self.graphviz(dot)
+
+    def test_block_symbols_do_not_shift_header_or_body_selectors(self):
+        import re
+        for selector in ('l1r', 'l1w1r', 'hl1r', 'hl1w1r', 'El1it'):
+            with self.subTest(selector=selector):
+                attrs = 'block ' + selector
+                plain = self.render(self.outline('\nFirst\nSecond\n', attrs, 'Sample heading'))
+                icon = self.render(self.outline('\nFirst\nSecond\n', attrs + ' symb=book', 'Sample heading'))
+                node = lambda dot: next(line for line in dot.splitlines() if 'node101[' in line)
+                without_icon = re.sub(r'<TR><TD[^>]*><FONT FACE="FontAwesome".*?</TR>', '', node(icon))
+                self.assertEqual(node(plain), without_icon)
+                self.graphviz(icon)
+
+    def test_block_line_font_sizes_override_default_in_either_order(self):
+        from xml.etree import ElementTree
+        body = '\nAlpha\n\nCharlie\n\nEcho\n\nGolf\nHotel\n\nJuliet\n\nLima\n'
+        for mode in ('block', 'verbatim', 'draw'):
+            for attrs in ('f16 l[1,5,10]f10fm', 'l[1,5,10]f10fm f16'):
+                with self.subTest(mode=mode, attrs=attrs):
+                    dot = self.render(self.outline(body, mode + ' fontcomic ' + attrs))
+                    self.assertEqual(3, dot.count('POINT-SIZE="10"'))
+                    self.graphviz(dot)
+                    if shutil.which('dot'):
+                        svg = subprocess.run(['dot', '-Tsvg'], input=dot.encode(), capture_output=True, check=True)
+                        text = {element.text.strip(): element.attrib
+                                for element in ElementTree.fromstring(svg.stdout).iter('{http://www.w3.org/2000/svg}text')
+                                if element.text}
+                        for word in ('Alpha', 'Echo', 'Juliet'):
+                            self.assertEqual('10.00', text[word]['font-size'])
+                            self.assertIn('Mono', text[word]['font-family'])
+                        for word in ('Charlie', 'Golf', 'Hotel', 'Lima'):
+                            self.assertEqual('16.00', text[word]['font-size'])
+
+    def test_block_font_size_last_selector_wins(self):
+        dot = self.render(self.outline('\nAlpha\nBeta\n', 'block f16 l1f10 El2f12'))
+        self.assertIn('<FONT POINT-SIZE="16"><FONT POINT-SIZE="10"><FONT POINT-SIZE="12">', dot)
+        self.graphviz(dot)
+
     def test_noheader_empty_heading_keeps_body_and_symbols(self):
         for mode in ('md', 'block'):
             for title in ('', ' '):
