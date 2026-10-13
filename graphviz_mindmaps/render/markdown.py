@@ -37,7 +37,7 @@ def _measure(text, face, size, bold=False, italic=False):
 def AppendMarkdownLabel(label, body_label):
     """Append a nested table after legacy title formatting has finished."""
     head, closing = label.rsplit('</TABLE>', 1)
-    return head + '<TR><TD ALIGN="LEFT" CELLPADDING="6">' + body_label + '</TD></TR></TABLE>' + closing
+    return head + '<TR><TD ALIGN="LEFT" CELLPADDING="2">' + body_label + '</TD></TR></TABLE>' + closing
 
 
 def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None):
