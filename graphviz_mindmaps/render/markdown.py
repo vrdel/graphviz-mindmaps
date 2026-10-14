@@ -40,14 +40,14 @@ def AppendMarkdownLabel(label, body_label):
     return head + '<TR><TD ALIGN="LEFT" CELLPADDING="2">' + body_label + '</TD></TR></TABLE>' + closing
 
 
-def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None):
+def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None):
     try:
         width = float(width)
     except (TypeError, ValueError):
         raise body.error('md_width must be a positive finite number of points') from None
     if not math.isfinite(width) or width <= 0:
         raise body.error('md_width must be a positive finite number of points')
-    def list_option(value, name):
+    def spacing_option(value, name):
         if value is None:
             return None
         try:
@@ -58,8 +58,9 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
             raise body.error(f'{name} must be a nonnegative finite number of points')
         return math.ceil(number)
 
-    list_spacing = list_option(list_spacing, 'md_list_spacing')
-    list_indent = list_option(list_indent, 'md_list_indent')
+    list_spacing = spacing_option(list_spacing, 'md_list_spacing')
+    list_indent = spacing_option(list_indent, 'md_list_indent')
+    line_spacing = 1 if line_spacing is None else spacing_option(line_spacing, 'md_line_spacing')
     face = face or font['comic']
     foreground = foreground or fontcolor['def']
     size = max(1, float(size))
@@ -139,6 +140,12 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
         if row or not rows:
             rows.append(row)
             widths.append(used)
+        def line_table(lines):
+            spacer = (f'<TR><TD HEIGHT="{line_spacing}" CELLPADDING="0"></TD></TR>'
+                      if line_spacing else '')
+            return (f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" ALIGN="{align}">'
+                    + spacer.join(lines) + '</TABLE>')
+
         if any(marked for row in rows for _, marked in row):
             # Graphviz FONT has no background attribute. Group adjacent marked
             # runs into table cells, retaining the same word wrapping as prose.
@@ -156,8 +163,13 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 lines.append(f'<TR><TD ALIGN="{align}"><TABLE BORDER="0" CELLBORDER="0" '
                              f'FIXEDSIZE="TRUE" WIDTH="{max(1, math.ceil(row_width * 1.12 + 4))}" HEIGHT="{math.ceil(points * 1.5)}" '
                              f'CELLSPACING="0" CELLPADDING="0" ALIGN="{align}"><TR>' + content + '</TR></TABLE></TD></TR>')
-            return (f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" ALIGN="{align}">'
-                    + ''.join(lines) + '</TABLE>')
+            return line_table(lines)
+        if line_spacing:
+            return line_table([
+                f'<TR><TD ALIGN="{align}" CELLPADDING="0">'
+                + (''.join(value for value, _ in row) or '&#160;') + '</TD></TR>'
+                for row in rows
+            ])
         # Graphviz aligns the line *preceding* BR, including the final line.
         return ''.join((''.join(value for value, _ in row) or '&#160;')
                        + f'<BR ALIGN="{align}"/>' for row in rows)

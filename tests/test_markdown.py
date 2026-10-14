@@ -401,10 +401,12 @@ if ready:
 
     def test_wrap_preserves_styled_words_and_long_code(self):
         body = MarkdownBody('prefix **some**word and `a long code span` plus more words', '<test>', 'title', 1)
-        result = RenderMarkdown(body, [self.temp.name], width=120)
-        self.assertIn('<BR ALIGN="LEFT"/>', result)
-        self.assertNotIn('some</B></FONT><BR', result)
-        self.assertIn('a&#160;long&#160;code&#160;span', result)
+        for spacing in (0, 1):
+            result = RenderMarkdown(body, [self.temp.name], width=120, line_spacing=spacing)
+            self.assertIn('<BR ALIGN="LEFT"/>' if spacing == 0 else 'HEIGHT="1"', result)
+            self.assertNotIn('some</B></FONT><BR', result)
+            self.assertNotIn('some</B></FONT></TD>', result)
+            self.assertIn('a&#160;long&#160;code&#160;span', result)
 
     def test_local_image_relative_to_source_and_remote_rejected(self):
         original = Path(self.temp.name, 'sample.png')
@@ -425,6 +427,51 @@ if ready:
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'md_width'):
                 self.render(self.outline('text', 'md md_width=' + value))
 
+    def test_markdown_line_spacing_validation_and_default(self):
+        source = 'First line  \nSecond line'
+        self.assertEqual(self.render(self.outline(source)),
+                         self.render(self.outline(source, 'md md_line_spacing=1')))
+        self.assertNotEqual(self.render(self.outline(source)),
+                            self.render(self.outline(source, 'md mdlns=0')))
+        for value in ('-1', 'bad', 'nan', 'inf', '""'):
+            for root in (False, True):
+                with self.subTest(value=value, root=root):
+                    attrs = 'md md_line_spacing=' + value
+                    lines = (['# Root', '\t: fname=out.jpg ' + attrs, '\t: text']
+                             if root else self.outline('text', attrs))
+                    with self.assertRaisesRegex(ValueError, 'md_line_spacing'):
+                        self.render(lines)
+
+    @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
+    def test_markdown_line_spacing_changes_baseline_distance(self):
+        from xml.etree import ElementTree
+        for source in ('Alpha  \nBeta', '==Alpha==  \nBeta', '* Alpha  \n  Beta'):
+            distances = []
+            for spacing in (0, 8):
+                dot = self.render(self.outline(source, f'md md_line_spacing={spacing} mdls=0'))
+                self.graphviz(dot)
+                result = subprocess.run(['dot', '-Tsvg'], input=dot.encode(), capture_output=True, check=True)
+                positions = {element.text: float(element.attrib['y'])
+                             for element in ElementTree.fromstring(result.stdout).iter('{http://www.w3.org/2000/svg}text')
+                             if element.text in ('Alpha', 'Beta')}
+                distances.append(abs(positions['Beta'] - positions['Alpha']))
+            with self.subTest(source=source):
+                self.assertAlmostEqual(8, distances[1] - distances[0], delta=1)
+
+    def test_markdown_line_spacing_wrapping_root_and_formatting(self):
+        source = '**Alpha** *Beta* Gamma Delta Epsilon Zeta Eta Theta'
+        dot = self.render(self.outline(source, 'md mdw=90 md_line_spacing=3.5'))
+        self.assertIn('HEIGHT="4" CELLPADDING="0"></TD>', dot)
+        self.assertIn('<B>Alpha</B>', dot)
+        self.assertIn('<I>Beta</I>', dot)
+        self.graphviz(dot)
+        root = self.render(['# Root', '\t: fname=out.jpg md md_line_spacing=8',
+                            '\t: Alpha  ', '\t: Beta'])
+        self.assertIn('HEIGHT="8" CELLPADDING="0"></TD>', root)
+        self.graphviz(root)
+        single = self.render(self.outline('Alpha', 'md md_line_spacing=8'))
+        self.assertNotIn('HEIGHT="8"', single)
+
     def test_markdown_layout_aliases(self):
         source = '* ! First item\n  - nested item\n* Second item'
         for root in (False, True):
@@ -435,7 +482,8 @@ if ready:
                 return self.render(self.outline(source, 'md noheader symb=book ' + attrs))
             for long, short, value in (('md_width', 'mdw', '180'),
                                        ('md_list_spacing', 'mdls', '0'),
-                                       ('md_list_indent', 'mdli', '48')):
+                                       ('md_list_indent', 'mdli', '48'),
+                                       ('md_line_spacing', 'mdlns', '4')):
                 with self.subTest(root=root, option=short):
                     expected = render(long + '=' + value)
                     self.assertEqual(expected, render(short + '=' + value))

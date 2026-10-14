@@ -584,6 +584,17 @@ Markdown body. Highlights can contain other inline formatting, for example
 on each side, without spaces just inside the markers. Escaped markers
 (`\=\=literal\=\=`), unmatched markers, and markers inside code remain literal.
 
+Use `md_line_spacing` (shortcut `mdlns`) to add space between lines within Markdown paragraphs:
+`md md_line_spacing=4` adds a four-point gap between wrapped lines and explicit
+Markdown line breaks. The default is `1` point; `mdlns=0` restores the original
+font-based line spacing without an added gap. The full name takes precedence
+when both forms are supplied.
+It applies to prose, headings, table cells, and text within lists or callouts,
+including highlighted text, on both regular and root Markdown nodes. It does
+not alter code images or the gaps between paragraphs or list items. Values
+must be nonnegative; fractional points round up. This adds space and cannot
+tighten lines below their existing font-based height.
+
 Use `md_list_spacing` to set the vertical gap between list items in points:
 `0` makes a compact list, while `8` adds an eight-point gap. `md_list_indent`
 sets the horizontal space reserved for the marker and its gap at each list

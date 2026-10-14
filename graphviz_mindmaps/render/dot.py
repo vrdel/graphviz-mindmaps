@@ -363,7 +363,8 @@ def ResolveRootCodeTheme(lines):
 
 
 def ResolveMarkdownOption(name, line):
-    aliases = {'md_width': 'mdw', 'md_list_spacing': 'mdls', 'md_list_indent': 'mdli'}
+    aliases = {'md_width': 'mdw', 'md_list_spacing': 'mdls', 'md_list_indent': 'mdli',
+               'md_line_spacing': 'mdlns'}
     value = ParseInlineAttrLine(name, line)
     return value if value is not None else ParseInlineAttrLine(aliases[name], line)
 
@@ -466,6 +467,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             code_theme=root_code_theme,
             list_spacing=ResolveMarkdownOption('md_list_spacing', root_options),
             list_indent=ResolveMarkdownOption('md_list_indent', root_options),
+            line_spacing=ResolveMarkdownOption('md_line_spacing', root_options),
         ))
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
@@ -504,6 +506,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             markdown_width = ResolveMarkdownOption('md_width', nextline) or 420
             markdown_list_spacing = ResolveMarkdownOption('md_list_spacing', nextline)
             markdown_list_indent = ResolveMarkdownOption('md_list_indent', nextline)
+            markdown_line_spacing = ResolveMarkdownOption('md_line_spacing', nextline)
             code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\"(?: style=\"([^\"]+)\")? data=\"([^\"]*)\"/>", label)
             code_source = None
             code_language = None
@@ -703,6 +706,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     code_theme=root_code_theme,
                     list_spacing=markdown_list_spacing,
                     list_indent=markdown_list_indent,
+                    line_spacing=markdown_line_spacing,
                 )
                 node._label = [AppendMarkdownLabel(''.join(node._label), body_label)]
 
