@@ -223,8 +223,9 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 rows.append(textrow('<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0"><TR><TD HEIGHT="1"> </TD></TR><HR/><TR><TD HEIGHT="1"> </TD></TR></TABLE>'))
             elif kind in {'fence', 'code_block'}:
                 temporary()
-                path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs, code_theme)
-                rows.append('<TR><TD ALIGN="LEFT" CELLPADDING="0">' + image(Path(path), available, block.source_line) + '</TD></TR>')
+                path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
+                                       code_theme, transparent_background=True)
+                rows.append('<TR><TD ALIGN="CENTER" VALIGN="MIDDLE" CELLPADDING="0">' + image(Path(path), available, block.source_line) + '</TD></TR>')
             elif kind == 'blockquote':
                 inner = render(block.children, max(1, available - 22))
                 accent = escape(fontcolor['b'], quote=True)

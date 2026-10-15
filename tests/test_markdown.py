@@ -1,4 +1,5 @@
 import io
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -388,6 +389,20 @@ if ready:
                 self.assertIn('&lt;b&gt;', dot)
                 self.assertIn('<IMG SRC=', dot)
                 self.graphviz(dot)
+
+    def test_code_background_is_transparent_including_resized_blocks(self):
+        for source in ('```python\nvalue = 123456789\n```', '    value = 123456789'):
+            for width in (420, 80):
+                with self.subTest(source=source, width=width):
+                    dot = self.render(self.outline(source, f'md bg=seagreen1 md_width={width}'))
+                    paths = re.findall(r'<IMG SRC="([^"]+)"', dot)
+                    self.assertTrue(paths)
+                    for path in paths:
+                        with Image.open(path) as image:
+                            self.assertEqual('RGBA', image.mode)
+                            self.assertEqual(0, image.getpixel((0, 0))[3])
+                            self.assertGreater(image.getchannel('A').getextrema()[1], 0)
+                    self.graphviz(dot)
 
     def test_soft_hard_breaks_and_node_local_reference_links(self):
         body = MarkdownBody('one\ntwo  \nthree\\\nfour', '<test>', 'title', 1)
