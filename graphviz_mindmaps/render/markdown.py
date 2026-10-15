@@ -225,7 +225,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 temporary()
                 path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
                                        code_theme, transparent_background=True)
-                rows.append('<TR><TD ALIGN="CENTER" VALIGN="MIDDLE" CELLPADDING="0">' + image(Path(path), available, block.source_line) + '</TD></TR>')
+                rows.append('<TR><TD ALIGN="LEFT" VALIGN="MIDDLE" CELLPADDING="0">' + image(Path(path), available, block.source_line) + '</TD></TR>')
             elif kind == 'blockquote':
                 inner = render(block.children, max(1, available - 22))
                 accent = escape(fontcolor['b'], quote=True)
