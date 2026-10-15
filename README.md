@@ -619,8 +619,11 @@ precedence.
 
 `md_width=420` sets the target body width in points. Prose wraps while retaining
 inline styles; lists use hanging indentation and table columns share the available
-width. An indivisible word or inline-code span may exceed that width. Code and
-local images are scaled down to fit. Markdown image syntax is supported for one
+width. An indivisible word or inline-code span may exceed that width. Fenced and
+indented code are centered horizontally and vertically within their cells, and
+use transparent backgrounds so the node background shows through;
+syntax colors still follow the code theme. Code and local images are scaled down
+to fit. Markdown image syntax is supported for one
 image in its own paragraph; relative paths resolve against the `.otl` file.
 Remote images are not downloaded. Missing images produce a source-located error.
 

@@ -81,7 +81,8 @@ def _highlight_palette(style):
     return palette
 
 
-def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_lines=None):
+def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_lines=None,
+                    transparent_background=False):
     highlight_lines = highlight_lines or []
     tmpdir = Path(tmpdirs[-1]) if tmpdirs else Path.cwd()
     code_dir = tmpdir / "code"
@@ -135,7 +136,8 @@ def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_l
     height = padding_y * 2 + line_height * len(token_lines)
 
     background = style.background_color or "#f8f8f8"
-    image = Image.new("RGB", (width, height), background)
+    image = (Image.new("RGBA", (width, height), (0, 0, 0, 0)) if transparent_background
+             else Image.new("RGB", (width, height), background))
     draw = ImageDraw.Draw(image)
     palette = _highlight_palette(style)
 
@@ -155,7 +157,8 @@ def RenderCodeImage(source, language, tmpdirs, style_name="default", highlight_l
         y += line_height
 
     digest = hashlib.sha256(
-        "\0".join([language, source, style_name, repr(sorted(highlighted_rows.items()))]).encode("utf-8")
+        "\0".join([language, source, style_name, repr(sorted(highlighted_rows.items())),
+                   str(transparent_background)]).encode("utf-8")
     ).hexdigest()[:16]
     output = code_dir / ("code-%s.png" % digest)
     image.save(output)
