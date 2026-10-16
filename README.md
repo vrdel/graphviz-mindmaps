@@ -332,6 +332,9 @@ in monospace and the other lines at 16 points.
 
 Code blocks can be highlighted and rendered as image-backed Graphviz nodes:
 
+Code images have transparent backgrounds so the node background shows through.
+Syntax colors and highlighted lines retain their selected code style.
+
 Code body lines can contain `# ` comments, including indented and inline comments.
 Keep the body prefix, for example `:     # Comment`, so the line stays inside
 the code node.
