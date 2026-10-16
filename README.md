@@ -332,6 +332,10 @@ in monospace and the other lines at 16 points.
 
 Code blocks can be highlighted and rendered as image-backed Graphviz nodes:
 
+Code body lines can contain `# ` comments, including indented and inline comments.
+Keep the body prefix, for example `:     # Comment`, so the line stays inside
+the code node.
+
 Set `code_theme` on the root to choose the default Pygments style for every code
 node in that mindmap. A code node's `style=` overrides it, including
 `style=default`. This setting is independent of the mindmap's `theme=` palette.
