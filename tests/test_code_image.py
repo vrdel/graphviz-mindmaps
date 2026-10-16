@@ -16,6 +16,33 @@ from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
 
 
 class CodeHighlightTests(unittest.TestCase):
+    def test_code_comments_preserve_source_and_following_nodes(self):
+        body = ['', '# Module comment', 'def sample(value):',
+                '    # Indented comment', '    text = "# literal"',
+                '    return value  # Inline comment', '']
+        for marker in (':', '|', ';'):
+            for multiline in (False, True):
+                with self.subTest(marker=marker, multiline=multiline):
+                    lines = ['# Root', '\t: fname=out.jpg', '\t# Sample']
+                    if multiline:
+                        lines.append('\t# continued title')
+                    lines += ['\t\t: code python']
+                    lines += ['\t\t' + marker + (' ' + line if line else '') for line in body]
+                    lines += ['\t\t# child', '\t\t\t: node', '\t# sibling', '\t\t: node']
+                    blocks = ExtractMindmapBlocks(lines, ApplyInlineBacktickBold)
+                    self.assertEqual(4, sum(line.lstrip().startswith('# ') for line in blocks[0]))
+                    with tempfile.TemporaryDirectory() as tmpdir:
+                        session = RenderSession(tmpdir=[tmpdir])
+                        with patch('graphviz_mindmaps.render.dot.RenderCodeImage', wraps=RenderCodeImage) as render:
+                            with patch('graphviz_mindmaps.render.dot.WriteDot'):
+                                GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None),
+                                       session, RenderRuntime({}, '#ffffff'))
+                        render.assert_called_once()
+                        expected = '\n'.join(' ' + line if line else '' for line in body)
+                        self.assertEqual(expected, render.call_args.args[0])
+                        self.assertIn('child', session.dotbuf)
+                        self.assertIn('sibling', session.dotbuf)
+
     def test_background_uses_selected_style_including_unknown_style_fallback(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             for name in ('default', 'monokai', 'nord', 'solarized-light', 'nonexistent-style'):
