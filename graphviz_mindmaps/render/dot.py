@@ -529,7 +529,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 if not tmpdir:
                     tmpdir.append(tempfile.mkdtemp())
                 code_image_path = RenderCodeImage(
-                    code_source, code_language, tmpdir, code_style, highlight_lines
+                    code_source, code_language, tmpdir, code_style, highlight_lines,
+                    transparent_background=True,
                 )
                 try:
                     labelhtml, ntype, label = BuildNodeLabelHtml(

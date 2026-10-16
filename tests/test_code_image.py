@@ -1,4 +1,5 @@
 import colorsys
+from pathlib import Path
 import tempfile
 import unittest
 from types import SimpleNamespace
@@ -80,6 +81,11 @@ class CodeHighlightTests(unittest.TestCase):
                         # Each image resolves its requested style, then the default highlight palette.
                         self.assertEqual(expected, [call.args[0] for call in styles.call_args_list[::2]])
                         self.assertEqual('#2e3440' if 'theme=nord' in root_attrs else '#ffffff', session.bgcolor)
+                        for path in Path(tmpdir, 'code').glob('*.png'):
+                            with Image.open(path) as image:
+                                self.assertEqual('RGBA', image.mode)
+                                self.assertEqual(0, image.getpixel((0, 0))[3])
+                                self.assertGreater(image.getchannel('A').getextrema()[1], 0)
         finally:
             ApplyTheme('default')
 
@@ -129,6 +135,7 @@ class CodeHighlightTests(unittest.TestCase):
                     )
             render.assert_called_once()
             self.assertEqual(('python', [tmpdir], 'monokai', [(n, '') for n in (1, 12, 2, 3, 4, 5, -1, -1, -2, -3, -4, -5)]), render.call_args.args[1:])
+            self.assertTrue(render.call_args.kwargs['transparent_background'])
             self.assertIn('Example', session.dotbuf)
             self.assertIn('<IMG SRC="code.png"', session.dotbuf)
 
