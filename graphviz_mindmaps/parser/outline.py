@@ -157,7 +157,7 @@ def _CollectVerbatimNodeLine(lines, node_line_index, apply_inline_backtick_bold,
     )
     body_lines = []
 
-    while body_index < len(lines) and '# ' not in lines[body_index] \
+    while body_index < len(lines) and not re.match(r"^[ \t]*#(?:\s|$)", lines[body_index]) \
             and not re.search(r"\t\s*[a-zA-Z0-9]\s*", lines[body_index]):
         if "\t:" in lines[body_index]:
             body_lines.append(lines[body_index].lstrip("\t:").rstrip())

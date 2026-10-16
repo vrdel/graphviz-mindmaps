@@ -318,6 +318,10 @@ Use `cdef` on a block node to select the current theme's default regular-node fi
     : block body
 ```
 
+`block`, `verbatim`, and `draw` bodies can contain literal `# ` text, including
+lines such as `: # Sample heading`. Only an outline heading without a body
+prefix starts a new node.
+
 For `block`, `verbatim`, and `draw` bodies, line selectors count from the first
 nonblank body line. Internal blank lines count; surrounding blank lines and
 the node header do not. This applies to both `lN` and end-relative `ElN`

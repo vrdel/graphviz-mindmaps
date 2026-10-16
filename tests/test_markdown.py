@@ -329,6 +329,26 @@ class MarkdownTests(unittest.TestCase):
             with self.subTest(attrs=attrs), self.assertRaisesRegex(ValueError, 'Markdown node'):
                 PrepareMarkdownBodies(self.outline('body', attrs))
 
+    def test_block_body_hash_heading_does_not_end_node(self):
+        source = ('\nNOTES.md\n# Sample heading\n\n'
+                  'A sample paragraph after the heading.\n'
+                  'Use `sample-command` here.\n')
+        for mode in ('block rawmarkers', 'block', 'verbatim', 'draw'):
+            for marker in (':', '|', ';'):
+                with self.subTest(mode=mode, marker=marker):
+                    lines = self.outline(source, mode)
+                    lines[4:] = [line.replace('\t\t:', '\t\t' + marker, 1)
+                                 for line in lines[4:]]
+                    lines += ['\t\t# child', '\t\t\t: node', '\t# sibling', '\t\t: node']
+                    blocks = ExtractMindmapBlocks(lines, ApplyInlineBacktickBold)
+                    self.assertEqual(4, sum(line.lstrip().startswith('# ') for line in blocks[0]))
+                    dot = self.render(lines)
+                    self.assertIn('#&nbsp;Sample&nbsp;heading', dot)
+                    self.assertIn('sample-command', dot)
+                    self.assertIn('child', dot)
+                    self.assertIn('sibling', dot)
+                    self.graphviz(dot)
+
     def test_non_markdown_bodies_do_not_select_markdown(self):
         for mode in ('block', 'code python'):
             lines = self.outline('md\n# code comment', attrs=mode)
