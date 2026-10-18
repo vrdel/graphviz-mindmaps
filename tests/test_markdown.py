@@ -424,6 +424,22 @@ if ready:
                             self.assertGreater(image.getchannel('A').getextrema()[1], 0)
                     self.graphviz(dot)
 
+    @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
+    def test_horizontal_rule_does_not_add_empty_text_lines(self):
+        from xml.etree import ElementTree
+        for source in ('Before\n\n---\n\nAfter', '---', 'Before\n\n---', '---\n\nAfter'):
+            with self.subTest(source=source):
+                dot = self.render(self.outline(source, 'md noheader'))
+                result = subprocess.run(['dot', '-Tsvg'], input=dot.encode(),
+                                        capture_output=True, check=True)
+                positions = {element.text: float(element.attrib['y'])
+                             for element in ElementTree.fromstring(result.stdout).iter('{http://www.w3.org/2000/svg}text')}
+                if source == 'Before\n\n---\n\nAfter':
+                    self.assertIn('Before', positions)
+                    self.assertIn('After', positions)
+                    self.assertLess(abs(positions['Before'] - positions['After']), 45)
+                self.graphviz(dot)
+
     def test_soft_hard_breaks_and_node_local_reference_links(self):
         body = MarkdownBody('one\ntwo  \nthree\\\nfour', '<test>', 'title', 1)
         blocks = ParseMarkdown(body)
