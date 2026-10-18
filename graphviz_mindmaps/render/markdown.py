@@ -220,7 +220,12 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     rows.append(textrow(wrapped(block.runs, available, round(size * ratio), kind == 'heading')))
             elif kind == 'hr':
                 # A separate tiny table guarantees legal HR placement even at EOF.
-                rows.append(textrow('<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0"><TR><TD HEIGHT="1"> </TD></TR><HR/><TR><TD HEIGHT="1"> </TD></TR></TABLE>'))
+                # Empty cells avoid inheriting a full text line's height from
+                # the surrounding font; all rule spacing is explicit.
+                rows.append('<TR><TD ALIGN="LEFT" CELLPADDING="0">'
+                            '<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">'
+                            '<TR><TD HEIGHT="1"></TD></TR><HR/>'
+                            '<TR><TD HEIGHT="1"></TD></TR></TABLE></TD></TR>')
             elif kind in {'fence', 'code_block'}:
                 temporary()
                 path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
