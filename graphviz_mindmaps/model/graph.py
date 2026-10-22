@@ -112,6 +112,7 @@ class Tree:
             self._bordercolor = bordercolor
             self._borderwidth = borderwidth
             self._borderstyle = borderstyle
+            self._square_corners = False
             self._hr_style = hr_style
 
         def _apply_fontname(self, attrs):
@@ -176,7 +177,17 @@ class Tree:
             attrs = self._apply_fgcolor(attrs)
             attrs = self._apply_bordercolor(attrs)
             attrs = self._apply_borderwidth(attrs)
-            return self._apply_borderstyle(attrs)
+            attrs = self._apply_borderstyle(attrs)
+            if self._square_corners:
+                attrs = re.sub(
+                    r'style="([^"]*)"',
+                    lambda match: 'style="%s"' % ','.join(
+                        style.strip() for style in match.group(1).split(',')
+                        if style.strip() != 'rounded'
+                    ),
+                    attrs,
+                )
+            return attrs
 
         def element(self):
             label_html = SpaceHorizontalRules("".join(self._label), self._tree.hr_spacing, self._hr_style or self._tree.hr_style)
