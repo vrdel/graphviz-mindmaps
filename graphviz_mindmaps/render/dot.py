@@ -697,6 +697,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 InsertImageRow(parentlist[level]._label, code_image_path)
             if markdown_body is not None:
                 node = parentlist[level]
+                node._square_corners = True
                 attrs = node._apply_node_overrides(nodetype[ntype])
                 body_label = RenderMarkdown(
                     markdown_body, tmpdir, markdown_width,
