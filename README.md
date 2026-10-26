@@ -612,8 +612,9 @@ sets the horizontal space reserved for the marker and its gap at each list
 level, also in points; larger values indent nested lists further. A minimum
 width is retained so the bullet or number fits. Both options accept nonnegative
 numbers (fractional values round up) and apply to bullet, numbered, and task
-lists, including nested lists and callouts. Omit them to retain the existing
-automatic indentation and padding. They also work on root Markdown nodes.
+lists, including nested lists and callouts. Both default to `0`, giving compact
+lists with the minimum space needed for their markers. They also work on root
+Markdown nodes. The default layout is equivalent to `mdls=0 mdlns=1 mdli=0`.
 
 Short aliases are available: `mdls` for `md_list_spacing`, `mdli` for
 `md_list_indent`, and `mdw` for `md_width`. For example,

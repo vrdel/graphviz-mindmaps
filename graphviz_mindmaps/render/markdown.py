@@ -58,8 +58,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
             raise body.error(f'{name} must be a nonnegative finite number of points')
         return math.ceil(number)
 
-    list_spacing = spacing_option(list_spacing, 'md_list_spacing')
-    list_indent = spacing_option(list_indent, 'md_list_indent')
+    list_spacing = 0 if list_spacing is None else spacing_option(list_spacing, 'md_list_spacing')
+    list_indent = 0 if list_indent is None else spacing_option(list_indent, 'md_list_indent')
     line_spacing = 1 if line_spacing is None else spacing_option(line_spacing, 'md_line_spacing')
     face = face or font['comic']
     foreground = foreground or fontcolor['def']
