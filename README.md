@@ -589,6 +589,9 @@ not clickable links in JPG output. Code is syntax-highlighted through Pygments
 and embedded as an image; unknown languages fall back to plain text. The root
 `code_theme=` selects the code style.
 
+Markdown list items written with `-` render with a Unicode minus (`−`);
+`*` and `+` render with a bullet (`•`). Task items retain their checkbox markers.
+
 Use `==highlighted text==` for a pale yellow background with dark text in the
 Markdown body. Highlights can contain other inline formatting, for example
 `==important **bold** text==`, and wrap across lines. Use exactly two equals signs

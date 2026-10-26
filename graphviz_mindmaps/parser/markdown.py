@@ -125,6 +125,7 @@ class Block:
     language: str = ''
     align: str = 'left'
     callout: str = ''
+    bullet_marker: str = ''
 
 
 def _highlight_tokenize(state, silent):
@@ -229,6 +230,8 @@ def ParseMarkdown(body):
             result.children = [convert(child) for child in node.children]
             if node.type == 'ordered_list':
                 result.start = int(node.attrs.get('start', 1))
+            if node.type == 'bullet_list':
+                result.bullet_marker = node.markup
             if (node.type == 'list_item' and node.parent.type == 'bullet_list'
                     and not body.rawmarkers and node.children
                     and node.children[0].type == 'paragraph'):

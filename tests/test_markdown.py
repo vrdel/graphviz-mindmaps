@@ -176,6 +176,23 @@ class MarkdownTests(unittest.TestCase):
             self.assertNotIn('>' + marker + '</FONT>', dot)
         self.graphviz(dot)
 
+    def test_dash_lists_render_unicode_minus(self):
+        source = ('- minus\n  * nested bullet\n- ! callout\n'
+                  '- [x] done\n- [ ] pending\n\n* star\n\n+ plus\n\n1. numbered')
+        for root in (False, True):
+            with self.subTest(root=root):
+                lines = (['# Root', '\t: fname=out.jpg md'] +
+                         ['\t: ' + line for line in source.split('\n')]
+                         if root else self.outline(source))
+                dot = self.render(lines)
+                self.assertEqual(2, dot.count('>−&#160;</TD>'))
+                self.assertEqual(3, dot.count('>•&#160;</TD>'))
+                self.assertIn('>☑&#160;</TD>', dot)
+                self.assertIn('>☐&#160;</TD>', dot)
+                self.assertIn('>1.&#160;</TD>', dot)
+                self.assertEqual(2, dot.count('BGCOLOR="#F2B8B8"'))
+                self.graphviz(dot)
+
     def test_callouts_stop_at_blank_lines_and_nested_items(self):
         source = '* ! warning\n  continuation\n\n  plain paragraph\n  - nested plain\n  - @ nested cyan\n* plain sibling'
         body = MarkdownBody(source, '<input>', 'test', 1)
