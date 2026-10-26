@@ -237,7 +237,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 rows.append(textrow(f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" ALIGN="LEFT"><TR><TD BORDER="3" SIDES="L" COLOR="{accent}" CELLPADDING="8" ALIGN="LEFT">{inner}</TD></TR></TABLE>'))
             elif kind in {'bullet_list', 'ordered_list'}:
                 listrows = []
-                markers = [f'{block.start + index}.' if kind == 'ordered_list' else '•'
+                bullet = '−' if block.bullet_marker == '-' else '•'
+                markers = [f'{block.start + index}.' if kind == 'ordered_list' else bullet
                            for index in range(len(block.children))]
                 original_markers = list(markers)
                 task_prefixes = {}
