@@ -81,7 +81,7 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
                              if '<FONT FACE="%s">' % fontface['fm'] in row]
                 self.assertEqual(['instance._cache_user_changed',
                                   'instance._cache_usage_accounts'], mono_rows)
-                self.assertIn('<HR/>', session.dotbuf)
+                self.assertIn('SIDES="B" STYLE="dashed"', session.dotbuf)
                 if shutil.which('dot'):
                     rendered = subprocess.run(['dot', '-Tsvg'], input=session.dotbuf,
                                               capture_output=True, text=True)

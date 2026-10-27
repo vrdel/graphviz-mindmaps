@@ -251,7 +251,7 @@ Use a nonnegative integer; `hr_spacing=0` removes the extra spacing. The setting
 also applies to rules in block nodes and does not affect line-selector numbering.
 
 Set `hr_style=solid`, `hr_style=dashed`, or `hr_style=dotted` on the root to
-choose the ruler style (default: `solid`). For example:
+choose the ruler style (default: `dashed`). For example:
 
 ```text
 # Notes
