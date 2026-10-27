@@ -6,7 +6,7 @@ from graphviz_mindmaps.parser.emoticons import ReplaceEmoticons
 from graphviz_mindmaps.render.image_transform import IMAGE_TRANSFORM_KEY_PATTERN
 
 
-def SpaceHorizontalRules(label, spacing, style="solid"):
+def SpaceHorizontalRules(label, spacing, style="dashed"):
     """Style and space rules after all logical line formatting is done."""
     if "<HR/>" not in label or (not spacing and style == "solid"):
         return label

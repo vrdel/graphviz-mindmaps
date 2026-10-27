@@ -685,7 +685,7 @@ class Tree:
         self.default_borderwidth = None
         self.default_borderstyle = None
         self.hr_spacing = 4
-        self.hr_style = "solid"
+        self.hr_style = "dashed"
 
     def _subgraphs_enabled_for_tabs(self, tabs, parent=None):
         if parent is not None and getattr(parent, "_child_subgraphs", None) is False:

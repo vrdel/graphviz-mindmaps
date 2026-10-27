@@ -193,7 +193,7 @@ def ResolveRootHrStyle(lines):
             if value not in {"solid", "dashed", "dotted"}:
                 raise ValueError("hr_style must be solid, dashed, or dotted")
             return value
-    return "solid"
+    return "dashed"
 
 
 def ResolveRootHrSpacing(lines):

@@ -17,7 +17,7 @@ class HorizontalRuleSpacingTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
     def test_node_style_overrides_root_without_affecting_children_or_siblings(self):
         blocks = ExtractMindmapBlocks([
-            '# Root', '\t: fname=out.jpg hr_style=dashed',
+            '# Root', '\t: fname=out.jpg',
             '\t# before; ---; after', '\t\t: node hr_style=solid',
             '\t\t# child; ---; after', '\t\t\t: node',
             '\t# Dotted block', '\t\t: block hr_style="DOTTED"',
@@ -53,10 +53,10 @@ class HorizontalRuleSpacingTests(unittest.TestCase):
                    RenderSession(), RenderRuntime({}, '#ffffff'))
 
     def test_root_style_default_override_and_validation(self):
-        self.assertEqual('solid', ResolveRootHrStyle(['# Root']))
+        self.assertEqual('dashed', ResolveRootHrStyle(['# Root']))
         for style in ('solid', 'dashed', 'dotted'):
             self.assertEqual(style, ResolveRootHrStyle(['# Root', '\t: hr_style=' + style]))
-        self.assertEqual('solid', ResolveRootHrStyle(['# Root', '\t# Child', '\t\t: hr_style=dashed']))
+        self.assertEqual('dashed', ResolveRootHrStyle(['# Root', '\t# Child', '\t\t: hr_style=solid']))
         with self.assertRaisesRegex(ValueError, 'hr_style'):
             ResolveRootHrStyle(['# Root', '\t: hr_style=unknown'])
 
@@ -112,7 +112,7 @@ class HorizontalRuleSpacingTests(unittest.TestCase):
         label = '<TABLE><TR><TD COLSPAN="2">before</TD></TR><HR/><TR><TD>one</TD><TD>two</TD></TR></TABLE>'
         result = SpaceHorizontalRules(label, 2)
         self.assertEqual(2, result.count('COLSPAN="2" HEIGHT="2"'))
-        self.assertEqual(label, SpaceHorizontalRules(label, 0))
+        self.assertEqual(label, SpaceHorizontalRules(label, 0, 'solid'))
 
     @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
     def test_rendered_spacing_adds_requested_height_for_nodes_and_blocks(self):
@@ -125,7 +125,7 @@ class HorizontalRuleSpacingTests(unittest.TestCase):
                 ruler_widths = {}
                 for spacing in (0, 2, 6):
                     blocks = ExtractMindmapBlocks(
-                        ['# Root', '\t: fname=out.jpg hr_spacing=%d' % spacing] + body,
+                        ['# Root', '\t: fname=out.jpg hr_style=solid hr_spacing=%d' % spacing] + body,
                         ApplyInlineBacktickBold,
                     )
                     path = str(Path(tmp) / 'out.dot')
