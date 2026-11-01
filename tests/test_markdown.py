@@ -161,6 +161,65 @@ class MarkdownTests(unittest.TestCase):
         self.assertTrue(any(run.text == '😃' and run.bold for run in runs))
         self.assertTrue(any(run.text == 'XD <3' and run.code for run in runs))
 
+    def test_custom_containers_render_in_root_and_child_nodes(self):
+        source = ('::: warning **Migration** checklist\n'
+                  'A paragraph with *formatting*.\n\n'
+                  '* [x] export\n* [ ] import\n\n'
+                  'Another paragraph.\n:::\nOutside')
+        for root in (False, True):
+            for theme in ('github-light', 'nord'):
+                with self.subTest(root=root, theme=theme):
+                    lines = (['# Root', '\t: fname=out.jpg md'] +
+                             ['\t: ' + line for line in source.split('\n')]
+                             if root else self.outline(source, 'md md_width=180'))
+                    dot = self.render(lines, theme)
+                    self.assertIn('BGCOLOR="#F1E6A8"', dot)
+                    self.assertIn('<B>Migration</B>', dot)
+                    self.assertIn('<I>formatting</I>', dot)
+                    self.assertIn('☑', dot)
+                    self.assertIn('Outside', dot)
+                    self.assertNotIn(':::', dot)
+                    self.graphviz(dot)
+
+    def test_container_names_titles_and_implicit_close(self):
+        for name, color in (('note', '#B4E4E3'), ('tip', '#B8E3B4'),
+                            ('danger', '#F2B8B8'), ('custom-name', '#E0E0E0')):
+            with self.subTest(name=name):
+                blocks = ParseMarkdown(MarkdownBody(
+                    f'::: {name}\nbody', '<test>', 'test', 1))
+                self.assertEqual(1, len(blocks))
+                self.assertEqual('container', blocks[0].kind)
+                self.assertEqual(color, blocks[0].callout)
+                self.assertEqual(name.replace('-', ' ').capitalize(),
+                                 ''.join(run.text for run in blocks[0].runs))
+
+    def test_nested_containers_preserve_code_and_following_paragraph(self):
+        source = (':::: note Outer\n::: tip Inner\ninside\n:::\n'
+                  '```text\n::::\n```\n::::\nafter')
+        blocks = ParseMarkdown(MarkdownBody(source, '<test>', 'test', 1))
+        self.assertEqual(['container', 'paragraph'], [block.kind for block in blocks])
+        self.assertEqual(['container', 'fence'],
+                         [block.kind for block in blocks[0].children])
+        self.assertEqual('::::\n', blocks[0].children[1].source)
+        self.graphviz(self.render(self.outline(source)))
+
+    def test_containers_in_lists_and_quotes(self):
+        for source in ('* item\n\n  ::: note\n  body\n  :::\n\n* sibling',
+                       '> ::: note\n> body\n> :::\n\nafter'):
+            with self.subTest(source=source):
+                dot = self.render(self.outline(source))
+                self.assertIn('BGCOLOR="#B4E4E3"', dot)
+                self.assertNotIn(':::', dot)
+                self.graphviz(dot)
+
+    def test_container_fences_are_literal_in_code_or_when_escaped(self):
+        source = ('\\::: note\nliteral\n\n'
+                  '```text\n::: tip\ncode\n:::\n```\n\n'
+                  '    ::: danger\n    indented')
+        blocks = ParseMarkdown(MarkdownBody(source, '<test>', 'test', 1))
+        self.assertEqual(['paragraph', 'fence', 'code_block'],
+                         [block.kind for block in blocks])
+
     def test_list_callouts_keep_markdown_formatting_and_symbols(self):
         source = ('* ! **Red** item\n  continued text\n'
                   '- ? Yellow *item*\n- $ Green `code`\n- @ Cyan item\n'

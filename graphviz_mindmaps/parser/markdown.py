@@ -128,6 +128,64 @@ class Block:
     bullet_marker: str = ''
 
 
+CONTAINER_COLORS = {
+    'note': '#B4E4E3', 'info': '#B4E4E3',
+    'tip': '#B8E3B4', 'success': '#B8E3B4',
+    'warning': '#F1E6A8', 'danger': '#F2B8B8', 'error': '#F2B8B8',
+}
+
+
+def _container(state, start_line, end_line, silent):
+    """Parse colon fences using the current list/quote indentation context."""
+    if state.is_code_block(start_line):
+        return False
+
+    def text(line):
+        return state.src[state.bMarks[line] + state.tShift[line]:state.eMarks[line]]
+
+    opening = re.fullmatch(r'(:{3,})[ \t]*([\w-]+)(?:[ \t]+(.*?))?[ \t]*', text(start_line))
+    if not opening:
+        return False
+    if silent:
+        return True
+    markup, name, title = opening.groups()
+    next_line = start_line + 1
+    closed = False
+    code_fence = None
+    while next_line < end_line:
+        line = text(next_line)
+        if line and state.sCount[next_line] < state.blkIndent:
+            break
+        if not state.is_code_block(next_line):
+            fence = re.match(r'(`{3,}|~{3,})(.*)$', line)
+            if code_fence:
+                if (fence and fence[1][0] == code_fence[0]
+                        and len(fence[1]) >= len(code_fence) and not fence[2].strip()):
+                    code_fence = None
+            elif fence and not (fence[1][0] == '`' and '`' in fence[2]):
+                code_fence = fence[1]
+            elif re.fullmatch(r':{' + str(len(markup)) + r',}[ \t]*', line):
+                closed = True
+                break
+        next_line += 1
+
+    old_parent, old_max = state.parentType, state.lineMax
+    state.parentType, state.lineMax = 'container', next_line
+    token = state.push('container_open', 'div', 1)
+    token.markup = markup
+    token.info = name
+    token.meta = {'title': title or name.replace('-', ' ').capitalize()}
+    token.map = [start_line, next_line + int(closed)]
+    try:
+        state.md.block.tokenize(state, start_line + 1, next_line)
+    finally:
+        state.parentType, state.lineMax = old_parent, old_max
+    token = state.push('container_close', 'div', -1)
+    token.markup = markup
+    state.line = next_line + int(closed)
+    return True
+
+
 def _highlight_tokenize(state, silent):
     """Pair exact == delimiters using Markdown's normal flanking rules."""
     if silent or state.src[state.pos] != '=':
@@ -171,6 +229,8 @@ def ParseMarkdown(body):
     parser = MarkdownIt('commonmark', {'html': False, 'linkify': False,
                                       'typographer': False, 'breaks': False})
     parser.enable(['strikethrough', 'table'])
+    parser.block.ruler.before('fence', 'container', _container,
+                              {'alt': ['paragraph', 'reference', 'blockquote', 'list']})
     parser.inline.ruler.before('emphasis', 'highlight', _highlight_tokenize)
     parser.inline.ruler2.before('emphasis', 'highlight', _highlight_postprocess)
     if not body.rawmarkers:
@@ -222,6 +282,11 @@ def ParseMarkdown(body):
                 result.level = int(node.tag[1:])
             if node.type in {'th', 'td'}:
                 result.align = node.attrs.get('style', 'text-align:left').split(':')[-1]
+        elif node.type == 'container':
+            title_tree = SyntaxTreeNode(parser.parseInline(node.meta['title']))
+            result.runs = inline(title_tree.children[0].children)
+            result.callout = CONTAINER_COLORS.get(node.info.lower(), '#E0E0E0')
+            result.children = [convert(child) for child in node.children]
         elif node.type in {'fence', 'code_block'}:
             result.source = node.content
             result.language = node.info.split()[0] if node.info.strip() else 'text'
