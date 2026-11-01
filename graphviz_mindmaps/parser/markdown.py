@@ -228,6 +228,10 @@ def ParseMarkdown(body):
 
     parser = MarkdownIt('commonmark', {'html': False, 'linkify': False,
                                       'typographer': False, 'breaks': False})
+    # Local-file links are useful in mindmaps. Retain the default validation
+    # for every other scheme; image URLs are checked separately by the renderer.
+    validate_link = parser.validateLink
+    parser.validateLink = lambda url: url.lower().startswith('file://') or validate_link(url)
     parser.enable(['strikethrough', 'table'])
     parser.block.ruler.before('fence', 'container', _container,
                               {'alt': ['paragraph', 'reference', 'blockquote', 'list']})

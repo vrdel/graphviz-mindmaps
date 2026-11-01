@@ -7,6 +7,7 @@ import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+from urllib.parse import unquote
 
 from PIL import Image
 
@@ -526,6 +527,29 @@ if ready:
         self.assertTrue(linked[0].runs[0].link)
         self.assertFalse(plain[0].runs[0].link)
 
+    def test_file_links_use_http_link_styling(self):
+        for url in ('file://filename.md', 'file:///tmp/filename.md',
+                    'file:///tmp/my%20notes.md', 'FILE:///tmp/filename.md'):
+            for source, label in ((f'<{url}>', unquote(url)), (f'[notes]({url})', 'notes'),
+                                  (f'[notes][local]\n\n[local]: {url}', 'notes')):
+                with self.subTest(source=source):
+                    blocks = ParseMarkdown(MarkdownBody(source, '<test>', 'links', 1))
+                    self.assertEqual(label, ''.join(run.text for run in blocks[0].runs))
+                    self.assertTrue(all(run.link == url for run in blocks[0].runs))
+                    dot = self.render(self.outline(source))
+                    http = self.render(self.outline(source.replace(url, 'http://this.is.link')))
+                    colors = lambda text: set(re.findall(r'<FONT[^>]* COLOR="([^"]+)"', text))
+                    self.assertEqual(colors(http), colors(dot))
+                    self.assertNotIn('&lt;', dot)
+                    self.graphviz(dot)
+
+    def test_file_links_do_not_enable_other_rejected_schemes(self):
+        for source in ('[bad](javascript:alert%281%29)', '<javascript:alert%281%29>',
+                       '[bad](vbscript:example)', '[bad](data:text/html,example)'):
+            with self.subTest(source=source):
+                blocks = ParseMarkdown(MarkdownBody(source, '<test>', 'links', 1))
+                self.assertTrue(all(not run.link for block in blocks for run in block.runs))
+
     def test_wrap_preserves_styled_words_and_long_code(self):
         body = MarkdownBody('prefix **some**word and `a long code span` plus more words', '<test>', 'title', 1)
         for spacing in (0, 1):
@@ -543,11 +567,9 @@ if ready:
         self.graphviz(self.render(read_input_lines([str(sourcefile)])))
         with Image.open(original) as image:
             self.assertEqual((800, 200), image.size)
-        for url in ('https://example.org/image.png', 'missing.png'):
+        for url in ('https://example.org/image.png', 'missing.png', 'file:///tmp/x.png'):
             with self.subTest(url=url), self.assertRaisesRegex(ValueError, 'Markdown node'):
                 self.render(self.outline('![alt](' + url + ')'))
-        # The Markdown parser rejects file: URLs as links, leaving literal text.
-        self.assertNotIn('<IMG SRC=', self.render(self.outline('![alt](file:///tmp/x.png)')))
 
     def test_width_validation(self):
         for value in ('zero', '0', '-1', 'nan', 'inf'):

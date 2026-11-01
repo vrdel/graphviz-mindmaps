@@ -612,6 +612,12 @@ not clickable links in JPG output. Code is syntax-highlighted through Pygments
 and embedded as an image; unknown languages fall back to plain text. The root
 `code_theme=` selects the code style.
 
+Angle-bracket autolinks support both HTTP and local-file URLs, for example
+`<https://example.org>` and `<file://filename.md>`. File URLs also work in
+explicit links (`[notes](file:///home/user/notes.md)`) and reference links,
+with the same styling as HTTP links. These links do not load the target file.
+For embedded images, use a filesystem path such as `![image](images/map.png)`.
+
 Markdown list items written with `-` render with a Unicode minus (`−`);
 `*` and `+` render with a bullet (`•`). Task items retain their checkbox markers.
 
