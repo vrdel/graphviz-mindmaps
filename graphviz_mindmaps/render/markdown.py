@@ -71,7 +71,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
             tmpdirs.append(tempfile.mkdtemp(prefix='gvmm-markdown-'))
         return Path(tmpdirs[-1])
 
-    def run_html(run, text, points, bold=False):
+    def run_html(run, text, points, bold=False, ink=None):
         value = escape(text, quote=True).replace('\t', '&#160;' * 4)
         if run.code:
             value = value.replace(' ', '&#160;')
@@ -79,11 +79,11 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
             if enabled:
                 value = f'<{tag}>{value}</{tag}>'
         color = ('#174ea6' if run.link else '#202020') if run.highlight else (
-            fontcolor['b'] if run.link else foreground)
+            fontcolor['b'] if run.link else ink or foreground)
         family = font['mono'] if run.code else face
         return f'<FONT FACE="{escape(family, quote=True)}" POINT-SIZE="{points:g}" COLOR="{escape(color, quote=True)}">{value}</FONT>'
 
-    def wrapped(runs, available, points, bold=False, align='LEFT'):
+    def wrapped(runs, available, points, bold=False, align='LEFT', ink=None):
         # Preserve styling across adjacent runs within the same word. Split only
         # at ordinary spaces; a nonbreaking space and inline code stay intact.
         groups = []
@@ -134,7 +134,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     gap = 0
                 if space:
                     row.append(('&#160;', row[-1][1] and parts[0].highlight))
-                row.extend((run_html(r, r.text, points, bold), r.highlight) for r in parts)
+                row.extend((run_html(r, r.text, points, bold, ink), r.highlight) for r in parts)
                 used += gap + length
                 space = False
         if row or not rows:
@@ -231,6 +231,16 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
                                        code_theme, transparent_background=True)
                 rows.append('<TR><TD ALIGN="LEFT" VALIGN="MIDDLE" CELLPADDING="0">' + image(Path(path), available, block.source_line) + '</TD></TR>')
+            elif kind == 'container':
+                inner_width = max(1, available - 20)
+                title = wrapped(block.runs, inner_width, size, bold=True, ink='#000000')
+                inner = render(block.children, inner_width)
+                color = escape(block.callout, quote=True)
+                rows.append(textrow(
+                    '<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" '
+                    f'CELLPADDING="6" COLOR="{color}" ALIGN="LEFT">'
+                    f'<TR><TD ALIGN="LEFT" BGCOLOR="{color}">{title}</TD></TR>'
+                    f'<TR><TD ALIGN="LEFT">{inner}</TD></TR></TABLE>'))
             elif kind == 'blockquote':
                 inner = render(block.children, max(1, available - 22))
                 accent = escape(fontcolor['b'], quote=True)

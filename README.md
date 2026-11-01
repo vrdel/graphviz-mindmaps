@@ -574,6 +574,29 @@ Use `md rawmarkers` to leave callout markers literal, or escape an individual
 marker (`* \! literal`). Markers inside code, ordinary paragraphs, and numbered
 lists remain literal.
 
+Markdown custom containers use `::: name` and a closing `:::`. Common names
+`note`/`info`, `tip`/`success`, `warning`, and `danger`/`error` use cyan, green,
+yellow, and red title backgrounds respectively. Other names use a neutral gray.
+An optional title follows the name and supports inline Markdown; without one,
+the name becomes the title. Container bodies support the usual Markdown blocks.
+
+```text
+\t# Migration
+\t\t: md
+\t\t: ::: warning **Before upgrading**
+\t\t: Back up your vault.
+\t\t:
+\t\t: * [ ] Export Canvas files
+\t\t: * [ ] Verify the backup
+\t\t: :::
+```
+
+For nested containers, use a longer outer fence (`:::: note` … `::::`) around
+shorter inner fences (`::: tip` … `:::`). Closing fences must have at least as
+many colons as their opener. An unclosed container ends at the end of its parent
+block or node. Escape the opener (`\::: note`) or put it inside code to display
+it literally. Containers also work inside Markdown lists and blockquotes.
+
 Markdown headings stay inside the node;
 an unprefixed outline heading ends the body. Remove only the colon prefix and
 one separator space when reading a body: extra indentation and trailing spaces
