@@ -13,7 +13,7 @@ from urllib.parse import unquote, urlparse
 from PIL import Image, ImageFont
 
 from graphviz_mindmaps.constants import font, fontcolor
-from graphviz_mindmaps.parser.markdown import ParseMarkdown
+from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown
 from graphviz_mindmaps.render.code_image import RenderCodeImage
 from graphviz_mindmaps.render.mermaid import RenderMermaidImage
 
@@ -71,7 +71,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     face = face or font['comic']
     foreground = foreground or fontcolor['def']
     size = max(1, float(size))
-    blocks = ParseMarkdown(body, preserve_newlines=not wrap)
+    blocks = ([Block('fence', source=body.source, language='mermaid')]
+              if body.mermaid else ParseMarkdown(body, preserve_newlines=not wrap))
 
     def temporary():
         if not tmpdirs:

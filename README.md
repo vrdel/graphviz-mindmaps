@@ -666,6 +666,22 @@ precedence.
 		: * Second item
 ```
 
+For a diagram-only node, use the `mermaid` body attribute. Every body line is
+raw Mermaid syntax; no Markdown fences are needed. The outline heading identifies
+the node in the source but is always hidden in the rendered node:
+
+```text
+\t# Deployment diagram
+\t\t: mermaid mdw=500 ccyan
+\t\t: flowchart LR
+\t\t:     A[Build] --> B[Test] --> C[Deploy]
+```
+
+Standalone Mermaid nodes use Pele with the same dependencies and sizing as
+Mermaid fences. Colors, borders, icons, and child nodes are supported. Root nodes
+can also use `mermaid`, with their heading and output title hidden. `mermaid`,
+`md`, `code`, `block`/`verbatim`, and `draw` are mutually exclusive body modes.
+
 Mermaid fences in Markdown nodes render as diagrams using
 [Obsidian's Pele](https://github.com/obsidianmd/pele):
 

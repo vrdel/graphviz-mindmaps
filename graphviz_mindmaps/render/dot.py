@@ -57,6 +57,7 @@ from graphviz_mindmaps.parser.outline import (
 )
 from graphviz_mindmaps.render.label_html import (
     BuildNodeLabelHtml,
+    HideNodeHeader,
     InsertSymbolRows,
     PostAttrProcLabel,
     PreAttrProcLabel,
@@ -395,6 +396,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     dotbuf = session.dotbuf
     title = session.title
     notitle = session.notitle
+    if root_markdown is not None and root_markdown.mermaid:
+        notitle = True
     bgcolor = session.bgcolor
     tmpdir = session.tmpdir
 
@@ -455,6 +458,10 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     root_attrs = ResolveRootNodeAttributes(lines, nodetype["root"])
     root_label = BuildRootLabel(lines, match.group(2), runtime.fontawesome_symb, tree)
     if root_markdown is not None:
+        if root_markdown.mermaid:
+            hidden_label = [root_label]
+            HideNodeHeader(hidden_label, allow_empty=True)
+            root_label = ''.join(hidden_label)
         root_options = []
         for attr in lines[1:]:
             if re.match(r"^\t*# ", attr):
@@ -525,6 +532,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             noheader = (vrbt or markdown_body is not None) and bool(
                 re.search(r"(?<!\S)noheader(?!\S)", nextline)
             )
+            if markdown_body is not None and markdown_body.mermaid:
+                noheader = True
 
             if code_source is not None:
                 highlight_lines, nextline = ExtractCodeHighlights(nextline)

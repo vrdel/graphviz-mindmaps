@@ -487,6 +487,53 @@ if ready:
                 self.assertIn('<IMG SRC=', dot)
                 self.graphviz(dot)
 
+    def test_standalone_mermaid_preserves_source_and_hides_header(self):
+        source = 'flowchart LR\n  A["literal *text* :-)"] --> B["# destination"]\n'
+        path = Path(self.temp.name, 'diagram.png')
+        Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)
+        for root in (False, True):
+            lines = (['# Hidden diagram title', '\t: fname=out.jpg mermaid mdw=220'] +
+                     ['\t: ' + line for line in source.split('\n')]
+                     if root else self.outline(source, 'mermaid mdw=220 ccyan', 'Hidden diagram title'))
+            prepared = PrepareMarkdownBodies(lines)
+            _, body = DecodeMarkdownBody(prepared[0 if root else 2].lstrip('\t')[2:])
+            self.assertTrue(body.mermaid)
+            self.assertEqual(source + '\n', body.source)
+            with self.subTest(root=root), patch(
+                'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+            ) as render, patch('graphviz_mindmaps.render.markdown.ParseMarkdown') as markdown:
+                dot = self.render(lines)
+                self.assertEqual(source + '\n', render.call_args.args[0])
+                self.assertEqual(220, render.call_args.args[2])
+                markdown.assert_not_called()
+                self.assertIn('<IMG SRC=', dot)
+                self.assertNotIn('Hidden&nbsp;diagram', dot)
+                self.assertNotIn('flowchart', dot)
+                self.graphviz(dot)
+
+    def test_standalone_mermaid_keeps_children_siblings_and_node_options(self):
+        path = Path(self.temp.name, 'diagram.png')
+        Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)
+        lines = self.outline('flowchart LR\nA-->B', 'mermaid ccyan symb=book', 'Hidden')
+        lines += ['\t\t# Child', '\t\t\t: node', '\t# Sibling', '\t\t: node']
+        with patch('graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path):
+            dot = self.render(lines)
+        self.assertNotIn('Hidden', dot)
+        self.assertIn('Child', dot)
+        self.assertIn('Sibling', dot)
+        self.assertIn('FACE="FontAwesome"', dot)
+        self.graphviz(dot)
+
+    def test_standalone_mermaid_rejects_conflicting_modes_and_reports_location(self):
+        for attrs in ('mermaid md', 'markdown mermaid', 'mermaid code python',
+                      'mermaid block', 'mermaid draw', 'mermaid verbatim'):
+            with self.subTest(attrs=attrs), self.assertRaisesRegex(ValueError, 'mutually exclusive'):
+                PrepareMarkdownBodies(self.outline('flowchart LR\nA-->B', attrs))
+        with patch('graphviz_mindmaps.render.markdown.RenderMermaidImage',
+                   side_effect=ValueError('Pele rendering failed: invalid diagram')):
+            with self.assertRaisesRegex(ValueError, "<input>:5: Mermaid node 'Diagram': Pele"):
+                self.render(self.outline('bad diagram', 'mermaid', 'Diagram'))
+
     def test_mermaid_fences_embed_images_in_root_child_and_nested_blocks(self):
         path = Path(self.temp.name, 'diagram.png')
         Image.new('RGBA', (800, 200), (243, 243, 243, 255)).save(path)
