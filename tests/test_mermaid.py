@@ -115,6 +115,20 @@ class MermaidTests(unittest.TestCase):
                                 RenderMermaidImage(source, directory, 400))
 
     @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
+    def test_real_pele_natural_dimensions_exceed_markdown_limits(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for direction, dimension, limit in (('LR', 'width', 420), ('TB', 'height', 900)):
+                source = 'flowchart ' + direction + '\n' + '\n'.join(
+                    f'A{i}[Step {i}] --> A{i + 1}[Step {i + 1}]' for i in range(15))
+                with self.subTest(direction=direction):
+                    output = RenderMermaidImage(source, directory, width=None)
+                    svg = ElementTree.fromstring(output.with_suffix('.svg').read_text())
+                    with Image.open(output) as image:
+                        self.assertGreater(getattr(image, dimension), limit)
+                        self.assertEqual(image.width, round(float(svg.get('width'))))
+                        self.assertEqual(image.height, round(float(svg.get('height'))))
+
+    @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
     def test_real_pele_themes_and_explicit_styles_have_separate_cached_images(self):
         source = 'flowchart LR\nA[Themed]-->B[Custom]\nstyle B fill:#abcdef'
         chart = 'pie title Tasks\n"Done" : 3\n"Pending" : 2'
