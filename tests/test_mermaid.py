@@ -12,6 +12,7 @@ from PIL import Image
 from graphviz_mindmaps.model.document import MarkdownBody
 from graphviz_mindmaps.render.markdown import RenderMarkdown
 from graphviz_mindmaps.render.mermaid import RenderMermaidImage, _static_svg
+from graphviz_mindmaps.theme import ApplyTheme, PeleThemeColors, THEME_PALETTES
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +21,21 @@ HAS_PELE = (shutil.which('node') and shutil.which('rsvg-convert')
 
 
 class MermaidTests(unittest.TestCase):
+    def test_theme_color_maps_cover_all_palettes_without_mutating_active_theme(self):
+        self.addCleanup(ApplyTheme, 'default')
+        from graphviz_mindmaps.constants import fontcolor
+        ApplyTheme('nord')
+        for name in ('default', *THEME_PALETTES):
+            with self.subTest(theme=name):
+                colors = PeleThemeColors(name)
+                self.assertEqual(8, sum(key.startswith('--pele-series-') for key in colors))
+                self.assertTrue(all(value.startswith('#') and len(value) == 7
+                                    for value in colors.values()))
+                if name != 'default':
+                    self.assertEqual(THEME_PALETTES[name]['fg'], colors['--pele-fg'])
+                    self.assertEqual(THEME_PALETTES[name]['panel'], colors['--pele-surface'])
+                self.assertEqual(THEME_PALETTES['nord']['fg'], fontcolor['def'])
+
     def test_static_svg_resolves_inherited_and_overridden_colors(self):
         source = ('<svg style="--_s:var(--pele-surface,#f3f3f3);font:16px sans-serif">'
                   '<rect fill="var(--_s)"/>'
@@ -97,6 +113,33 @@ class MermaidTests(unittest.TestCase):
             source = 'flowchart LR\nA-->B'
             self.assertNotEqual(RenderMermaidImage(source, directory, 200),
                                 RenderMermaidImage(source, directory, 400))
+
+    @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
+    def test_real_pele_themes_and_explicit_styles_have_separate_cached_images(self):
+        source = 'flowchart LR\nA[Themed]-->B[Custom]\nstyle B fill:#abcdef'
+        chart = 'pie title Tasks\n"Done" : 3\n"Pending" : 2'
+        with tempfile.TemporaryDirectory() as directory:
+            outputs = []
+            for theme in ('github-light', 'nord', 'default'):
+                with self.subTest(theme=theme):
+                    colors = PeleThemeColors(theme)
+                    output = RenderMermaidImage(source, directory, colors=colors)
+                    outputs.append(output)
+                    svg = output.with_suffix('.svg').read_text()
+                    self.assertIn(colors['--pele-fg'], svg)
+                    self.assertIn(colors['--pele-surface'], svg)
+                    self.assertIn(colors['--pele-border'], svg)
+                    self.assertIn('#abcdef', svg)
+                    self.assertNotIn('var(', svg)
+                    pie = RenderMermaidImage(chart, directory, colors=colors)
+                    self.assertIn(colors['--pele-series-1'], pie.with_suffix('.svg').read_text())
+                    with Image.open(output) as image:
+                        self.assertEqual(0, image.convert('RGBA').getchannel('A').getextrema()[0])
+            self.assertEqual(3, len(set(outputs)))
+            with patch('graphviz_mindmaps.render.mermaid.subprocess.run') as run:
+                reordered = dict(reversed(list(PeleThemeColors('nord').items())))
+                self.assertEqual(outputs[1], RenderMermaidImage(source, directory, colors=reordered))
+                run.assert_not_called()
 
     @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
     def test_wheel_helper_resolves_pele_from_working_directory(self):

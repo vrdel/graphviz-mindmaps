@@ -3,7 +3,7 @@ import re
 import subprocess
 import tempfile
 
-from graphviz_mindmaps.theme import ApplyTheme
+from graphviz_mindmaps.theme import ApplyTheme, PeleThemeColors
 
 from graphviz_mindmaps.fontawesome import FONT_DIR
 from graphviz_mindmaps.render.code_image import ExtractCodeHighlights, RenderCodeImage
@@ -376,6 +376,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     root_theme = ResolveRootTheme(lines)
     root_code_theme = ResolveRootCodeTheme(lines)
     theme_bgcolor = ApplyTheme(root_theme or runtime.theme_name)
+    diagram_colors = PeleThemeColors(root_theme or runtime.theme_name)
     default_bgcolor = theme_bgcolor if root_theme else runtime.default_bgcolor
     tree = Tree(
         nodetype,
@@ -476,6 +477,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             list_indent=ResolveMarkdownOption('md_list_indent', root_options),
             line_spacing=ResolveMarkdownOption('md_line_spacing', root_options),
             wrap=ParseInlineAttrLine('md_wrap', root_options),
+            diagram_colors=diagram_colors,
         ))
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
@@ -721,6 +723,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     list_indent=markdown_list_indent,
                     line_spacing=markdown_line_spacing,
                     wrap=markdown_wrap,
+                    diagram_colors=diagram_colors,
                 )
                 node._label = [AppendMarkdownLabel(''.join(node._label), body_label)]
 

@@ -41,7 +41,7 @@ def AppendMarkdownLabel(label, body_label):
     return head + '<TR><TD ALIGN="LEFT" CELLPADDING="2">' + body_label + '</TD></TR></TABLE>' + closing
 
 
-def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None):
+def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None):
     if wrap is None:
         wrap = True
     elif isinstance(wrap, str) and wrap.lower() in {'on', 'off'}:
@@ -238,7 +238,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 directory = temporary()
                 if kind == 'fence' and block.language.lower() == 'mermaid':
                     try:
-                        path = RenderMermaidImage(block.source, directory, max(1, available))
+                        path = RenderMermaidImage(block.source, directory, max(1, available),
+                                                  colors=diagram_colors)
                     except ValueError as exc:
                         raise body.error(str(exc), block.source_line) from exc
                 else:
