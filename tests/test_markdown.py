@@ -487,6 +487,31 @@ if ready:
                 self.assertIn('<IMG SRC=', dot)
                 self.graphviz(dot)
 
+    def test_mermaid_fences_embed_images_in_root_child_and_nested_blocks(self):
+        path = Path(self.temp.name, 'diagram.png')
+        Image.new('RGBA', (800, 200), (243, 243, 243, 255)).save(path)
+        fence = '```mermaid\nflowchart LR\nA-->B\n```'
+        for root in (False, True):
+            for source in (fence, '::: note\n' + fence + '\n:::',
+                           '* Diagram\n\n' + '\n'.join('  ' + line for line in fence.splitlines()),
+                           '\n'.join('> ' + line for line in fence.splitlines())):
+                with self.subTest(root=root, source=source), patch(
+                    'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                ) as render:
+                    lines = (['# Root', '\t: fname=out.jpg md mdw=200'] +
+                             ['\t: ' + line for line in source.splitlines()]
+                             if root else self.outline(source, 'md mdw=200'))
+                    dot = self.render(lines)
+                    render.assert_called_once()
+                    self.assertEqual('flowchart LR\nA-->B\n', render.call_args.args[0])
+                    self.assertLessEqual(render.call_args.args[2], 200)
+                    images = re.findall(r'<IMG SRC="([^"]+)"', dot)
+                    self.assertEqual(1, len(images))
+                    with Image.open(images[0]) as image:
+                        self.assertLessEqual(image.width, 200)
+                    self.assertNotIn('flowchart', dot)
+                    self.graphviz(dot)
+
     def test_code_background_is_transparent_including_resized_blocks(self):
         for source in ('```python\nvalue = 123456789\n```', '    value = 123456789'):
             for width in (420, 80):
@@ -570,6 +595,57 @@ if ready:
         for url in ('https://example.org/image.png', 'missing.png', 'file:///tmp/x.png'):
             with self.subTest(url=url), self.assertRaisesRegex(ValueError, 'Markdown node'):
                 self.render(self.outline('![alt](' + url + ')'))
+
+    def test_markdown_wrap_defaults_and_validation(self):
+        source = 'first command\nsecond command with several more words'
+        for root in (False, True):
+            def render(option):
+                attrs = 'md mdw=90 ' + option
+                return self.render(
+                    ['# Root', '\t: fname=out.jpg ' + attrs] +
+                    ['\t: ' + line for line in source.splitlines()]
+                    if root else self.outline(source, attrs))
+            with self.subTest(root=root):
+                self.assertEqual(render(''), render('md_wrap=on'))
+                self.assertNotEqual(render('md_wrap=on'), render('md_wrap=off'))
+                for value in ('yes', 'auto', '0'):
+                    with self.assertRaisesRegex(ValueError, 'md_wrap must be on or off'):
+                        render('md_wrap=' + value)
+
+    @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
+    def test_markdown_wrap_off_preserves_source_lines_without_auto_wrapping(self):
+        from xml.etree import ElementTree
+        source = ('curl -LsSf https://astral.sh/uv/install.sh | sh\n'
+                  'uv\nvim .oh-my-zsh/oh-my-zsh.sh <- uv plugin')
+        for root in (False, True):
+            attrs = 'md noheader fontmono mdw=90 md_wrap=off'
+            lines = (['# Root', '\t: fname=out.jpg ' + attrs] +
+                     ['\t: ' + line for line in source.splitlines()]
+                     if root else self.outline(source, attrs))
+            dot = self.render(lines)
+            result = subprocess.run(['dot', '-Tsvg'], input=dot.encode(),
+                                    capture_output=True, check=True)
+            positions = {}
+            for element in ElementTree.fromstring(result.stdout).iter('{http://www.w3.org/2000/svg}text'):
+                positions.setdefault(float(element.attrib['y']), []).append(element.text or '')
+            command_rows = [''.join(parts).replace('\u00a0', ' ') for parts in positions.values()
+                            if any(word in ''.join(parts) for word in ('curl', 'uv', 'vim'))]
+            with self.subTest(root=root):
+                self.assertEqual(source.splitlines(), command_rows)
+                self.graphviz(dot)
+
+    def test_markdown_wrap_off_preserves_nested_formatting_and_is_node_local(self):
+        source = '::: note\n* **Alpha**\n  *Beta* ==Gamma==\n:::'
+        dot = self.render(self.outline(source, 'md mdw=90 md_wrap=off'))
+        for fragment in ('<B>Alpha</B>', '<I>Beta</I>', 'BGCOLOR="#fff2a8"'):
+            self.assertIn(fragment, dot)
+        self.graphviz(dot)
+        lines = self.outline('first\nsecond', 'md md_wrap=off')
+        lines += ['\t# Sibling', '\t\t: md', '\t\t: third', '\t\t: fourth']
+        dot = self.render(lines)
+        self.assertIn('>third</FONT>&#160;<FONT', dot)
+        self.assertNotIn('>first</FONT>&#160;<FONT', dot)
+        self.graphviz(dot)
 
     def test_width_validation(self):
         for value in ('zero', '0', '-1', 'nan', 'inf'):

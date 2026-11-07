@@ -221,7 +221,7 @@ def _highlight_postprocess(state):
                 token.content = ''
 
 
-def ParseMarkdown(body):
+def ParseMarkdown(body, preserve_newlines=False):
     """CommonMark plus tables, strikethrough and ==marks==, without HTML."""
     from markdown_it import MarkdownIt
     from markdown_it.tree import SyntaxTreeNode
@@ -267,7 +267,8 @@ def ParseMarkdown(body):
                            's': {'strike': True}, 'link': {'link': node.attrs.get('href', '')}}[kind]
                 result.extend(inline(node.children, replace(style, **changes)))
             elif kind == 'softbreak':
-                result.append(replace(style, text=' '))
+                result.append(replace(style, text='' if preserve_newlines else ' ',
+                                      hardbreak=preserve_newlines))
             elif kind == 'hardbreak':
                 result.append(replace(style, text='', hardbreak=True))
             elif kind == 'image':

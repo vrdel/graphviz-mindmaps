@@ -1,0 +1,11 @@
+{
+  "name": "graphviz-mindmaps-diagrams",
+  "private": true,
+  "description": "Optional Pele renderer for Mermaid fences in Markdown nodes",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "pele": "1.13.0"
+  }
+}

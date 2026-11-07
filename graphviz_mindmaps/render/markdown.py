@@ -15,6 +15,7 @@ from PIL import Image, ImageFont
 from graphviz_mindmaps.constants import font, fontcolor
 from graphviz_mindmaps.parser.markdown import ParseMarkdown
 from graphviz_mindmaps.render.code_image import RenderCodeImage
+from graphviz_mindmaps.render.mermaid import RenderMermaidImage
 
 
 @lru_cache(maxsize=128)
@@ -40,7 +41,13 @@ def AppendMarkdownLabel(label, body_label):
     return head + '<TR><TD ALIGN="LEFT" CELLPADDING="2">' + body_label + '</TD></TR></TABLE>' + closing
 
 
-def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None):
+def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None):
+    if wrap is None:
+        wrap = True
+    elif isinstance(wrap, str) and wrap.lower() in {'on', 'off'}:
+        wrap = wrap.lower() == 'on'
+    elif not isinstance(wrap, bool):
+        raise body.error('md_wrap must be on or off')
     try:
         width = float(width)
     except (TypeError, ValueError):
@@ -64,7 +71,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     face = face or font['comic']
     foreground = foreground or fontcolor['def']
     size = max(1, float(size))
-    blocks = ParseMarkdown(body)
+    blocks = ParseMarkdown(body, preserve_newlines=not wrap)
 
     def temporary():
         if not tmpdirs:
@@ -127,7 +134,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                                       r.bold or bold, r.italic) for r in parts)
                 gap = _measure(' ', face, points) if space else 0
                 # A little slack accounts for differences in Graphviz/Pillow metrics.
-                if row and used + gap + length > available * .94:
+                if wrap and row and used + gap + length > available * .94:
                     rows.append(row)
                     widths.append(used)
                     row, used, space = [], 0.0, False
@@ -227,9 +234,15 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                             '<TR><TD HEIGHT="1"></TD></TR><HR/>'
                             '<TR><TD HEIGHT="1"></TD></TR></TABLE></TD></TR>')
             elif kind in {'fence', 'code_block'}:
-                temporary()
-                path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
-                                       code_theme, transparent_background=True)
+                directory = temporary()
+                if kind == 'fence' and block.language.lower() == 'mermaid':
+                    try:
+                        path = RenderMermaidImage(block.source, directory, max(1, available))
+                    except ValueError as exc:
+                        raise body.error(str(exc), block.source_line) from exc
+                else:
+                    path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
+                                           code_theme, transparent_background=True)
                 rows.append('<TR><TD ALIGN="LEFT" VALIGN="MIDDLE" CELLPADDING="0">' + image(Path(path), available, block.source_line) + '</TD></TR>')
             elif kind == 'container':
                 inner_width = max(1, available - 20)
