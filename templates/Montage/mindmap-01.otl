@@ -382,12 +382,78 @@
 				: edgl
 				:
 	# markdown
-		: md
-		: ## Lorem ipsum
 		:
-		: Lorem **ipsum** dolor sit amet, *consectetur* adipiscing elit.
-		: Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+		# formatted text
+			: md mdw=360
+			: ## Lorem ipsum
+			:
+			: Lorem **ipsum** dolor sit amet, *consectetur* adipiscing elit.
+			: Use `inline code` and ==highlighted text== within a paragraph.
+			:
+		# noheader (outline heading hidden)
+			: md noheader mdw=360 cteal
+			: ## Body-only Markdown
+			:
+			: The outline heading is hidden; this body heading remains visible.
+			:
+		# table
+			: md mdw=420
+			: | Feature | Syntax | State |
+			: | :--- | :--- | ---: |
+			: | Emphasis | **bold** and *italic* | Ready |
+			: | Code | `print(1)` | Ready |
+			: | Tasks | Checkbox lists | Ready |
+			:
+		# list callouts
+			: md mdw=360 cwhite fg="#202020"
+			: * ! **Warning:** verify the backup.
+			: * ? **Check:** confirm the configuration.
+			: * $ **Success:** all tests passed.
+			: * @ **Info:** review the deployment logs.
+			:
+		# container callout
+			: md mdw=360 cwhite fg="#202020"
+			: ::: warning Before deployment
+			: Back up the **configuration** first.
+			:
+			: * [ ] Save the current settings
+			: * [ ] Verify the backup
+			: :::
+			:
+	# mermaid diagrams
 		:
+		# standalone diagram (heading hidden)
+			: mermaid
+			: flowchart LR
+			:     A[Draft] --> B[Review] --> C[Done]
+			:
+		# Mermaid within Markdown
+			: md mdw=500
+			: ## Deployment workflow
+			:
+			: Run the tests before deploying.
+			:
+			: ```mermaid
+			: flowchart LR
+			:     A[Build] --> B[Test]
+			:     B --> C{Passed?}
+			:     C -->|Yes| D[Deploy]
+			:     C -->|No| A
+			: ```
+			:
+			: **Check the logs** after deployment.
+			:
+		# mermaid attributes and dependencies
+			: block rawmarkers
+			:
+			: : mermaid renders the body as Mermaid syntax
+			: no Markdown fences or noheader needed
+			: natural size, with no width or height limit
+			: transparent background; add ccyan for a colored fill
+			: diagram colors follow the active mindmap theme
+			: requires Node.js 20+, Pele, and rsvg-convert
+			: repository setup: npm ci
+			:
 	# block nodes
 		:
 		# block cteal
