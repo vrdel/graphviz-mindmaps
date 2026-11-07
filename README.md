@@ -624,7 +624,8 @@ with the same styling as HTTP links. These links do not load the target file.
 For embedded images, use a filesystem path such as `![image](images/map.png)`.
 
 Markdown list items written with `-` render with a Unicode minus (`−`);
-`*` and `+` render with a bullet (`•`). Task items retain their checkbox markers.
+`*` and `+` render with a bullet (`•`). Task items retain the list marker alongside
+their checkbox, for example `• ☑ done` or `− ☐ pending`.
 
 Use `==highlighted text==` for a pale yellow background with dark text in the
 Markdown body. Highlights can contain other inline formatting, for example

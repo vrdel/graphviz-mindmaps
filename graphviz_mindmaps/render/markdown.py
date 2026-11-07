@@ -273,7 +273,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     task = re.match(r'^\[([ xX])\][ \t]+', first.text)
                     if task and not any((first.code, first.bold, first.italic, first.strike, first.link)):
                         task_prefixes[index] = task.end()
-                        markers[index] = '☑' if task.group(1).lower() == 'x' else '☐'
+                        checkbox = '☑' if task.group(1).lower() == 'x' else '☐'
+                        markers[index] = bullet + ' ' + checkbox
                 explicit_layout = list_spacing is not None or list_indent is not None
                 width_markers = markers if explicit_layout else original_markers
                 marker_width = max([_measure(m, face, size) for m in width_markers] + [size]) + 2

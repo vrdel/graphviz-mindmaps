@@ -247,10 +247,28 @@ class MarkdownTests(unittest.TestCase):
                 dot = self.render(lines)
                 self.assertEqual(2, dot.count('>−&#160;</TD>'))
                 self.assertEqual(3, dot.count('>•&#160;</TD>'))
-                self.assertIn('>☑&#160;</TD>', dot)
-                self.assertIn('>☐&#160;</TD>', dot)
+                self.assertIn('>− ☑&#160;</TD>', dot)
+                self.assertIn('>− ☐&#160;</TD>', dot)
                 self.assertIn('>1.&#160;</TD>', dot)
                 self.assertEqual(2, dot.count('BGCOLOR="#F2B8B8"'))
+                self.graphviz(dot)
+
+    def test_task_items_preserve_bullets_and_checkboxes(self):
+        for marker, rendered in (('*', '•'), ('+', '•'), ('-', '−')):
+            with self.subTest(marker=marker):
+                source = (f'{marker} Ubuntu 26.04 LTS migracija\n'
+                          f'{marker} window focus ring\n'
+                          '  - da mogu konacno setati ispravnim redoslijedom\n'
+                          '    fokusiranih prozora\n'
+                          f'{marker} [x] Obsidian automated Canvas export\n'
+                          f'{marker} [X] uppercase\n'
+                          f'{marker} [ ] pending')
+                dot = self.render(self.outline(source, 'md ccyan md_width=180'))
+                self.assertEqual(2, dot.count(f'>{rendered} ☑&#160;</TD>'))
+                self.assertIn(f'>{rendered} ☐&#160;</TD>', dot)
+                self.assertNotIn('[x]', dot)
+                self.assertNotIn('[X]', dot)
+                self.assertNotIn('[ ]', dot)
                 self.graphviz(dot)
 
     def test_callouts_stop_at_blank_lines_and_nested_items(self):
