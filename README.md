@@ -673,13 +673,17 @@ the node in the source but is always hidden in the rendered node:
 
 ```text
 \t# Deployment diagram
-\t\t: mermaid mdw=500 ccyan
+\t\t: mermaid ccyan
 \t\t: flowchart LR
 \t\t:     A[Build] --> B[Test] --> C[Deploy]
 ```
 
-Standalone Mermaid nodes use Pele with the same dependencies and sizing as
-Mermaid fences. Colors, borders, icons, and child nodes are supported. Root nodes
+Standalone Mermaid nodes use Pele at the diagram's natural size, without width
+or height limits or automatic image scaling. `mdw`/`md_width` does not constrain
+these nodes; the node grows to fit the complete diagram. Colors, borders, icons,
+and child nodes are supported. The node background is transparent unless a color
+attribute such as `ccyan` or `bg="#123456"` is supplied. Root nodes also default
+to transparent, with `ccyan` or `root_bg=` available to set a background. Root nodes
 can also use `mermaid`, with their heading and output title hidden. `mermaid`,
 `md`, `code`, `block`/`verbatim`, and `draw` are mutually exclusive body modes.
 
@@ -698,9 +702,11 @@ Mermaid fences in Markdown nodes render as diagrams using
 ```
 
 Pele runs locally through Node without a browser. Its SVG output is converted
-to a transparent PNG with `rsvg-convert` and fitted to the available `mdw`.
+to a transparent PNG with `rsvg-convert`. Fenced diagrams inside `md` nodes fit
+the available `mdw` and the Markdown image height limit; standalone `mermaid`
+nodes keep their natural size.
 Fences also work in root nodes, containers, lists, and blockquotes. Diagram
-directions are preserved; very large diagrams are scaled down. Repeated identical
+directions are preserved; very large fenced diagrams are scaled down. Repeated identical
 diagrams at the same width and with the same palette reuse their rendered image
 within the render session. Both standalone Mermaid nodes and fenced diagrams
 automatically follow the active mindmap theme (`--theme` or root `theme=`): text,

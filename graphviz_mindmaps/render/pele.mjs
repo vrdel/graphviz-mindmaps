@@ -16,7 +16,7 @@ try {
   const { source, width } = JSON.parse(readFileSync(0, 'utf8'));
   const { svg } = engine.render(source, {
     responsive: false,
-    maxWidth: width,
+    maxWidth: width ?? undefined,
     autoDirection: false,
     images: false,
     links: false,

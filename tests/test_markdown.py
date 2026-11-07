@@ -545,12 +545,51 @@ if ready:
             ) as render, patch('graphviz_mindmaps.render.markdown.ParseMarkdown') as markdown:
                 dot = self.render(lines)
                 self.assertEqual(source + '\n', render.call_args.args[0])
-                self.assertEqual(220, render.call_args.args[2])
+                self.assertIsNone(render.call_args.args[2])
                 markdown.assert_not_called()
                 self.assertIn('<IMG SRC=', dot)
                 self.assertNotIn('Hidden&nbsp;diagram', dot)
                 self.assertNotIn('flowchart', dot)
                 self.graphviz(dot)
+
+    def test_standalone_mermaid_background_defaults_to_transparent(self):
+        from graphviz_mindmaps.constants import vrbtcolors
+        path = Path(self.temp.name, 'diagram.png')
+        Image.new('RGBA', (160, 80), (0, 0, 0, 0)).save(path)
+        for theme in ('default', 'nord'):
+            for root in (False, True):
+                for attrs, expected in (('', 'transparent'), ('ccyan', None),
+                                        ('root_bg="#123456"' if root else 'bg="#123456"', '#123456')):
+                    mode = 'mermaid ' + attrs
+                    lines = (['# Root', '\t: fname=out.jpg ' + mode,
+                              '\t: flowchart LR', '\t: A-->B']
+                             if root else self.outline('flowchart LR\nA-->B', mode))
+                    with self.subTest(theme=theme, root=root, attrs=attrs), patch(
+                        'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                    ):
+                        dot = self.render(lines, theme)
+                        node = 'node1' if root else 'node101'
+                        rendered = re.search(r'\b' + node + r'\[([^\n]+)', dot).group(1)
+                        self.assertIn('fillcolor="' + (expected or vrbtcolors['ccyan']) + '"', rendered)
+                        self.graphviz(dot)
+
+    def test_standalone_mermaid_does_not_resize_wide_or_tall_diagrams(self):
+        path = Path(self.temp.name, 'large-diagram.png')
+        Image.new('RGBA', (1200, 1400), (220, 240, 240, 255)).save(path)
+        for root in (False, True):
+            for width in ('100', '2000'):
+                attrs = 'mermaid mdw=' + width
+                lines = (['# Root', '\t: fname=out.jpg ' + attrs,
+                          '\t: flowchart LR', '\t: A-->B']
+                         if root else self.outline('flowchart LR\nA-->B', attrs))
+                with self.subTest(root=root, width=width), patch(
+                    'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                ) as render:
+                    dot = self.render(lines)
+                    self.assertIsNone(render.call_args.args[2])
+                    self.assertEqual([str(path)], re.findall(r'<IMG SRC="([^"]+)"', dot))
+                    self.graphviz(dot)
+        self.assertFalse(list(Path(self.temp.name).glob('md-image-*')))
 
     def test_standalone_mermaid_keeps_children_siblings_and_node_options(self):
         path = Path(self.temp.name, 'diagram.png')

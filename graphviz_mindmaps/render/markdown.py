@@ -42,6 +42,9 @@ def AppendMarkdownLabel(label, body_label):
 
 
 def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None):
+    # Standalone diagrams grow to their natural dimensions, independent of mdw.
+    if body.mermaid:
+        width = 420
     if wrap is None:
         wrap = True
     elif isinstance(wrap, str) and wrap.lower() in {'on', 'off'}:
@@ -188,11 +191,11 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     def textrow(value):
         return '<TR><TD ALIGN="LEFT">' + value + '</TD></TR>'
 
-    def image(path, available, line):
+    def image(path, available, line, constrain=True):
         try:
             with Image.open(path) as img:
                 img.load()
-                if img.width > available or img.height > 900:
+                if constrain and (img.width > available or img.height > 900):
                     img.thumbnail((max(1, int(available)), 900))
                     # Copy into the session: never resize an author's source image.
                     key = hashlib.sha256((str(path) + str(available)).encode()).hexdigest()[:16]
@@ -238,14 +241,17 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 directory = temporary()
                 if kind == 'fence' and block.language.lower() == 'mermaid':
                     try:
-                        path = RenderMermaidImage(block.source, directory, max(1, available),
+                        path = RenderMermaidImage(block.source, directory,
+                                                  None if body.mermaid else max(1, available),
                                                   colors=diagram_colors)
                     except ValueError as exc:
                         raise body.error(str(exc), block.source_line) from exc
                 else:
                     path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
                                            code_theme, transparent_background=True)
-                rows.append('<TR><TD ALIGN="LEFT" VALIGN="MIDDLE" CELLPADDING="0">' + image(Path(path), available, block.source_line) + '</TD></TR>')
+                rows.append('<TR><TD ALIGN="LEFT" VALIGN="MIDDLE" CELLPADDING="0">'
+                            + image(Path(path), available, block.source_line, constrain=not body.mermaid)
+                            + '</TD></TR>')
             elif kind == 'container':
                 inner_width = max(1, available - 20)
                 title = wrapped(block.runs, inner_width, size, bold=True, ink='#000000')

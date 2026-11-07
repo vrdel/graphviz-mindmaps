@@ -469,6 +469,10 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 break
             root_options.append(attr)
         root_options = ' '.join(root_options)
+        if root_markdown.mermaid and ParseInlineAttrLine('root_bg', root_options) is None:
+            fill_token = ExtractVerbatimFillToken(root_options) or ''
+            fill = ResolveVerbatimFillColorToken(fill_token, vrbtcolors) or 'transparent'
+            root_attrs = re.sub(r'fillcolor="[^"]*"', f'fillcolor="{fill}"', root_attrs)
         root_label = AppendMarkdownLabel(root_label, RenderMarkdown(
             root_markdown, tmpdir, ResolveMarkdownOption('md_width', root_options) or 420,
             foreground=ParseInlineAttrLine('root_fg', root_options),
@@ -664,7 +668,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             if markdown_body is not None:
                 state_obj.bgcolor = state_obj.bgcolor or (
                     ResolveVerbatimFillColorToken(verbatim_fill_token or ntype, vrbtcolors)
-                    or vrbtcolors["def"]
+                    or ('transparent' if markdown_body.mermaid else vrbtcolors["def"])
                 )
                 state_obj.bordercolor = (
                     state_obj.bordercolor or tree.default_bordercolor

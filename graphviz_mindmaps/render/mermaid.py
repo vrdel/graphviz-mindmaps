@@ -52,6 +52,7 @@ def _static_svg(svg, colors=None):
 
 
 def RenderMermaidImage(source, tmpdir, width=420, colors=None):
+    """Use width=None for a natural-size diagram without a layout width limit."""
     node = shutil.which('node')
     rasterizer = shutil.which('rsvg-convert')
     if not node:
