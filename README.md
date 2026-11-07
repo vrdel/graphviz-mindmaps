@@ -701,7 +701,12 @@ Pele runs locally through Node without a browser. Its SVG output is converted
 to a transparent PNG with `rsvg-convert` and fitted to the available `mdw`.
 Fences also work in root nodes, containers, lists, and blockquotes. Diagram
 directions are preserved; very large diagrams are scaled down. Repeated identical
-diagrams at the same width reuse their rendered image within the render session.
+diagrams at the same width and with the same palette reuse their rendered image
+within the render session. Both standalone Mermaid nodes and fenced diagrams
+automatically follow the active mindmap theme (`--theme` or root `theme=`): text,
+arrows, borders, node fills, subgraph fills, accents, and chart series colors
+come from that palette. Explicit colors in Mermaid `style`, `classDef`, or
+chart palette settings override the theme. The surrounding image stays transparent.
 Other code fences keep their syntax highlighting. Mermaid syntax errors and
 missing dependencies produce an error identifying the outline node and fence
 line. Pele supplies the diagram layout and styles; it does not guarantee the

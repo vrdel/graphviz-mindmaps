@@ -791,6 +791,35 @@ THEME_PALETTES = {
 }
 
 
+def PeleThemeColors(name):
+    """Map a mindmap palette to Pele's SVG color variables."""
+    if name == 'default':
+        colors = _DEFAULTS['fontcolor']
+        palette = {
+            'bg': constants.DEFAULT_BGCOLOR, 'fg': colors['def'],
+            'panel': _DEFAULTS['vrbtcolors']['cdef'], 'border': '#8a8a8a',
+            'accent': colors['b'], 'blue': colors['b'], 'red': colors['r'],
+            'green': colors['g'], 'yellow': colors['y'], 'cyan': colors['c'],
+            'purple': colors['p'], 'orange': '#b36b00',
+        }
+    elif name in THEME_PALETTES:
+        palette = THEME_PALETTES[name]
+    else:
+        raise ValueError('unknown theme: %s' % name)
+    variables = {
+        '--pele-bg': palette['bg'], '--pele-fg': palette['fg'],
+        '--pele-line': palette['fg'], '--pele-surface': palette['panel'],
+        '--pele-surface-alt': _blend_colors(palette['panel'], palette['bg']),
+        '--pele-border': palette['border'], '--pele-accent': palette['accent'],
+        '--pele-critical': palette['red'], '--pele-error': palette['red'],
+        '--pele-muted': _blend_colors(palette['fg'], palette['panel'], 0.4),
+    }
+    for index, color in enumerate(('blue', 'orange', 'green', 'red', 'cyan',
+                                    'yellow', 'purple', 'accent'), start=1):
+        variables[f'--pele-series-{index}'] = palette[color]
+    return variables
+
+
 def ApplyTheme(name):
     if name == "default":
         return _restore_defaults()

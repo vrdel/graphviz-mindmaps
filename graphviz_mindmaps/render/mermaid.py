@@ -10,7 +10,7 @@ from xml.etree import ElementTree
 from PIL import Image
 
 
-def _static_svg(svg):
+def _static_svg(svg, colors=None):
     """Materialize Pele's CSS variables for SVG rasterizers without var()."""
     variable = re.compile(r'var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*))?\)')
 
@@ -47,18 +47,19 @@ def _static_svg(svg):
         root = ElementTree.fromstring(svg)
     except ElementTree.ParseError as exc:
         raise ValueError(f'Pele returned invalid SVG: {exc}') from exc
-    visit(root, {})
+    visit(root, colors or {})
     return ElementTree.tostring(root, encoding='unicode')
 
 
-def RenderMermaidImage(source, tmpdir, width=420):
+def RenderMermaidImage(source, tmpdir, width=420, colors=None):
     node = shutil.which('node')
     rasterizer = shutil.which('rsvg-convert')
     if not node:
         raise ValueError('Pele rendering requires Node.js 20 or newer on PATH')
     if not rasterizer:
         raise ValueError('Pele rendering requires rsvg-convert on PATH (librsvg2-bin)')
-    payload = json.dumps({'source': source, 'width': width}, ensure_ascii=False)
+    payload = json.dumps({'source': source, 'width': width, 'colors': colors or {}},
+                         ensure_ascii=False, sort_keys=True)
     key = hashlib.sha256(payload.encode()).hexdigest()[:20]
     directory = Path(tmpdir) / 'mermaid'
     directory.mkdir(parents=True, exist_ok=True)
@@ -73,7 +74,7 @@ def RenderMermaidImage(source, tmpdir, width=420):
         if result.returncode:
             raise ValueError('Pele rendering failed: ' + (result.stderr.strip() or
                              f'node exited {result.returncode}'))
-        svgfile.write_text(_static_svg(result.stdout), encoding='utf-8')
+        svgfile.write_text(_static_svg(result.stdout, colors), encoding='utf-8')
         result = subprocess.run([rasterizer, '-o', str(pending), str(svgfile)],
                                 capture_output=True, text=True, timeout=30)
         if result.returncode:

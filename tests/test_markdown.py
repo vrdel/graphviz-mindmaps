@@ -18,7 +18,7 @@ from graphviz_mindmaps.parser.outline import ExtractMindmapBlocks
 from graphviz_mindmaps.render.dot import GenDot
 from graphviz_mindmaps.render.label_html import ApplyInlineBacktickBold
 from graphviz_mindmaps.render.markdown import RenderMarkdown
-from graphviz_mindmaps.theme import ApplyTheme
+from graphviz_mindmaps.theme import ApplyTheme, PeleThemeColors
 
 
 class MarkdownTests(unittest.TestCase):
@@ -504,6 +504,29 @@ if ready:
                 self.assertIn('&lt;b&gt;', dot)
                 self.assertIn('<IMG SRC=', dot)
                 self.graphviz(dot)
+
+    def test_mermaid_theme_uses_root_override_and_does_not_leak_between_maps(self):
+        path = Path(self.temp.name, 'diagram.png')
+        Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)
+        for mode in ('md', 'mermaid'):
+            source = 'flowchart LR\nA-->B'
+            if mode == 'md':
+                source = '```mermaid\n' + source + '\n```'
+            for root in (False, True):
+                lines = (['# Root', '\t: fname=out.jpg ' + mode] +
+                         ['\t: ' + line for line in source.splitlines()]
+                         if root else self.outline(source, mode))
+                with self.subTest(mode=mode, root=root), patch(
+                    'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                ) as render:
+                    self.render(lines, 'github-light')
+                    self.assertEqual(PeleThemeColors('github-light'), render.call_args.kwargs['colors'])
+                    overridden = list(lines)
+                    overridden[1] += ' theme=nord'
+                    self.render(overridden, 'github-light')
+                    self.assertEqual(PeleThemeColors('nord'), render.call_args.kwargs['colors'])
+                    self.render(lines, 'github-light')
+                    self.assertEqual(PeleThemeColors('github-light'), render.call_args.kwargs['colors'])
 
     def test_standalone_mermaid_preserves_source_and_hides_header(self):
         source = 'flowchart LR\n  A["literal *text* :-)"] --> B["# destination"]\n'
