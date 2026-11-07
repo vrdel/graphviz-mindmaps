@@ -1,5 +1,6 @@
 .gitignore
 .ropeproject/
+node_modules/
 *.pyc
 galapix-docker/galapix-container*
 templates/Single/mindmap-01-*.jpg

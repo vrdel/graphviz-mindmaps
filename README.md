@@ -39,6 +39,11 @@ Used in some workflows:
 - `just`
 - `galaview.sh`
 - `inkscape`, used as a fallback when Graphviz's cairo bitmap renderer cannot render very large graphs directly
+- Node.js 20+, the `pele` npm package, and `rsvg-convert` (Debian/Ubuntu:
+  `librsvg2-bin`) for Mermaid diagrams inside Markdown nodes. Run `npm ci`
+  from this repository to install the pinned Pele version. For a Python wheel
+  installation, run `npm install pele@1.13.0` in the directory from which you
+  invoke `gvmm`.
 
 ## Entrypoints
 
@@ -661,7 +666,49 @@ precedence.
 		: * Second item
 ```
 
-`md_width=420` sets the target body width in points. Prose wraps while retaining
+Mermaid fences in Markdown nodes render as diagrams using
+[Obsidian's Pele](https://github.com/obsidianmd/pele):
+
+```text
+\t# Deployment
+\t\t: md noheader mdw=500
+\t\t: Before deployment:
+\t\t:
+\t\t: ```mermaid
+\t\t: flowchart LR
+\t\t:     A[Build] --> B[Test] --> C[Deploy]
+\t\t: ```
+```
+
+Pele runs locally through Node without a browser. Its SVG output is converted
+to a transparent PNG with `rsvg-convert` and fitted to the available `mdw`.
+Fences also work in root nodes, containers, lists, and blockquotes. Diagram
+directions are preserved; very large diagrams are scaled down. Repeated identical
+diagrams at the same width reuse their rendered image within the render session.
+Other code fences keep their syntax highlighting. Mermaid syntax errors and
+missing dependencies produce an error identifying the outline node and fence
+line. Pele supplies the diagram layout and styles; it does not guarantee the
+same appearance as Mermaid.js. External images and interactive links within
+diagrams are disabled for this static output.
+
+Use `md_wrap=off` to preserve source newlines and disable automatic text wrapping
+for an individual Markdown node. Long text lines can exceed `mdw`; Markdown
+formatting, headings, and blank-line paragraph boundaries still work. This also
+works on root Markdown nodes. `md_wrap=on` (the default) joins ordinary paragraph
+lines with spaces and wraps text to the target width. Code and image sizing
+continue to follow `mdw` in either mode.
+
+```text
+\t# Project setup
+\t\t: md noheader fontmono mdw=450 md_wrap=off
+\t\t: #### Setup commands
+\t\t:
+\t\t: python -m venv .venv
+\t\t: source .venv/bin/activate
+\t\t: python -m pip install -r requirements.txt
+```
+
+`md_width=420` sets the target body width in points. By default, prose wraps while retaining
 inline styles; lists use hanging indentation and table columns share the available
 width. An indivisible word or inline-code span may exceed that width. Fenced and
 indented code are left-aligned and centered vertically within their cells, and

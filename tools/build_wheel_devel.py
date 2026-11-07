@@ -43,6 +43,7 @@ def copy_project_tree(temp_root: pathlib.Path) -> pathlib.Path:
     ignore = shutil.ignore_patterns(
         ".git",
         ".specstory",
+        "node_modules",
         "__pycache__",
         "*.pyc",
         "build",
