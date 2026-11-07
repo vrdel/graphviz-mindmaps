@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import os
 import re
 import shlex
@@ -329,6 +330,8 @@ class MontageRenderer:
         self.spec_path = spec_path
         self.outfile = outfile
         self.scale = scale
+        if scale is not None and (not math.isfinite(float(scale)) or float(scale) <= 0):
+            raise ValueError('scale must be a positive finite percentage')
         self.no_clean = no_clean
         self.background = background
         self.curdir = Path.cwd()
@@ -349,7 +352,7 @@ class MontageRenderer:
             return self.curdir / self.outfile
 
         if nested:
-            name = f"{self.spec_path.stem}-m{self.auto_nested_index}.jpg"
+            name = f"{self.spec_path.stem}-m{self.auto_nested_index}.png"
             self.auto_nested_index += 1
             return self.curdir / name
 
@@ -368,7 +371,7 @@ class MontageRenderer:
         return "s" if nested else "m"
 
     def render_image_group(self, images: list[str], background: str) -> Path:
-        tmp_path = self.temp_root / f"group-{next(tempfile._get_candidate_names())}.jpg"
+        tmp_path = self.temp_root / f"group-{next(tempfile._get_candidate_names())}.png"
         if len(images) == 1:
             symlink_or_copy(self.curdir / images[0], tmp_path)
             return tmp_path
@@ -387,8 +390,7 @@ class MontageRenderer:
 
     def render_transformed_image(self, image: str, transform_key: str) -> Path:
         image, scale_percent = ParseImageTransformSpec(image)
-        suffix = Path(image).suffix or ".jpg"
-        tmp_path = self.temp_root / f"{transform_key}-{next(tempfile._get_candidate_names())}{suffix}"
+        tmp_path = self.temp_root / f"{transform_key}-{next(tempfile._get_candidate_names())}.png"
         TransformImage(
             self.curdir / image,
             tmp_path,
@@ -415,7 +417,7 @@ class MontageRenderer:
             else:
                 raise ValueError(f"unsupported row item: {item!r}")
 
-        tmp_path = self.temp_root / f"row-{next(tempfile._get_candidate_names())}.jpg"
+        tmp_path = self.temp_root / f"row-{next(tempfile._get_candidate_names())}.png"
         if len(item_paths) == 1:
             symlink_or_copy(item_paths[0], tmp_path)
             return tmp_path
@@ -446,8 +448,9 @@ class MontageRenderer:
             row_items = ensure_list(row, "row")
             row_paths.append(self.render_row(row_items, background))
 
+        raw_output = self.temp_root / f"raw-{next(tempfile._get_candidate_names())}.png"
         if len(row_paths) == 1:
-            copy_output(row_paths[0], output_path)
+            copy_output(row_paths[0], raw_output)
         else:
             cmd = [
                 "gm", "montage",
@@ -456,13 +459,12 @@ class MontageRenderer:
                 "-geometry", "+0+0",
                 "-tile", "1x",
                 *[str(path) for path in row_paths],
-                str(output_path),
+                str(raw_output),
             ]
             run_command(cmd)
 
         if title:
-            raw_output = self.temp_root / f"raw-{next(tempfile._get_candidate_names())}.jpg"
-            copy_output(output_path, raw_output)
+            titled_output = self.temp_root / f"titled-{next(tempfile._get_candidate_names())}.png"
             run_command([
                 sys.executable,
                 str(self.tool_dir / "montage_title.py"),
@@ -473,14 +475,38 @@ class MontageRenderer:
                 "-b",
                 background,
                 str(raw_output),
-                str(output_path),
+                str(titled_output),
             ])
-            self.intermediate_outputs.append(raw_output)
+            raw_output = titled_output
 
-        if self.scale and not nested:
-            run_command(["gm", "convert", "-scale", f"{self.scale}%", str(output_path), str(output_path)])
+        self.write_output(raw_output, output_path, self.scale if not nested else None)
 
         return output_path
+
+    def write_output(self, source: Path, destination: Path, scale: str | None) -> None:
+        """Scale before encoding JPEG, then atomically publish a valid result."""
+        if destination.suffix.lower() in {'.jpg', '.jpeg'}:
+            result = subprocess.run(['gm', 'identify', '-format', '%w %h', str(source)],
+                                    capture_output=True, text=True, check=True)
+            width, height = map(int, result.stdout.split())
+            factor = float(scale) / 100 if scale else 1
+            if max(math.ceil(width * factor), math.ceil(height * factor)) > 65500:
+                raise ValueError(f'JPEG output would exceed 65500 pixels per dimension '
+                                 f'(source {width}x{height}, scale {scale or "100"}%); '
+                                 'use a smaller -s percentage or a .png output')
+        descriptor, filename = tempfile.mkstemp(prefix='.' + destination.stem + '-',
+                                               suffix=destination.suffix, dir=destination.parent)
+        os.close(descriptor)
+        pending = Path(filename)
+        try:
+            command = ['gm', 'convert', str(source)]
+            if scale:
+                command.extend(['-scale', f'{scale}%'])
+            command.append(str(pending))
+            run_command(command)
+            pending.replace(destination)
+        finally:
+            pending.unlink(missing_ok=True)
 
     def cleanup(self) -> None:
         if not self.no_clean:
@@ -515,18 +541,23 @@ def main(argv: list[str] | None = None) -> int:
 
     scale = None if args.scale in (None, "specified") else args.scale
     spec_path = Path(args.cmfile).resolve()
-    renderer = MontageRenderer(
-        spec_path=spec_path,
-        outfile=args.outfile,
-        scale=scale,
-        no_clean=args.no_clean,
-        background=args.background,
-    )
+    renderer = None
     try:
+        renderer = MontageRenderer(
+            spec_path=spec_path,
+            outfile=args.outfile,
+            scale=scale,
+            no_clean=args.no_clean,
+            background=args.background,
+        )
         spec = load_spec(spec_path)
         renderer.render_spec(spec, nested=False)
+    except (ValueError, subprocess.CalledProcessError) as exc:
+        print(f'montage: {exc}', file=sys.stderr)
+        return 1
     finally:
-        renderer.cleanup()
+        if renderer is not None:
+            renderer.cleanup()
     return 0
 
 

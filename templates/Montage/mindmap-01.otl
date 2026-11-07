@@ -427,6 +427,28 @@
 			: flowchart LR
 			:     A[Draft] --> B[Review] --> C[Done]
 			:
+		# styled Mermaid diagram (heading hidden)
+			: mermaid
+			: flowchart LR
+			:     A[Plan]:::step --> B{Ready?}
+			:     B -->|Yes| C[Release]:::done
+			:     B -->|No| D[Revise]:::step
+			:     classDef step fill:#dffdfa,stroke:#00948c,stroke-width:2px,color:#202020
+			:     classDef done fill:#dffde6,stroke:#027b10,stroke-width:2px,color:#202020
+			:     style B fill:#fcfddf,stroke:#a7a63b,stroke-width:2px,color:#202020
+			:     linkStyle 1 stroke:#027b10,stroke-width:3px
+			:     linkStyle 2 stroke:#b30000,stroke-width:2px,stroke-dasharray:5 3
+			:
+		# Mermaid styling syntax
+			: block rawmarkers
+			:
+			: classDef defines a reusable node style
+			: :::step / :::done applies a class to a node
+			: style B overrides a single diagram node
+			: linkStyle uses zero-based arrow indices
+			: explicit diagram colors override the theme
+			: outer node colors still use ccyan or bg=
+			:
 		# Mermaid within Markdown
 			: md mdw=500
 			: ## Deployment workflow
