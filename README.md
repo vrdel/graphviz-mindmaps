@@ -404,6 +404,15 @@ montage -o output.jpg montage.yml
 montage -s 80 -b '#4b5262' -o output.jpg montage.yml
 ```
 
+Montages use PNG intermediates and apply `-s` before encoding the final image,
+so an unscaled layout can exceed JPEG's 65,500-pixel dimension limit when the
+scaled result fits. Titles are included before scaling. If the requested JPG
+still exceeds that limit, use a smaller scale or select a `.png` output to keep
+the full dimensions. Failed renders preserve the previous output file.
+Some viewers have stricter limits: feh/Imlib2 can reject images above 32,767
+pixels in either dimension even when the JPEG is valid. Montage preserves the
+requested scale and does not shrink output to accommodate viewer limits.
+
 Montage YAML supports image entries, joined image groups, row breaks, and nested submontages:
 
 ```yaml
