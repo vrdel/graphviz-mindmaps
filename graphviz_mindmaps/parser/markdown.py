@@ -28,7 +28,8 @@ def DecodeMarkdownBody(title):
 def PrepareMarkdownBodies(lines):
     """Return legacy outline lines with bodies carried in an opaque payload.
 
-    Only a heading's attribute line (or a root's attribute group) can select md.
+    Only a heading's attribute line (or a root's attribute group) can select md
+    or a standalone mermaid body.
     Body text is never tested for directives, fname, or outline headings by the
     downstream parser. Raw whitespace survives in the payload.
     """
@@ -56,7 +57,7 @@ def PrepareMarkdownBodies(lines):
         end = j
         md_index = None
         while end < len(lines) and attr_pattern.match(lines[end]):
-            if {'md', 'markdown'} & set(_tokens(lines[end])):
+            if {'md', 'markdown', 'mermaid'} & set(_tokens(lines[end])):
                 md_index = end
                 end += 1
                 break
@@ -71,12 +72,18 @@ def PrepareMarkdownBodies(lines):
         body = MarkdownBody('', getattr(lines[md_index], 'filename', '<input>'), title,
                             getattr(lines[md_index], 'number', md_index + 1))
         body.rawmarkers = 'rawmarkers' in _tokens(lines[md_index])
+        body.mermaid = 'mermaid' in _tokens(lines[md_index])
+        body_modes = set()
         for attr in lines[j:end]:
             for token in _tokens(attr):
+                if token in {'md', 'markdown', 'mermaid'}:
+                    body_modes.add('md' if token == 'markdown' else token)
                 if token in {'block', 'verbatim', 'verbat', 'draw'} or re.match(r'^code(?:$|[=:])', token):
-                    raise body.error('md, code, block, and draw are mutually exclusive body modes')
+                    raise body.error('md, mermaid, code, block, and draw are mutually exclusive body modes')
                 if re.match(r'^(?:E?l|E?w)(?:\d|\[)', token):
                     raise body.error('body line/word selectors are not supported; use hl/h header selectors or Markdown emphasis')
+        if len(body_modes) > 1:
+            raise body.error('md and mermaid are mutually exclusive body modes')
         source = []
         k = end
         prefix = indent + ':'

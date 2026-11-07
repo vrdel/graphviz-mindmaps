@@ -21,12 +21,14 @@ class MarkdownBody:
     # (original line number, payload column), including prefixed blank lines.
     locations: list = field(default_factory=list)
     rawmarkers: bool = False
+    mermaid: bool = False
 
     def error(self, message, source_line=None):
         line = self.attribute_line
         if source_line is not None and 0 <= source_line < len(self.locations):
             line = self.locations[source_line][0]
-        return ValueError(f"{self.filename}:{line}: Markdown node {self.title!r}: {message}")
+        kind = 'Mermaid' if self.mermaid else 'Markdown'
+        return ValueError(f"{self.filename}:{line}: {kind} node {self.title!r}: {message}")
 
 
 @dataclass
