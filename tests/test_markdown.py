@@ -247,10 +247,28 @@ class MarkdownTests(unittest.TestCase):
                 dot = self.render(lines)
                 self.assertEqual(2, dot.count('>−&#160;</TD>'))
                 self.assertEqual(3, dot.count('>•&#160;</TD>'))
-                self.assertIn('>☑&#160;</TD>', dot)
-                self.assertIn('>☐&#160;</TD>', dot)
+                self.assertIn('>− ☑&#160;</TD>', dot)
+                self.assertIn('>− ☐&#160;</TD>', dot)
                 self.assertIn('>1.&#160;</TD>', dot)
                 self.assertEqual(2, dot.count('BGCOLOR="#F2B8B8"'))
+                self.graphviz(dot)
+
+    def test_task_items_preserve_bullets_and_checkboxes(self):
+        for marker, rendered in (('*', '•'), ('+', '•'), ('-', '−')):
+            with self.subTest(marker=marker):
+                source = (f'{marker} Sample system upgrade\n'
+                          f'{marker} keyboard focus indicator\n'
+                          '  - navigate items in the intended order\n'
+                          '    across focused views\n'
+                          f'{marker} [x] automated diagram export\n'
+                          f'{marker} [X] uppercase\n'
+                          f'{marker} [ ] pending')
+                dot = self.render(self.outline(source, 'md ccyan md_width=180'))
+                self.assertEqual(2, dot.count(f'>{rendered} ☑&#160;</TD>'))
+                self.assertIn(f'>{rendered} ☐&#160;</TD>', dot)
+                self.assertNotIn('[x]', dot)
+                self.assertNotIn('[X]', dot)
+                self.assertNotIn('[ ]', dot)
                 self.graphviz(dot)
 
     def test_callouts_stop_at_blank_lines_and_nested_items(self):
