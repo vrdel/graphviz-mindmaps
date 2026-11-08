@@ -1,7 +1,11 @@
 title: simple montage
 entries:
-  - image: mindmap-01.jpg
-  - image_gray: mindmap-01.jpg
+  # Pair the tall examples in three columns so the requested scale fits JPEG.
+  - submontage:
+      entries:
+        - image: mindmap-01.jpg
+        - new_row: true
+        - image_gray: mindmap-01.jpg
   # - image_negate: mindmap-01.jpg|50
   # - image_negate_contrast: mindmap-01.jpg
   # - image_gray: mindmap-01.jpg
@@ -13,7 +17,6 @@ entries:
   # - image_gray_sketch: mindmap-01.jpg
   # - image_negate_gray_sketch: mindmap-01.jpg
   # - image_negate_gray_contrast_sketch: mindmap-01.jpg|50
-  - new_row: true
   - column: [mindmap-01.jpg, mindmap-01.jpg]
   - submontage:
       title: joint submontage

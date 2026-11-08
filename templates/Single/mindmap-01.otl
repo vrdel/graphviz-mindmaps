@@ -480,6 +480,128 @@
 			: flowchart LR
 			:     A[Draft] --> B[Review] --> C[Done]
 			:
+			# usecase
+				: mermaid
+				:
+				: usecase-beta
+				: direction LR
+				: actor Customer
+				: Browse("Browse catalog")
+				: Customer --> Browse
+				:
+				# agentflow
+					: mermaid
+					:
+					: agentflow-beta TB
+					:   flow intake["Intake"]
+					:     receive["Receive request"]@{ shape: input }
+					:   end
+					:
+					:   flow processing["Processing"]
+					:     validate["Validate"]@{ shape: task }
+					:     enrich["Enrich"]@{ shape: task }
+					:     validate --> enrich
+					:   end
+					:   processing@{ view: "collapsed" }
+					:
+					:   flow output["Output"]
+					:     publish["Publish"]@{ shape: action }
+					:   end
+					:
+					:   receive --> validate
+					:   enrich --> publish
+					:
+			# venn
+				: mermaid
+				:
+				: venn-beta
+				:   set A["Frontend"]
+				:     text A1["React"]
+				:     text A2["Design Systems"]
+				:   set B["Backend"]
+				:     text B1["API"]
+				:   union A,B["Shared"]
+				:     text AB1["OpenAPI"]
+				:
+				# mindmap
+					: mermaid
+					:
+					: mindmap
+					:     id1["`**Root** with
+					: a second line
+					: Unicode works too: 🤓`"]
+					:       id2["`The dog in **the** hog... a *very long text* that wraps to a new line`"]
+					:       id3[Regular labels still works]
+					:
+				# treeView
+					: mermaid
+					:
+					: treeView-beta
+					:     src/
+					:         App.tsx
+					:         utils.ts
+					:     Dockerfile
+					:     notes.txt
+					:     README.md
+					:
+			# sequenceDiagram
+				: mermaid
+				:
+				: sequenceDiagram
+				:   autonumber
+				:   actor Customer
+				:   participant Web as Web app
+				:   participant API as API gateway
+				:   participant Bank
+				:   Customer->>Web: Place order
+				:   Web->>API: POST /orders
+				:   activate API
+				:   API->>Bank: Authorize payment
+				:   Bank-->>API: Approved
+				:   API-->>Web: 201 Created
+				:   deactivate API
+				:   Web-->>Customer: Order confirmed
+				:   Note over Customer,Bank: One order, one transaction
+				:
+				# stateDiagram-v2
+					: mermaid
+					:
+					: stateDiagram-v2
+					:     [*] --> Still
+					:     Still --> [*]
+					:
+					:     Still --> Moving
+					:     Moving --> Still
+					:     Moving --> Crash
+					:     Crash --> [*]
+					:
+				# architecture-beta
+					: mermaid
+					:
+					: architecture-beta
+					:     group api(cloud)[API]
+					:     service db1(database)[DB1] in api
+					:     service db2(database)[DB2] in api
+					:     service db3(database)[DB3] in api
+					:     service mcp(server)[MCP] in api
+					:     db1:R --> L:mcp
+					:     db2:R --> L:mcp
+					:     db3:R --> L:mcp
+					:     align column db1 db2 db3
+					:
+					# architecture-beta
+						: mermaid
+						:
+						: architecture-beta
+						:     service src1(server)[Source 1]
+						:     service src2(server)[Source 2]
+						:     service src3(server)[Source 3]
+						:     service proc(server)[Processor]
+						:     src1:B --> T:proc
+						:     src2:B --> T:proc
+						:     src3:B --> T:proc
+						:     align row src1 src2 src3
+						:
 		# styled Mermaid diagram (heading hidden)
 			: mermaid
 			: flowchart LR
