@@ -69,7 +69,7 @@ Apply a font to a selected word with `l1w2fmld` (first line, second word,
 monospace, bold):
 
 ```text
-# za models.User ide posebna logika
+# Handle example.Item with custom logic
     : commen l1w2fmld
 ```
 
@@ -83,9 +83,9 @@ Create template projects:
 create-mm -s
 create-mm -s -f justfile
 create-mm -m
-create-mm -m -p notes.otl -g montage.yml -w Notes.wiki -f justfile
+create-mm -m -p mindmap.otl -g montage.yml -w Notes.wiki -f justfile
 create-mm -m -l 80
-create-mm -m -o final-notes.jpg
+create-mm -m -o final-mindmap.jpg
 ```
 
 `create-mm -s` creates a single mindmap starter with `mindmap-01.otl`; pass `-f justfile` to create a build file too. `create-mm -m` creates a montage project with `montage.yml`, `justfile`, `Template.wiki`, and `mindmap-01.otl`.
@@ -94,13 +94,13 @@ Use `-o` with `-m` to change the generated justfile's final montage image name.
 Render one or more outline files with `gvmm`:
 
 ```bash
-gvmm -f notes.otl
-gvmm -f notes-1.otl notes-2.otl
-gvmm -f notes.otl -i output.jpg
-gvmm -f notes.otl -d output.dot
-gvmm -f notes.otl -s 80
-gvmm -f notes.otl --theme nord
-gvmm -f notes.otl --theme gruvbox
+gvmm -f mindmap.otl
+gvmm -f mindmap-1.otl mindmap-2.otl
+gvmm -f mindmap.otl -i output.jpg
+gvmm -f mindmap.otl -d output.dot
+gvmm -f mindmap.otl -s 80
+gvmm -f mindmap.otl --theme nord
+gvmm -f mindmap.otl --theme gruvbox
 ```
 
 Supported themes are `default`, `nord`, `papercolor`, `papercolor-dark`, `monokai`,
@@ -133,13 +133,13 @@ Additional dark themes (adapted with subdued, tinted node backgrounds):
 - `ayu-dark` — deep charcoal with amber accents, based on [Ayu](https://github.com/ayu-theme/ayu-colors).
 - `nightfox` — dark navy with muted accents, based on [Nightfox](https://github.com/EdenEast/nightfox.nvim).
 
-For example: `gvmm --theme catppuccin-latte -f notes.otl` or `: theme=catppuccin-latte` on the root.
+For example: `gvmm --theme catppuccin-latte -f mindmap.otl` or `: theme=catppuccin-latte` on the root.
 
 Choose a theme for an individual mindmap with a root `theme=` attribute:
 
 ```text
 # Notes
-    : fname=notes.jpg theme=nord
+    : fname=mindmap.jpg theme=nord
     # Themed node
         : node
 ```
@@ -153,7 +153,7 @@ with the `fname=` line:
 
 ```text
 # root_node
-    : fname=srce-tech-2610.jpg notitle
+    : fname=mindmap.jpg notitle
     : leaf=node sgmargin=2 theme=github-light
     : bg=#efefef root_bw=4 root_bs=dashed root_bg=seagreen1
     : root_symb=check
@@ -166,13 +166,13 @@ Root titles can also span consecutive `#` lines at the same indentation.
 Use the usual word and line selectors on the root attribute lines:
 
 ```text
-# za models.User ide posebna logika
-# druga linija naslova
-    : fname=notes.jpg notitle root_symb=check
+# Handle example.Item with custom logic
+# Additional details
+    : fname=mindmap.jpg notitle root_symb=check
     : l1w2fmld l2f30 l2b
 ```
 
-This renders `models.User` in bold monospace and the second title line in
+This renders `example.Item` in bold monospace and the second title line in
 30-point blue text. Semicolon-separated titles still work. Selectors count
 title lines and words from 1, excluding root icons, and affect only the root.
 Font, size, color, emphasis, ranges, and end-relative selectors work as they
@@ -182,7 +182,7 @@ Use `root_bg` for the root node's fill and `root_fg` for its text color:
 
 ```text
 # Notes
-    : fname=notes.jpg theme=nord root_bg="#334155" root_fg="white"
+    : fname=mindmap.jpg theme=nord root_bg="#334155" root_fg="white"
 ```
 
 These override the theme for the root node only. Named Graphviz colors and hex
@@ -194,7 +194,7 @@ Use `root_bw` for the root border width, `root_bs` for its style (such as
 
 ```text
 # Notes
-    : fname=notes.jpg root_bw=3 root_bs=dashed root_bc="#88c0d0"
+    : fname=mindmap.jpg root_bw=3 root_bs=dashed root_bc="#88c0d0"
 ```
 
 These affect only the root node and override its border settings. The border
@@ -205,7 +205,7 @@ Add Font Awesome icons above the root title with `root_symb`:
 
 ```text
 # Notes
-    : fname=notes.jpg root_symb=book:lightbulb-o root_bg="#334155" root_fg="white"
+    : fname=mindmap.jpg root_symb=book:lightbulb-o root_bg="#334155" root_fg="white"
 ```
 
 Use the same icon names as `symb=`, separated by colons. Icons use the same
@@ -221,7 +221,7 @@ or `root_sym[1,3]gf35` to style several icons. Color codes match child symbols:
 
 ```text
 # Notes
-    : fname=notes.jpg root_symb=book:star:check
+    : fname=mindmap.jpg root_symb=book:star:check
     : root_sym3rf35
 ```
 
@@ -233,7 +233,7 @@ Set a default style for untyped leaf nodes from the root attribute line:
 
 ```text
 # Notes
-    : fname=notes.jpg notitle leaf=node
+    : fname=mindmap.jpg notitle leaf=node
     # parent
         :
         # leaf rendered as node
@@ -247,7 +247,7 @@ by default. Set `hr_spacing` on a root attribute line to change this for all nod
 
 ```text
 # Notes
-    : fname=notes.jpg hr_spacing=4
+    : fname=mindmap.jpg hr_spacing=4
     # before; ---; after
         : node
 ```
@@ -260,7 +260,7 @@ choose the ruler style (default: `dashed`). For example:
 
 ```text
 # Notes
-    : fname=notes.jpg hr_style=dashed hr_spacing=2
+    : fname=mindmap.jpg hr_style=dashed hr_spacing=2
     # before; ---; after
         : node
 ```
@@ -269,7 +269,7 @@ Override the root ruler style for an individual node with `hr_style=`:
 
 ```text
 # Notes
-    : fname=notes.jpg hr_style=dashed
+    : fname=mindmap.jpg hr_style=dashed
     # before; ---; after
         : node hr_style=solid
     # Block with dotted ruler
@@ -350,7 +350,7 @@ node in that mindmap. A code node's `style=` overrides it, including
 
 ```text
 # Notes
-    : fname=notes.jpg theme=nord code_theme=monokai
+    : fname=mindmap.jpg theme=nord code_theme=monokai
     # Inherits monokai
         : code python
         : print("hello")
@@ -479,11 +479,11 @@ montage-title -s m -t "Title" input.jpg output.jpg
 Run the same tools through the local `pyenv` helper:
 
 ```bash
-./gvmm-exe.py gvmm -f notes.otl
+./gvmm-exe.py gvmm -f mindmap.otl
 ./gvmm-exe.py create-mm -m
 ./gvmm-exe.py copy-mm montage.yml archive/
-./gvmm-exe.py move-mm notes.otl archive/
-./gvmm-exe.py target-make notes.otl
+./gvmm-exe.py move-mm mindmap.otl archive/
+./gvmm-exe.py target-make mindmap.otl
 ./gvmm-exe.py montage -o output.jpg montage.yml
 ./gvmm-exe.py montage-title -s s -t "Title" image.jpg
 ```
@@ -501,11 +501,6 @@ Open [fontawesome-codes.html](fontawesome-codes.html) to view the rendered icon 
 - `gvmm` can read outline input from files via `-f` or from standard input.
 - `montage` reads YAML montage specs. Use `submontage` for nested montage entries.
 - `montage-title` is intended to title raw images; the current montage flow titles raw intermediate outputs before writing the final destination.
-
-## License
-
-Licensed under the Apache License, Version 2.0.
-See [LICENSE](/home/daniel/my_work/git.graphviz-mindmaps/graphviz-mindmaps/LICENSE).
 
 ## Markdown nodes
 
@@ -767,7 +762,7 @@ the root's attribute group; subsequent colon-prefixed lines are body text:
 ```text
 # Root title
 # second title line
-	: fname=notes.jpg notitle
+	: fname=mindmap.jpg notitle
 	: theme=github-light root_symb=book
 	: md hl2fm md_width=400
 	: ## Heading inside the root
@@ -780,3 +775,8 @@ the root's attribute group; subsequent colon-prefixed lines are body text:
 See [examples/markdown.otl](examples/markdown.otl) for a complete example. Render it
 from the example directory with `gvmm -f markdown.otl`, or choose an explicit
 output with `gvmm -f examples/markdown.otl -i /tmp/markdown.jpg`.
+
+## License
+
+Licensed under the Apache License, Version 2.0.
+See [LICENSE](/home/daniel/my_work/git.graphviz-mindmaps/graphviz-mindmaps/LICENSE).
