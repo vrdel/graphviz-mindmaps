@@ -792,6 +792,34 @@ if ready:
             self.assertGreater(rendered_width('* A much longer second line', 100),
                                rendered_width('* short', 800))
 
+    @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
+    def test_unwrapped_lists_stay_left_aligned_below_wider_paragraphs(self):
+        from xml.etree import ElementTree
+        lists = ('* Short\n* Tiny\n  - Nested',
+                 '1. Short\n2. Tiny\n   - Nested',
+                 '* ! **Short**\n* [x] Tiny\n  - Nested')
+        for root in (False, True):
+            for spacing in (0, 1):
+                for listing in lists:
+                    source = 'Anchor this paragraph is much longer than the list below it.\n\n' + listing
+                    attrs = f'md noheader fontmono md_wrap=off mdlns={spacing}'
+                    lines = (['# Root', '\t: fname=out.jpg ' + attrs] +
+                             ['\t: ' + line for line in source.splitlines()]
+                             if root else self.outline(source, attrs))
+                    with self.subTest(root=root, spacing=spacing, listing=listing):
+                        dot = self.render(lines)
+                        result = subprocess.run(['dot', '-Tsvg'], input=dot.encode(),
+                                                capture_output=True, check=True)
+                        self.assertFalse(result.stderr, result.stderr.decode())
+                        positions = {element.text: float(element.attrib['x'])
+                                     for element in ElementTree.fromstring(result.stdout).iter('{http://www.w3.org/2000/svg}text')
+                                     if element.text in ('Anchor', 'Short', 'Tiny', 'Nested')}
+                        self.assertAlmostEqual(positions['Short'], positions['Tiny'], delta=1)
+                        self.assertGreater(positions['Short'], positions['Anchor'])
+                        self.assertLess(positions['Short'] - positions['Anchor'], 65)
+                        self.assertGreater(positions['Nested'], positions['Short'])
+                        self.assertLess(positions['Nested'] - positions['Short'], 65)
+
     def test_markdown_wrap_off_preserves_nested_formatting_and_is_node_local(self):
         source = '::: note\n* **Alpha**\n  *Beta* ==Gamma==\n:::'
         dot = self.render(self.outline(source, 'md mdw=90 md_wrap=off'))

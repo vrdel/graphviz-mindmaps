@@ -35,6 +35,23 @@ def _measure(text, face, size, bold=False, italic=False):
     return metric.getlength(text) / 4
 
 
+@lru_cache(maxsize=128)
+def _natural_list_table(label, face, size, foreground):
+    """Fix a list to its intrinsic size so Graphviz cannot stretch its columns."""
+    font_label = ('<FONT FACE="%s" POINT-SIZE="%g" COLOR="%s">%s</FONT>' %
+                  (escape(face, quote=True), size, escape(foreground, quote=True), label))
+    source = 'digraph { node [shape=plain]; list [label=<' + font_label + '>]; }'
+    try:
+        result = subprocess.run(['dot', '-Tplain'], input=source, capture_output=True,
+                                text=True, check=True, timeout=30)
+        node = next(line.split() for line in result.stdout.splitlines()
+                    if line.startswith('node list '))
+        width, height = (math.ceil(float(value) * 72) + 1 for value in node[4:6])
+    except (OSError, subprocess.SubprocessError, StopIteration, ValueError) as exc:
+        raise ValueError('cannot determine Markdown list dimensions with Graphviz') from exc
+    return label.replace('<TABLE ', f'<TABLE FIXEDSIZE="TRUE" WIDTH="{width}" HEIGHT="{height}" ', 1)
+
+
 def AppendMarkdownLabel(label, body_label):
     """Append a nested table after legacy title formatting has finished."""
     head, closing = label.rsplit('</TABLE>', 1)
@@ -309,7 +326,13 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     if item.callout and len(children) > 1:
                         rest = render(children[1:], max(1, available - marker_width - 6), item_content=True)
                         listrows.append(f'<TR><TD></TD><TD ALIGN="LEFT" CELLPADDING="0">{rest}</TD></TR>')
-                rows.append(textrow(table(listrows, padding=0 if list_spacing is not None else 3)))
+                list_table = table(listrows, padding=0 if list_spacing is not None else 3)
+                if not wrap:
+                    try:
+                        list_table = _natural_list_table(list_table, face, size, foreground)
+                    except ValueError as exc:
+                        raise body.error(str(exc), block.source_line) from exc
+                rows.append(textrow(list_table))
             elif kind == 'table':
                 matrix = [row for section in block.children for row in section.children]
                 columns = max((len(row.children) for row in matrix), default=1)
