@@ -761,6 +761,37 @@ if ready:
                 self.assertEqual(source.splitlines(), command_rows)
                 self.graphviz(dot)
 
+    @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
+    def test_markdown_wrap_off_width_follows_content_instead_of_mdw(self):
+        sources = (
+            'short\nA much longer second line',
+            '* short\n* A much longer second line',
+            '* ! **Warning**\n* [x] Longer task description',
+            '* outer\n  - inner\n  - A much longer nested line',
+            '> * short\n> * A much longer quoted line',
+            '::: note\n* short\n* A much longer contained line\n:::',
+            '==highlighted==\nA much longer second line',
+            '| Name | Value |\n| --- | --- |\n| First | A longer value |',
+        )
+        for root in (False, True):
+            def rendered_width(source, width):
+                attrs = f'md noheader fontmono md_wrap=off mdw={width}'
+                lines = (['# Root', '\t: fname=out.jpg ' + attrs] +
+                         ['\t: ' + line for line in source.splitlines()]
+                         if root else self.outline(source, attrs))
+                dot = self.render(lines)
+                result = subprocess.run(['dot', '-Tplain'], input=dot.encode(),
+                                        capture_output=True, check=True)
+                target = 'node node1 ' if root else 'node node101 '
+                node = next(line.split() for line in result.stdout.decode().splitlines()
+                            if line.startswith(target))
+                return float(node[4])
+            for source in sources:
+                with self.subTest(root=root, source=source):
+                    self.assertEqual(rendered_width(source, 100), rendered_width(source, 800))
+            self.assertGreater(rendered_width('* A much longer second line', 100),
+                               rendered_width('* short', 800))
+
     def test_markdown_wrap_off_preserves_nested_formatting_and_is_node_local(self):
         source = '::: note\n* **Alpha**\n  *Beta* ==Gamma==\n:::'
         dot = self.render(self.outline(source, 'md mdw=90 md_wrap=off'))
