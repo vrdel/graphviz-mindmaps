@@ -724,7 +724,9 @@ same appearance as Mermaid.js. External images and interactive links within
 diagrams are disabled for this static output.
 
 Use `md_wrap=off` to preserve source newlines and disable automatic text wrapping
-for an individual Markdown node. Long text lines can exceed `mdw`; Markdown
+for an individual Markdown node. The text width fits the longest rendered line,
+including list markers and indentation, rather than reserving `mdw`. Long lines
+can exceed `mdw`, and short lines can produce a narrower node. Markdown
 formatting, headings, and blank-line paragraph boundaries still work. This also
 works on root Markdown nodes. `md_wrap=on` (the default) joins ordinary paragraph
 lines with spaces and wraps text to the target width. Code and image sizing

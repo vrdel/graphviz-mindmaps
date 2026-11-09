@@ -300,11 +300,12 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     # share the callout. A blank line or nested bullet ends it.
                     highlighted = children[:1] if item.callout else children
                     content = render(highlighted, max(1, available - marker_width - 6), item_content=True)
-                    content_width = max(1, math.ceil(available - marker_width - 6))
+                    content_width = (f' WIDTH="{max(1, math.ceil(available - marker_width - 6))}"'
+                                     if wrap else '')
                     background = f' BGCOLOR="{item.callout}"' if item.callout else ''
                     padding = ' CELLPADDING="0"' if list_spacing is not None else ''
                     marker_label = escape(marker) + ('&#160;' if explicit_layout else '')
-                    listrows.append(f'<TR><TD{background}{padding} VALIGN="TOP" ALIGN="RIGHT" WIDTH="{math.ceil(marker_width)}">{marker_label}</TD><TD{background} ALIGN="LEFT" CELLPADDING="0" WIDTH="{content_width}">{content}</TD></TR>')
+                    listrows.append(f'<TR><TD{background}{padding} VALIGN="TOP" ALIGN="RIGHT" WIDTH="{math.ceil(marker_width)}">{marker_label}</TD><TD{background} ALIGN="LEFT" CELLPADDING="0"{content_width}>{content}</TD></TR>')
                     if item.callout and len(children) > 1:
                         rest = render(children[1:], max(1, available - marker_width - 6), item_content=True)
                         listrows.append(f'<TR><TD></TD><TD ALIGN="LEFT" CELLPADDING="0">{rest}</TD></TR>')
