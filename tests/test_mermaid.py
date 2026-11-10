@@ -129,6 +129,20 @@ class MermaidTests(unittest.TestCase):
                         self.assertEqual(image.height, round(float(svg.get('height'))))
 
     @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
+    def test_unwrapped_markdown_uses_real_pele_at_natural_size(self):
+        import re
+        source = 'flowchart LR\n' + '\n'.join(f'A{i}[Step {i}] --> A{i + 1}[Step {i + 1}]'
+                                              for i in range(10))
+        body = MarkdownBody('Before\n\n```mermaid\n' + source + '\n```\n\nAfter',
+                            '<test>', 'Natural diagram', 1)
+        with tempfile.TemporaryDirectory() as directory:
+            natural = RenderMermaidImage(source + '\n', directory, width=None)
+            label = RenderMarkdown(body, [directory], width=100, wrap='off')
+            self.assertEqual([str(natural)], re.findall(r'<IMG SRC="([^"]+)"', label))
+            with Image.open(natural) as image:
+                self.assertGreater(image.width, 100)
+
+    @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
     def test_real_pele_themes_and_explicit_styles_have_separate_cached_images(self):
         source = 'flowchart LR\nA[Themed]-->B[Custom]\nstyle B fill:#abcdef'
         chart = 'pie title Tasks\n"Done" : 3\n"Pending" : 2'

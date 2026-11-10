@@ -256,10 +256,12 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                             '<TR><TD HEIGHT="1"></TD></TR></TABLE></TD></TR>')
             elif kind in {'fence', 'code_block'}:
                 directory = temporary()
-                if kind == 'fence' and block.language.lower() == 'mermaid':
+                is_mermaid = kind == 'fence' and block.language.lower() == 'mermaid'
+                natural_mermaid = is_mermaid and (body.mermaid or not wrap)
+                if is_mermaid:
                     try:
                         path = RenderMermaidImage(block.source, directory,
-                                                  None if body.mermaid else max(1, available),
+                                                  None if natural_mermaid else max(1, available),
                                                   colors=diagram_colors)
                     except ValueError as exc:
                         raise body.error(str(exc), block.source_line) from exc
@@ -267,7 +269,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
                                            code_theme, transparent_background=True)
                 rows.append('<TR><TD ALIGN="LEFT" VALIGN="MIDDLE" CELLPADDING="0">'
-                            + image(Path(path), available, block.source_line, constrain=not body.mermaid)
+                            + image(Path(path), available, block.source_line, constrain=not natural_mermaid)
                             + '</TD></TR>')
             elif kind == 'container':
                 inner_width = max(1, available - 20)
