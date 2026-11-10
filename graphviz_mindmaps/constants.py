@@ -43,6 +43,7 @@ subgraphcolors = {
 }
 
 vrbtcolors = {
+    "ctrans": "transparent",
     "cdef": "#f4f4f4",
     "cgreen": "#dffde6",
     "cred": "#fde0df",
@@ -79,6 +80,7 @@ font = {
 fontsize = {"s": "12", "m": "14", "l": "16", "xl": "20", "xxl": "24"}
 
 nodetype = {
+    "ctrans": "shape=box style=\"rounded,radial\" fontsize=\"%s\" fillcolor=\"transparent\" color=\"#8a8a8a\"" % (fontsize["l"]),
     "root": "fontsize=\"%s\" margin=\"0.5\" shape=cds style=radial color=\"#000000\" fillcolor=\"#dfdfdf\" gradientangle=\"90\"" % (fontsize["xxl"]),
     "quest": "shape=oval fontname=\"%s\" fontsize=\"%s\" margin=\"0,0\" style=\"radial\" fillcolor=\"#fffbab\" color=\"#8a8a8a\"" % (font["comic"], fontsize["l"]),
     "impor": "shape=signature fontsize=\"%s\" margin=\"0.25\" style=\"radial\" fillcolor=\"#ffb6c1\" color=\"#8a8a8a\"" % (fontsize["l"]),

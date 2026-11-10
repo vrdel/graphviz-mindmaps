@@ -57,6 +57,33 @@ class RootThemeTests(unittest.TestCase):
                                                      for i in (1, 3, 5))
                             self.assertEqual(expected, actual)
 
+    def test_ctrans_remains_transparent_in_every_theme_and_body_mode(self):
+        self.addCleanup(ApplyTheme, 'default')
+        for theme in ('default', *THEME_PALETTES):
+            for mode in ('', 'block ', 'verbatim ', 'draw ', 'code python ', 'md '):
+                with self.subTest(theme=theme, mode=mode):
+                    runtime = build_runtime(theme)
+                    session = self.render(runtime, child_attrs=mode + 'ctrans\n\t\t: sample text')
+                    for directory in session.tmpdir:
+                        self.addCleanup(shutil.rmtree, directory, True)
+                    child = next(line for line in session.dotbuf.splitlines() if 'node101[' in line)
+                    self.assertIn('fillcolor="transparent"', child)
+                    self.assertEqual('transparent', constants.vrbtcolors['ctrans'])
+                    if mode == '' and theme != 'default':
+                        self.assertIn('fontcolor="' + THEME_PALETTES[theme]['fg'] + '"', child)
+
+    def test_ctrans_preserves_explicit_background_text_and_border_overrides(self):
+        self.addCleanup(ApplyTheme, 'default')
+        for mode in ('', 'block ', 'md '):
+            with self.subTest(mode=mode):
+                session = self.render(build_runtime('nord'), child_attrs=
+                                      mode + 'ctrans bg="#123456" fg="#abcdef" bc="#654321" bw=2\n\t\t: sample')
+                child = next(line for line in session.dotbuf.splitlines() if 'node101[' in line)
+                self.assertIn('fillcolor="#123456"', child)
+                self.assertIn('fontcolor="#abcdef"', child)
+                self.assertIn('color="#654321"', child)
+                self.assertIn('penwidth="2"', child)
+
     def test_extra_colors_render_in_regular_block_and_markdown_nodes(self):
         for theme in ('default', 'github-light', 'nord'):
             for token in ('cteal', 'cmint', 'clavender', 'cpeach', 'csand',
