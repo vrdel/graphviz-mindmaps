@@ -481,6 +481,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             list_indent=ResolveMarkdownOption('md_list_indent', root_options),
             line_spacing=ResolveMarkdownOption('md_line_spacing', root_options),
             wrap=ParseInlineAttrLine('md_wrap', root_options),
+            mermaid_font=ParseInlineAttrLine('mermaid_font', root_options),
             diagram_colors=diagram_colors,
         ))
 
@@ -522,6 +523,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             markdown_list_indent = ResolveMarkdownOption('md_list_indent', nextline)
             markdown_line_spacing = ResolveMarkdownOption('md_line_spacing', nextline)
             markdown_wrap = ParseInlineAttrLine('md_wrap', nextline)
+            mermaid_font = ParseInlineAttrLine('mermaid_font', nextline)
             code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\"(?: style=\"([^\"]+)\")? data=\"([^\"]*)\"/>", label)
             code_source = None
             code_language = None
@@ -727,6 +729,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     list_indent=markdown_list_indent,
                     line_spacing=markdown_line_spacing,
                     wrap=markdown_wrap,
+                    mermaid_font=mermaid_font,
                     diagram_colors=diagram_colors,
                 )
                 node._label = [AppendMarkdownLabel(''.join(node._label), body_label)]
