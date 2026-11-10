@@ -733,6 +733,18 @@ Fences also work in root nodes, containers, lists, and blockquotes. Diagram
 directions are preserved; very large fenced diagrams are scaled down only when
 wrapping is enabled. Diagram labels use the containing node's font family and
 text size, including font attributes such as `fontmono` and `fontserif`.
+`mermaid_font=on` (the default) enables this inheritance. Set `mermaid_font=off`
+on an `md` or `mermaid` node to use Pele's own font and text-size defaults instead:
+
+```otl
+\t# Diagram with Pele fonts
+\t\t: mermaid mermaid_font=off
+\t\t: flowchart LR
+\t\t:   A[Start] --> B[Finish]
+```
+
+The option applies only to diagrams in that node, including root nodes and
+diagrams nested inside Markdown containers, lists, or blockquotes.
 Repeated identical diagrams at the same width, font, size, and palette reuse their rendered image
 within the render session. Both standalone Mermaid nodes and fenced diagrams
 automatically follow the active mindmap theme (`--theme` or root `theme=`): text,

@@ -58,7 +58,7 @@ def AppendMarkdownLabel(label, body_label):
     return head + '<TR><TD ALIGN="LEFT" CELLPADDING="2">' + body_label + '</TD></TR></TABLE>' + closing
 
 
-def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None):
+def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None):
     # Standalone diagrams grow to their natural dimensions, independent of mdw.
     if body.mermaid:
         width = 420
@@ -68,6 +68,12 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
         wrap = wrap.lower() == 'on'
     elif not isinstance(wrap, bool):
         raise body.error('md_wrap must be on or off')
+    if mermaid_font is None:
+        mermaid_font = True
+    elif isinstance(mermaid_font, str) and mermaid_font.lower() in {'on', 'off'}:
+        mermaid_font = mermaid_font.lower() == 'on'
+    elif not isinstance(mermaid_font, bool):
+        raise body.error('mermaid_font must be on or off')
     try:
         width = float(width)
     except (TypeError, ValueError):
@@ -91,6 +97,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     face = face or font['comic']
     foreground = foreground or fontcolor['def']
     size = max(1, float(size))
+    diagram_font = {'face': face, 'size': size} if mermaid_font else {}
     blocks = ([Block('fence', source=body.source, language='mermaid')]
               if body.mermaid else ParseMarkdown(body, preserve_newlines=not wrap))
 
@@ -262,7 +269,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     try:
                         path = RenderMermaidImage(block.source, directory,
                                                   None if natural_mermaid else max(1, available),
-                                                  colors=diagram_colors, face=face, size=size)
+                                                  colors=diagram_colors, **diagram_font)
                     except ValueError as exc:
                         raise body.error(str(exc), block.source_line) from exc
                 else:

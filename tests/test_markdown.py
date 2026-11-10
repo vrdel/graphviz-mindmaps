@@ -545,6 +545,40 @@ if ready:
                     self.assertEqual(face, render.call_args.kwargs['face'])
                     self.assertEqual(22, render.call_args.kwargs['size'])
 
+    def test_mermaid_font_option_defaults_validation_and_node_scope(self):
+        path = Path(self.temp.name, 'diagram.png')
+        Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)
+        for mode in ('md', 'mermaid'):
+            source = 'flowchart LR\nA-->B'
+            if mode == 'md':
+                source = '```mermaid\n' + source + '\n```'
+            for root in (False, True):
+                def lines(option):
+                    attrs = mode + ' fontmono f22 ' + option
+                    return (['# Root', '\t: fname=out.jpg ' + attrs] +
+                            ['\t: ' + line for line in source.splitlines()]
+                            if root else self.outline(source, attrs))
+
+                with self.subTest(mode=mode, root=root), patch(
+                    'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                ) as render:
+                    self.render(lines(''))
+                    inherited = render.call_args.kwargs
+                    self.render(lines('mermaid_font=on'))
+                    self.assertEqual(inherited, render.call_args.kwargs)
+                    self.render(lines('mermaid_font=off'))
+                    self.assertNotIn('face', render.call_args.kwargs)
+                    self.assertNotIn('size', render.call_args.kwargs)
+                    # A sibling with no option still inherits its font.
+                    siblings = lines('mermaid_font=off') + [
+                        '\t# Sibling', '\t\t: mermaid fontserif',
+                        '\t\t: flowchart LR', '\t\t: A-->B']
+                    self.render(siblings)
+                    self.assertEqual('Dejavu Serif', render.call_args.kwargs['face'])
+                    for value in ('yes', 'auto', '0'):
+                        with self.assertRaisesRegex(ValueError, 'mermaid_font must be on or off'):
+                            self.render(lines('mermaid_font=' + value))
+
     def test_standalone_mermaid_preserves_source_and_hides_header(self):
         source = 'flowchart LR\n  A["literal *text* :-)"] --> B["# destination"]\n'
         path = Path(self.temp.name, 'diagram.png')
