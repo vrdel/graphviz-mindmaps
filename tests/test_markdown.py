@@ -614,6 +614,37 @@ if ready:
             with self.assertRaisesRegex(ValueError, "<input>:5: Mermaid node 'Diagram': Pele"):
                 self.render(self.outline('bad diagram', 'mermaid', 'Diagram'))
 
+    def test_unwrapped_mermaid_fences_keep_natural_width_and_height(self):
+        path = Path(self.temp.name, 'large-diagram.png')
+        Image.new('RGBA', (1200, 1000), (220, 240, 240, 255)).save(path, dpi=(96, 96))
+        fence = '```mermaid\nflowchart LR\nA-->B\n```'
+        for root in (False, True):
+            for source in ('Before\n\n' + fence + '\n\nAfter',
+                           '::: note\n' + fence + '\n:::',
+                           '* Diagram\n\n' + '\n'.join('  ' + line for line in fence.splitlines()),
+                           '\n'.join('> ' + line for line in fence.splitlines())):
+                lines = (['# Root', '\t: fname=out.jpg md mdw=100 md_wrap=off'] +
+                         ['\t: ' + line for line in source.splitlines()]
+                         if root else self.outline(source, 'md noheader mdw=100 md_wrap=off'))
+                with self.subTest(root=root, source=source), patch(
+                    'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                ) as render:
+                    dot = self.render(lines)
+                    render.assert_called_once()
+                    self.assertIsNone(render.call_args.args[2])
+                    self.assertEqual([str(path)], re.findall(r'<IMG SRC="([^"]+)"', dot))
+                    if shutil.which('dot'):
+                        result = subprocess.run(['dot', '-Tplain'], input=dot.encode(),
+                                                capture_output=True, check=True)
+                        target = 'node node1 ' if root else 'node node101 '
+                        node = next(line.split() for line in result.stdout.decode().splitlines()
+                                    if line.startswith(target))
+                        # Graphviz reports points; the PNG's natural size is at 96 dpi.
+                        self.assertGreaterEqual(float(node[4]) * 72, 1200 * 72 / 96)
+                        self.assertGreaterEqual(float(node[5]) * 72, 1000 * 72 / 96)
+                    self.graphviz(dot)
+        self.assertFalse(list(Path(self.temp.name).glob('md-image-*')))
+
     def test_mermaid_fences_embed_images_in_root_child_and_nested_blocks(self):
         path = Path(self.temp.name, 'diagram.png')
         Image.new('RGBA', (800, 200), (243, 243, 243, 255)).save(path)

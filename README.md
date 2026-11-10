@@ -706,11 +706,14 @@ Mermaid fences in Markdown nodes render as diagrams using
 ```
 
 Pele runs locally through Node without a browser. Its SVG output is converted
-to a transparent PNG with `rsvg-convert`. Fenced diagrams inside `md` nodes fit
-the available `mdw` and the Markdown image height limit; standalone `mermaid`
-nodes keep their natural size.
+to a transparent PNG with `rsvg-convert`. With `md_wrap=on`, fenced diagrams
+inside `md` nodes fit the available `mdw` and the Markdown image height limit.
+With `md_wrap=off`, they keep their natural width and height, and the Markdown
+node grows to fit the diagram. Standalone `mermaid` nodes always keep their
+natural size.
 Fences also work in root nodes, containers, lists, and blockquotes. Diagram
-directions are preserved; very large fenced diagrams are scaled down. Repeated identical
+directions are preserved; very large fenced diagrams are scaled down only when
+wrapping is enabled. Repeated identical
 diagrams at the same width and with the same palette reuse their rendered image
 within the render session. Both standalone Mermaid nodes and fenced diagrams
 automatically follow the active mindmap theme (`--theme` or root `theme=`): text,
@@ -730,8 +733,9 @@ can exceed `mdw`, and short lines can produce a narrower node. Lists remain
 left-aligned when other paragraphs or headings are wider than the list. Markdown
 formatting, headings, and blank-line paragraph boundaries still work. This also
 works on root Markdown nodes. `md_wrap=on` (the default) joins ordinary paragraph
-lines with spaces and wraps text to the target width. Code and image sizing
-continue to follow `mdw` in either mode.
+lines with spaces and wraps text to the target width. Mermaid fences keep their
+natural size when wrapping is off, including inside lists, quotes, and containers.
+Other code and image sizing continues to follow `mdw` in either mode.
 
 ```text
 \t# Project setup
