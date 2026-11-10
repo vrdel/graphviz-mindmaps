@@ -262,7 +262,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     try:
                         path = RenderMermaidImage(block.source, directory,
                                                   None if natural_mermaid else max(1, available),
-                                                  colors=diagram_colors)
+                                                  colors=diagram_colors, face=face, size=size)
                     except ValueError as exc:
                         raise body.error(str(exc), block.source_line) from exc
                 else:

@@ -731,8 +731,9 @@ node grows to fit the diagram. Standalone `mermaid` nodes always keep their
 natural size.
 Fences also work in root nodes, containers, lists, and blockquotes. Diagram
 directions are preserved; very large fenced diagrams are scaled down only when
-wrapping is enabled. Repeated identical
-diagrams at the same width and with the same palette reuse their rendered image
+wrapping is enabled. Diagram labels use the containing node's font family and
+text size, including font attributes such as `fontmono` and `fontserif`.
+Repeated identical diagrams at the same width, font, size, and palette reuse their rendered image
 within the render session. Both standalone Mermaid nodes and fenced diagrams
 automatically follow the active mindmap theme (`--theme` or root `theme=`): text,
 arrows, borders, node fills, subgraph fills, accents, and chart series colors
