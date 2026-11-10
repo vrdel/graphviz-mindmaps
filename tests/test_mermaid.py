@@ -9,7 +9,8 @@ from xml.etree import ElementTree
 
 from PIL import Image
 
-from graphviz_mindmaps.constants import font
+from graphviz_mindmaps.constants import font, vrbtcolors
+from graphviz_mindmaps.parser.attributes import ResolveVerbatimFillColorToken
 from graphviz_mindmaps.model.document import MarkdownBody
 from graphviz_mindmaps.render.markdown import RenderMarkdown
 from graphviz_mindmaps.render.mermaid import RenderMermaidImage, _static_svg
@@ -62,6 +63,26 @@ class MermaidTests(unittest.TestCase):
             ), self.assertRaisesRegex(ValueError, 'timed out'):
                 RenderMermaidImage('flowchart LR\nA-->B', directory)
 
+    def test_static_svg_resolves_color_tokens_only_in_color_properties(self):
+        svg = ('<svg><rect fill="ccyan" stroke="cred-10" '
+               'style="color:corange10;fill:ctrans;stroke-width:4px;stop-color:cred999;'
+               'flood-color:cred-999;lighting-color:ccyan !important;font-family:ccyan"/>'
+               '<text data-id="ccyan">fill:ccyan,stroke:cred-10</text>'
+               '<path fill="#f9f" stroke="red" style="color:rgb(1,2,3)"/></svg>')
+        palette = {'ccyan': '#dffdfa', 'cred': '#fde0df', 'corang': '#fdecdf',
+                   'ctrans': 'transparent'}
+        root = ElementTree.fromstring(_static_svg(svg, color_tokens=palette))
+        self.assertEqual('#dffdfa', root[0].get('fill'))
+        self.assertEqual('#f3d6d5', root[0].get('stroke'))
+        self.assertEqual('color:#fff6e9;fill:transparent;stroke-width:4px;stop-color:#ffffff;'
+                         'flood-color:#000000;lighting-color:#dffdfa !important;font-family:ccyan',
+                         root[0].get('style'))
+        self.assertEqual('ccyan', root[1].get('data-id'))
+        self.assertEqual('fill:ccyan,stroke:cred-10', root[1].text)
+        self.assertEqual('#f9f', root[2].get('fill'))
+        self.assertEqual('red', root[2].get('stroke'))
+        self.assertEqual('color:rgb(1,2,3)', root[2].get('style'))
+
     def test_markdown_mermaid_errors_include_outline_location(self):
         body = MarkdownBody('text\n\n```mermaid\nbad\n```', 'map.otl', 'Diagram', 5,
                             locations=[(10 + i, 3) for i in range(5)])
@@ -105,6 +126,39 @@ class MermaidTests(unittest.TestCase):
                     with patch('graphviz_mindmaps.render.mermaid.subprocess.run') as run:
                         self.assertEqual(path, RenderMermaidImage(source, directory, 420))
                         run.assert_not_called()
+
+    @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
+    def test_real_pele_custom_color_styles_follow_theme_and_cache_palette(self):
+        self.addCleanup(ApplyTheme, 'default')
+        source = ('flowchart LR\nA["fill:ccyan,stroke:cred-10"]-->B[Class]-->C[Transparent]\n'
+                  'style A fill:ccyan,stroke:cred-10,stroke-width:4px\n'
+                  'classDef custom fill:corange10,stroke:cgrey,color:cblue-10\n'
+                  'class B custom\nstyle C fill:ctrans,stroke:cblack\n'
+                  'linkStyle 0 stroke:cviole10,stroke-width:4px')
+        with tempfile.TemporaryDirectory() as directory:
+            outputs = []
+            for theme in ('default', 'nord', 'github-light', 'default'):
+                ApplyTheme(theme)
+                output = RenderMermaidImage(source, directory, width=None)
+                outputs.append(output)
+                root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
+                styles = ';'.join(element.get('style', '') for element in root.iter())
+                palette = dict(vrbtcolors)
+                for property, token in (('fill', 'ccyan'), ('stroke', 'cred-10'),
+                                        ('fill', 'corange10'), ('stroke', 'cviole10')):
+                    self.assertIn(property + ':' + ResolveVerbatimFillColorToken(token, palette), styles)
+                self.assertIn('fill:transparent', styles)
+                self.assertIn('stroke-width:4px', styles)
+                self.assertIn('fill:ccyan,stroke:cred-10', ''.join(root.itertext()))
+                self.assertNotIn('stroke:cblack', styles)
+                self.assertNotIn('stroke:cgrey', styles)
+            self.assertEqual(3, len(set(outputs)))
+            self.assertEqual(outputs[0], outputs[-1])
+            # A user-defined palette change must invalidate the same-source cache.
+            with patch.dict(vrbtcolors, {'ccyan': '#123456'}):
+                customized = RenderMermaidImage(source, directory, width=None)
+                self.assertNotEqual(outputs[-1], customized)
+                self.assertIn('fill:#123456', customized.with_suffix('.svg').read_text())
 
     @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
     def test_real_pele_parse_errors_and_width_specific_cache(self):

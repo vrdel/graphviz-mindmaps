@@ -9,10 +9,47 @@ from xml.etree import ElementTree
 
 from PIL import Image
 
+from graphviz_mindmaps.constants import nodetype, vrbtcolors
+from graphviz_mindmaps.parser.attributes import NormalizeColorToken
 
-def _static_svg(svg, colors=None):
+
+def _diagram_color_tokens():
+    """Use block fills, with regular-node fills for tokens blocks lack."""
+    tokens = {}
+    for name, attrs in nodetype.items():
+        if re.fullmatch(r'c[a-z]+', name):
+            fill = re.search(r'fillcolor="(#[0-9a-fA-F]{6}|transparent)"', attrs)
+            if fill:
+                tokens[name] = fill.group(1)
+    tokens.update((name, value) for name, value in vrbtcolors.items()
+                  if re.fullmatch(r'c[a-z]+', name))
+    return tokens
+
+
+def _static_svg(svg, colors=None, color_tokens=None):
     """Materialize Pele's CSS variables for SVG rasterizers without var()."""
     variable = re.compile(r'var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*))?\)')
+    color_tokens = _diagram_color_tokens() if color_tokens is None else color_tokens
+    color_properties = {'fill', 'stroke', 'color', 'stop-color', 'flood-color', 'lighting-color'}
+
+    def resolve_color(key, value):
+        if key.strip().lower() not in color_properties:
+            return value
+        match = re.fullmatch(r'\s*(c[a-z]+(?:-?\d+)?)(\s*!important)?\s*', value)
+        if not match:
+            return value
+        token = NormalizeColorToken(match.group(1))
+        shade = re.fullmatch(r'(c[a-z]+)(-?\d+)?', token)
+        base, delta = shade.groups()
+        resolved = color_tokens.get(base)
+        if resolved is None:
+            return value
+        if delta:
+            if not re.fullmatch(r'#[0-9a-fA-F]{6}', resolved):
+                return value
+            resolved = '#' + ''.join('%02x' % min(255, max(0, int(resolved[i:i + 2], 16) + int(delta)))
+                                     for i in (1, 3, 5))
+        return resolved + (match.group(2) or '')
 
     def expand(value, variables, seen=()):
         def substitute(match):
@@ -34,12 +71,12 @@ def _static_svg(svg, colors=None):
         variables.update((key.strip(), value.strip()) for key, value in declarations
                          if key.strip().startswith('--'))
         if declarations:
-            element.set('style', ';'.join(key + ':' + expand(value, variables)
+            element.set('style', ';'.join(key + ':' + resolve_color(key, expand(value, variables))
                                          for key, value in declarations
                                          if not key.strip().startswith('--')))
         for key, value in list(element.attrib.items()):
             if key != 'style':
-                element.set(key, expand(value, variables))
+                element.set(key, resolve_color(key, expand(value, variables)))
         for child in element:
             visit(child, variables)
 
@@ -59,7 +96,9 @@ def RenderMermaidImage(source, tmpdir, width=420, colors=None, face=None, size=N
         raise ValueError('Pele rendering requires Node.js 20 or newer on PATH')
     if not rasterizer:
         raise ValueError('Pele rendering requires rsvg-convert on PATH (librsvg2-bin)')
+    color_tokens = _diagram_color_tokens()
     payload = json.dumps({'source': source, 'width': width, 'colors': colors or {},
+                          'color_tokens': color_tokens,
                           'face': face, 'size': float(size) if size is not None else None},
                          ensure_ascii=False, sort_keys=True)
     key = hashlib.sha256(payload.encode()).hexdigest()[:20]
@@ -76,7 +115,7 @@ def RenderMermaidImage(source, tmpdir, width=420, colors=None, face=None, size=N
         if result.returncode:
             raise ValueError('Pele rendering failed: ' + (result.stderr.strip() or
                              f'node exited {result.returncode}'))
-        svgfile.write_text(_static_svg(result.stdout, colors), encoding='utf-8')
+        svgfile.write_text(_static_svg(result.stdout, colors, color_tokens), encoding='utf-8')
         result = subprocess.run([rasterizer, '-o', str(pending), str(svgfile)],
                                 capture_output=True, text=True, timeout=30)
         if result.returncode:

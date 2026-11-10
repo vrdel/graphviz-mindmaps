@@ -751,6 +751,22 @@ automatically follow the active mindmap theme (`--theme` or root `theme=`): text
 arrows, borders, node fills, subgraph fills, accents, and chart series colors
 come from that palette. Explicit colors in Mermaid `style`, `classDef`, or
 chart palette settings override the theme. The surrounding image stays transparent.
+Color values in Mermaid `style`, `classDef`, and `linkStyle` declarations can
+also use mindmap color tokens:
+
+```mermaid
+flowchart LR
+  id1[Start] --> id2[Finish]
+  style id1 fill:ccyan,stroke:cred-10,stroke-width:4px
+  classDef done fill:cgreen10,stroke:cblue,color:cblack
+  class id2 done
+  linkStyle 0 stroke:cviolet-10,stroke-width:2px
+```
+
+These tokens follow the active theme's block/Markdown fill palette, with
+regular node fills for colors such as `cblack` and `cgrey`. Existing aliases,
+brightness adjustments (`cred-10`, `cgreen10`), and `ctrans` are supported.
+Hex values, CSS color names, and diagram labels retain their existing meaning.
 Other code fences keep their syntax highlighting. Mermaid syntax errors and
 missing dependencies produce an error identifying the outline node and fence
 line. Pele supplies the diagram layout and styles; it does not guarantee the
