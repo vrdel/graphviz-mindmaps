@@ -323,6 +323,24 @@ Use `cdef` on a block node to select the current theme's default regular-node fi
     : block body
 ```
 
+Use `ctrans` for a transparent node background. It works on regular, block,
+verbatim, draw, code, and Markdown nodes and stays transparent in every theme:
+
+```text
+# Transparent examples
+\t: fname=mindmap.jpg
+\t# Transparent block
+\t\t: block ctrans
+\t\t:
+\t\t: This body shows the background behind the node.
+\t# Transparent Markdown
+\t\t: md ctrans noheader
+\t\t: **Markdown** with a transparent background.
+```
+
+Text and borders retain their usual styling. An explicit `bg=`/`bgcolor=` value
+overrides `ctrans` if both are supplied.
+
 `block`, `verbatim`, and `draw` bodies can contain literal `# ` text, including
 lines such as `: # Sample heading`. Only an outline heading without a body
 prefix starts a new node.

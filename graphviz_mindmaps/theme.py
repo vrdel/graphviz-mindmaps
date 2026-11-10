@@ -117,6 +117,7 @@ def _apply_palette(palette):
         "def": "shape=underline fontcolor=\"%s\" color=\"%s\"" % (fg, border),
         "underl": "shape=underline fontcolor=\"%s\" color=\"%s\"" % (fg, border),
         "node": _node(panel, border=border, fontcolor=fg),
+        "ctrans": _node('transparent', border=border, fontcolor=fg),
         "list": _node(palette["cyan_bg"], border=border, shape="rect", style="radial", fontcolor=fg),
         "data": _node(panel, border=border, shape="cylinder", style="radial", fontcolor=fg, margin="0.1,0.3"),
         "answer": _node(palette["green_bg"], border=green, shape="cds", style="radial", fontcolor=fg, margin="0.2"),
