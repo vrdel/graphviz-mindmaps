@@ -528,6 +528,23 @@ if ready:
                     self.render(lines, 'github-light')
                     self.assertEqual(PeleThemeColors('github-light'), render.call_args.kwargs['colors'])
 
+    def test_mermaid_inherits_containing_node_font_and_size(self):
+        path = Path(self.temp.name, 'diagram.png')
+        Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)
+        for mode in ('md', 'mermaid'):
+            source = 'flowchart LR\nA-->B'
+            if mode == 'md':
+                source = '```mermaid\n' + source + '\n```'
+            for token, face in (('fontmono', 'Dejavu Sans Mono'),
+                                ('fontserif', 'Dejavu Serif'),
+                                ('fontsans', 'Dejavu Sans')):
+                with self.subTest(mode=mode, font=token), patch(
+                    'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                ) as render:
+                    self.render(self.outline(source, mode + ' ' + token + ' f22'))
+                    self.assertEqual(face, render.call_args.kwargs['face'])
+                    self.assertEqual(22, render.call_args.kwargs['size'])
+
     def test_standalone_mermaid_preserves_source_and_hides_header(self):
         source = 'flowchart LR\n  A["literal *text* :-)"] --> B["# destination"]\n'
         path = Path(self.temp.name, 'diagram.png')

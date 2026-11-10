@@ -13,8 +13,11 @@ try {
     const require = createRequire(resolve(process.cwd(), 'package.json'));
     engine = await import(pathToFileURL(require.resolve('pele')).href);
   }
-  const { source, width } = JSON.parse(readFileSync(0, 'utf8'));
+  const { source, width, face, size } = JSON.parse(readFileSync(0, 'utf8'));
   const { svg } = engine.render(source, {
+    fontFamily: face,
+    fontFamilyMono: face,
+    fontSize: size,
     responsive: false,
     maxWidth: width ?? undefined,
     autoDirection: false,

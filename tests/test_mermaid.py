@@ -9,6 +9,7 @@ from xml.etree import ElementTree
 
 from PIL import Image
 
+from graphviz_mindmaps.constants import font
 from graphviz_mindmaps.model.document import MarkdownBody
 from graphviz_mindmaps.render.markdown import RenderMarkdown
 from graphviz_mindmaps.render.mermaid import RenderMermaidImage, _static_svg
@@ -136,11 +137,36 @@ class MermaidTests(unittest.TestCase):
         body = MarkdownBody('Before\n\n```mermaid\n' + source + '\n```\n\nAfter',
                             '<test>', 'Natural diagram', 1)
         with tempfile.TemporaryDirectory() as directory:
-            natural = RenderMermaidImage(source + '\n', directory, width=None)
+            natural = RenderMermaidImage(source + '\n', directory, width=None,
+                                         face=font['comic'], size=18)
             label = RenderMarkdown(body, [directory], width=100, wrap='off')
             self.assertEqual([str(natural)], re.findall(r'<IMG SRC="([^"]+)"', label))
             with Image.open(natural) as image:
                 self.assertGreater(image.width, 100)
+
+    @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
+    def test_real_pele_uses_node_font_and_size_with_separate_cached_images(self):
+        body = MarkdownBody('```mermaid\nflowchart LR\nA[Node label]\n```',
+                            '<test>', 'Font inheritance', 1)
+        with tempfile.TemporaryDirectory() as directory:
+            outputs = []
+            for face, size in (('Dejavu Sans Mono', 18), ('Dejavu Serif', 18),
+                               ('Dejavu Serif', 26)):
+                with self.subTest(face=face, size=size):
+                    output = RenderMermaidImage('flowchart LR\nA[Node label]\n', directory,
+                                                width=None, face=face, size=size)
+                    outputs.append(output)
+                    root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
+                    self.assertIn('font-family:' + face, root.get('style'))
+                    self.assertIn(f'font:{size}px ', root.get('style'))
+                    label = RenderMarkdown(body, [directory], face=face, size=size, wrap=False)
+                    self.assertIn(str(output), label)
+            self.assertEqual(3, len(set(outputs)))
+            with patch('graphviz_mindmaps.render.mermaid.subprocess.run') as run:
+                self.assertEqual(outputs[-1], RenderMermaidImage(
+                    'flowchart LR\nA[Node label]\n', directory, width=None,
+                    face='Dejavu Serif', size=26))
+                run.assert_not_called()
 
     @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
     def test_real_pele_themes_and_explicit_styles_have_separate_cached_images(self):

@@ -51,7 +51,7 @@ def _static_svg(svg, colors=None):
     return ElementTree.tostring(root, encoding='unicode')
 
 
-def RenderMermaidImage(source, tmpdir, width=420, colors=None):
+def RenderMermaidImage(source, tmpdir, width=420, colors=None, face=None, size=None):
     """Use width=None for a natural-size diagram without a layout width limit."""
     node = shutil.which('node')
     rasterizer = shutil.which('rsvg-convert')
@@ -59,7 +59,8 @@ def RenderMermaidImage(source, tmpdir, width=420, colors=None):
         raise ValueError('Pele rendering requires Node.js 20 or newer on PATH')
     if not rasterizer:
         raise ValueError('Pele rendering requires rsvg-convert on PATH (librsvg2-bin)')
-    payload = json.dumps({'source': source, 'width': width, 'colors': colors or {}},
+    payload = json.dumps({'source': source, 'width': width, 'colors': colors or {},
+                          'face': face, 'size': float(size) if size is not None else None},
                          ensure_ascii=False, sort_keys=True)
     key = hashlib.sha256(payload.encode()).hexdigest()[:20]
     directory = Path(tmpdir) / 'mermaid'
