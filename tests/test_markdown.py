@@ -712,6 +712,39 @@ if ready:
                     self.assertEqual(face, render.call_args.kwargs['face'])
                     self.assertEqual(22, render.call_args.kwargs['size'])
 
+    def test_mermaid_font_size_override_validation_and_node_scope(self):
+        path = Path(self.temp.name, 'diagram.png')
+        Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)
+        for mode in ('md', 'mermaid'):
+            source = '> ```mermaid\n> flowchart LR\n> A-->B\n> ```' if mode == 'md' else 'flowchart LR\nA-->B'
+            for root in (False, True):
+                def lines(option):
+                    attrs = mode + ' ' + option
+                    return (['# Root', '\t: fname=out.jpg ' + attrs] +
+                            ['\t: ' + line for line in source.splitlines()]
+                            if root else self.outline(source, attrs))
+
+                with self.subTest(mode=mode, root=root), patch(
+                    'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                ) as render:
+                    self.render(self.outline('flowchart LR\nA-->B', 'mermaid'))
+                    sibling_defaults = render.call_args.kwargs
+                    self.render(lines(''))
+                    inherited_face = render.call_args.kwargs['face']
+                    self.render(lines('mermaid_font_size=24.5'))
+                    self.assertEqual(24.5, render.call_args.kwargs['size'])
+                    self.assertEqual(inherited_face, render.call_args.kwargs['face'])
+                    self.render(lines('mermaid_font=off mermaid_font_size=28'))
+                    self.assertNotIn('face', render.call_args.kwargs)
+                    self.assertEqual(28, render.call_args.kwargs['size'])
+                    siblings = lines('mermaid_font_size=28') + [
+                        '\t# sibling', '\t\t: mermaid', '\t\t: flowchart LR', '\t\t: A-->B']
+                    self.render(siblings)
+                    self.assertEqual(sibling_defaults, render.call_args.kwargs)
+                    for value in ('0', '-1', 'nan', 'inf', 'text'):
+                        with self.assertRaisesRegex(ValueError, r'<input>:\d+: .*mermaid_font_size'):
+                            self.render(lines('mermaid_font_size=' + value))
+
     def test_mermaid_font_option_defaults_validation_and_node_scope(self):
         path = Path(self.temp.name, 'diagram.png')
         Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)

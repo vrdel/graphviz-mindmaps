@@ -231,6 +231,31 @@ class MermaidTests(unittest.TestCase):
                 run.assert_not_called()
 
     @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
+    def test_real_mermaid_font_size_override_relayouts_diagrams_and_caches_size(self):
+        import re
+        with tempfile.TemporaryDirectory() as directory:
+            for source in ('flowchart LR\nA[Build]-->B[Deploy]', 'sequenceDiagram\nClient->>API: Request'):
+                body = MarkdownBody('```mermaid\n' + source + '\n```', '<test>', 'Font sizes', 1)
+                outputs, sizes = [], []
+                for size in (14, 24.5, 28):
+                    label = RenderMarkdown(body, [directory], size=18, wrap=False,
+                                           mermaid_font='off', mermaid_font_size=size)
+                    path = Path(re.search(r'<IMG SRC="([^"]+)"', label).group(1))
+                    outputs.append(path)
+                    root = ElementTree.fromstring(path.with_suffix('.svg').read_text())
+                    self.assertIn(f'font:{size:g}px ', root.get('style'))
+                    self.assertIn('font-family:sans-serif', root.get('style'))
+                    with Image.open(path) as image:
+                        sizes.append(image.size)
+                self.assertEqual(3, len(set(outputs)))
+                self.assertGreater(sizes[-1][0], sizes[0][0])
+                self.assertGreater(sizes[-1][1], sizes[0][1])
+                with patch('graphviz_mindmaps.render.mermaid.subprocess.run') as run:
+                    label = RenderMarkdown(body, [directory], wrap=False, mermaid_font='off', mermaid_font_size='28')
+                    self.assertIn(str(outputs[-1]), label)
+                    run.assert_not_called()
+
+    @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')
     def test_real_pele_themes_and_explicit_styles_have_separate_cached_images(self):
         source = 'flowchart LR\nA[Themed]-->B[Custom]\nstyle B fill:#abcdef'
         chart = 'pie title Tasks\n"Done" : 3\n"Pending" : 2'

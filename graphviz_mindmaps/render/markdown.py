@@ -15,7 +15,7 @@ from PIL import Image, ImageFont
 from graphviz_mindmaps.constants import font, fontcolor
 from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown, ParseMarkdownTitleColors
 from graphviz_mindmaps.render.code_image import RenderCodeImage
-from graphviz_mindmaps.render.mermaid import RenderMermaidImage
+from graphviz_mindmaps.render.mermaid import ParseMermaidFontSize, RenderMermaidImage
 from graphviz_mindmaps.render.svgbob import ParseSvgbobFontSize, ParseSvgbobStrokeWidth, RenderSvgbobImage
 
 
@@ -59,7 +59,7 @@ def AppendMarkdownLabel(label, body_label):
     return head + '<TR><TD ALIGN="LEFT" CELLPADDING="2">' + body_label + '</TD></TR></TABLE>' + closing
 
 
-def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None, title_colors=None, svgbob_stroke_width=None, svgbob_font_size=None):
+def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None, title_colors=None, svgbob_stroke_width=None, svgbob_font_size=None, mermaid_font_size=None):
     # Standalone diagrams grow to their natural dimensions, independent of mdw.
     if body.diagram:
         width = 420
@@ -102,9 +102,12 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
         heading_colors = ParseMarkdownTitleColors(title_colors)
         svgbob_stroke_width = ParseSvgbobStrokeWidth(svgbob_stroke_width)
         svgbob_font_size = ParseSvgbobFontSize(svgbob_font_size)
+        mermaid_font_size = ParseMermaidFontSize(mermaid_font_size)
     except ValueError as exc:
         raise body.error(str(exc)) from exc
     diagram_font = {'face': face, 'size': size} if mermaid_font else {}
+    if mermaid_font_size is not None:
+        diagram_font['size'] = mermaid_font_size
     blocks = ([Block('fence', source=body.source, language=body.diagram)]
               if body.diagram else ParseMarkdown(body, preserve_newlines=not wrap))
 

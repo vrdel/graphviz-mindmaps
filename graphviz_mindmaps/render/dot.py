@@ -482,6 +482,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             line_spacing=ResolveMarkdownOption('md_line_spacing', root_options),
             wrap=ParseInlineAttrLine('md_wrap', root_options),
             mermaid_font=ParseInlineAttrLine('mermaid_font', root_options),
+            mermaid_font_size=ParseInlineAttrLine('mermaid_font_size', root_options),
             diagram_colors=diagram_colors,
             title_colors=root_options,
             svgbob_stroke_width=ParseInlineAttrLine('svgbob_stroke_width', root_options),
@@ -530,6 +531,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             svgbob_stroke_width = ParseInlineAttrLine('svgbob_stroke_width', nextline)
             svgbob_font_size = ParseInlineAttrLine('svgbob_font_size', nextline)
             mermaid_font = ParseInlineAttrLine('mermaid_font', nextline)
+            mermaid_font_size = ParseInlineAttrLine('mermaid_font_size', nextline)
             code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\"(?: style=\"([^\"]+)\")? data=\"([^\"]*)\"/>", label)
             code_source = None
             code_language = None
@@ -736,6 +738,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     line_spacing=markdown_line_spacing,
                     wrap=markdown_wrap,
                     mermaid_font=mermaid_font,
+                    mermaid_font_size=mermaid_font_size,
                     diagram_colors=diagram_colors,
                     title_colors=markdown_title_colors,
                     svgbob_stroke_width=svgbob_stroke_width,
