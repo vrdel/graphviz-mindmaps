@@ -651,6 +651,39 @@
 			: requires Node.js 20+, Pele, and rsvg-convert
 			: repository setup: npm ci
 			:
+	# svgbob ASCII diagrams
+		:
+		# standalone diagram (heading hidden)
+			: svgbob
+			:
+			: +---------+     +----------+
+			: | outline |---->| renderer |
+			: +---------+     +----------+
+			:
+		# Svgbob within Markdown
+			: md noheader md_wrap=off ctrans
+			:
+			: ### Local rendering pipeline
+			:
+			: ```svgbob
+			: +-------+     +-----+     +-----+
+			: | ASCII |---->| SVG |---->| PNG |
+			: +-------+     +-----+     +-----+
+			: ```
+			:
+			: **Natural size:** the node grows to fit the diagram.
+			:
+		# Svgbob attributes and dependencies
+			: block rawmarkers
+			:
+			: : svgbob renders the body as an ASCII diagram
+			: standalone headings are hidden automatically
+			: transparent background; add ccyan for a colored fill
+			: text and lines follow the node foreground color
+			: Markdown fences fit mdw unless md_wrap=off
+			: requires Svgbob and rsvg-convert
+			: setup: python3 tools/install_svgbob.py
+			:
 	# block nodes
 		:
 		# block cteal
