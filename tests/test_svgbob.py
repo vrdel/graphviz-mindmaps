@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 from xml.etree import ElementTree
 
-from PIL import Image
+from PIL import Image, ImageColor
 
 from graphviz_mindmaps.render.svgbob import FindSvgbob, RenderSvgbobImage
 from graphviz_mindmaps.constants import vrbtcolors
@@ -152,6 +152,34 @@ fade = { fill: linear-gradient(90deg, ccyan, ctrans); }
                 right = rgba.getpixel((round(x + w * .8), round(y + h * .2)))
                 self.assertGreater(left[3], right[3])
                 self.assertLess(max(abs(a - b) for a, b in zip(left[:3], right[:3])), 4)
+
+    @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
+    def test_real_tagged_rectangle_with_touching_arrows_gets_colored(self):
+        source = '''+------------+     +------------------+     +------------+
+| Source     |---->| Filter processor |---->| Topology   |
+|            |     |           {cpas} |     |            |
++------------+     +------------------+     +------------+
+
+# Legend:
+cpas = { fill: ccyan; stroke: cred-10; }
+'''
+        with tempfile.TemporaryDirectory() as directory:
+            output = RenderSvgbobImage(source, directory, stroke_width=1)
+            root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
+            namespace = '{http://www.w3.org/2000/svg}'
+            rectangle = next(node for node in root.iter(namespace + 'rect')
+                             if 'cpas' in node.get('class', '').split())
+            self.assertNotIn('{cpas}', ''.join(node.text or '' for node in root.iter(namespace + 'text')))
+            self.assertIn('Filter', ''.join(root.itertext()))
+            raw = subprocess.run([FindSvgbob()], input=source, text=True,
+                                 capture_output=True, check=True)
+            original = ElementTree.fromstring(raw.stdout)
+            self.assertEqual([node.get('points') for node in original.iter(namespace + 'polygon')],
+                             [node.get('points') for node in root.iter(namespace + 'polygon')])
+            x, y, width, height = [float(rectangle.get(key)) for key in ('x', 'y', 'width', 'height')]
+            with Image.open(output) as image:
+                pixel = image.convert('RGBA').getpixel((round(x + width / 2), round(y + height * .8)))
+                self.assertEqual(ImageColor.getcolor(vrbtcolors['ccyan'], 'RGBA'), pixel)
 
     @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
     def test_real_spacing_unicode_and_literal_xml_characters(self):
