@@ -840,6 +840,14 @@ and retain their natural dimensions. A color attribute such as `ccyan` sets the
 surrounding node's background. Fences fit `mdw` with `md_wrap=on`; with
 `md_wrap=off`, they retain natural dimensions and the node expands to fit them.
 Root nodes and fences nested in lists, blockquotes, and containers also work.
+Use `svgbob_stroke_width=1` for thinner lines or `svgbob_stroke_width=4` for
+thicker lines. The default remains `2`. Values must be finite and nonnegative;
+fractions such as `0.5` are supported. Set the attribute on a standalone
+`svgbob` node or on an `md` node to affect its Svgbob fences, including nested
+fences. The option is local to that node and does not change the diagram's
+dimensions or text size. With `md_wrap=on`, fitting the rendered image to `mdw`
+also scales its visible strokes.
+
 The `svgbob`, `mermaid`, `md`, `code`, `block`, and `draw` body modes are mutually
 exclusive. See [examples/svgbob.otl](examples/svgbob.otl) for a complete example.
 

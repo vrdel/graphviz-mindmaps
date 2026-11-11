@@ -1,6 +1,7 @@
 """Render ASCII diagrams with the optional Svgbob CLI and librsvg."""
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -25,7 +26,18 @@ def FindSvgbob():
     return None
 
 
-def RenderSvgbobImage(source, tmpdir, foreground='#000000'):
+def ParseSvgbobStrokeWidth(value):
+    try:
+        width = 2.0 if value is None else float(value)
+    except (TypeError, ValueError):
+        raise ValueError('svgbob_stroke_width must be a nonnegative finite number') from None
+    if not math.isfinite(width) or width < 0:
+        raise ValueError('svgbob_stroke_width must be a nonnegative finite number')
+    return width
+
+
+def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2):
+    stroke_width = ParseSvgbobStrokeWidth(stroke_width)
     executable = FindSvgbob()
     rasterizer = shutil.which('rsvg-convert')
     if not executable:
@@ -36,6 +48,7 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000'):
     try:
         stamp = Path(executable).stat()
         payload = json.dumps({'source': source, 'foreground': foreground, 'font': font['mono'],
+                              'stroke_width': stroke_width,
                               'executable': executable, 'mtime': stamp.st_mtime_ns,
                               'size': stamp.st_size}, sort_keys=True, ensure_ascii=False)
         key = hashlib.sha256(payload.encode()).hexdigest()[:20]
@@ -50,6 +63,7 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000'):
             result = subprocess.run([
                 executable, '--background', 'transparent', '--font-family', font['mono'],
                 '--stroke-color', foreground, '--fill-color', foreground,
+                '--stroke-width', str(stroke_width),
             ], input=source, text=True, capture_output=True, timeout=30)
             if result.returncode:
                 raise ValueError('Svgbob rendering failed: ' + (result.stderr.strip() or
