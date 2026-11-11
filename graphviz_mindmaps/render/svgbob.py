@@ -13,6 +13,7 @@ from PIL import Image
 from graphviz_mindmaps.constants import font
 from graphviz_mindmaps.render.diagram_colors import DiagramColorTokens
 from graphviz_mindmaps.render.svgbob_styles import StyleSvgbobSvg
+from graphviz_mindmaps.render.svgbob_shapes import RecoverSvgbobRectangles
 
 
 def FindSvgbob():
@@ -51,6 +52,7 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2):
         stamp = Path(executable).stat()
         color_tokens = DiagramColorTokens()
         payload = json.dumps({'source': source, 'foreground': foreground, 'font': font['mono'],
+                              'render_version': 2,
                               'stroke_width': stroke_width,
                               'color_tokens': color_tokens,
                               'executable': executable, 'mtime': stamp.st_mtime_ns,
@@ -78,6 +80,7 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2):
                 raise ValueError(f'Svgbob returned invalid SVG: {exc}') from exc
             if root.tag != '{http://www.w3.org/2000/svg}svg':
                 raise ValueError('Svgbob returned invalid SVG: missing SVG root')
+            RecoverSvgbobRectangles(root)
             svgfile.write_text(StyleSvgbobSvg(root, color_tokens), encoding='utf-8')
             result = subprocess.run([rasterizer, '-o', str(pending), str(svgfile)],
                                     text=True, capture_output=True, timeout=30)
