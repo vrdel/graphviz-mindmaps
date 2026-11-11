@@ -67,6 +67,52 @@ class MarkdownTests(unittest.TestCase):
         self.assertEqual((5, 5), body.locations[0])
         self.assertNotIn('bg=red', '\n'.join(prepared))
 
+    def test_markdown_title_colors_select_positions_and_follow_theme(self):
+        from graphviz_mindmaps.constants import fontcolor
+        source = '\n\n'.join('#' * level + f' Heading{position}'
+                              for position, level in enumerate((3, 1, 5, 2, 1, 6, 2), 1))
+        source += '\n\nOrdinaryBody'
+        for root in (False, True):
+            for theme in ('default', 'nord'):
+                attrs = 'md mt[1,5]r mt7b'
+                lines = (['# OutlineTitle', '\t: fname=out.jpg ' + attrs] +
+                         ['\t: ' + line for line in source.splitlines()]
+                         if root else self.outline(source, attrs, 'OutlineTitle'))
+                with self.subTest(root=root, theme=theme):
+                    dot = self.render(lines, theme)
+                    alternate = [line.replace('mt[1,5]r', 'mt[1-5]r') for line in lines]
+                    self.assertEqual(dot, self.render(alternate, theme))
+                    for position in range(1, 8):
+                        ink = fontcolor['r'] if position <= 5 else fontcolor['b'] if position == 7 else fontcolor['def']
+                        self.assertRegex(dot, r'<FONT [^>]*COLOR="' + ink + r'"><B>Heading' + str(position) + r'</B></FONT>')
+                    self.assertRegex(dot, r'<FONT [^>]*COLOR="' + fontcolor['def'] + r'">OrdinaryBody</FONT>')
+                    self.assertNotRegex(dot, r'<FONT [^>]*COLOR="' + fontcolor['r'] + r'">(?:<B>)?OutlineTitle')
+                    self.graphviz(dot)
+
+    def test_markdown_title_color_ranges_overrides_nested_headings_and_node_scope(self):
+        from graphviz_mindmaps.constants import fontcolor
+        source = ('## Top\n\n## **Strong** and `code`\n\n> ## Quoted\n\n'
+                  '- item\n\n  ## Listed\n\n::: info Container\n## Inside\n:::\n\n## Last')
+        attrs = 'md mt[6-1]b mt2r mt[4-5]r mt4g'
+        lines = self.outline(source, attrs)
+        lines += ['\t# sibling', '\t\t: md', '\t\t: # SiblingBody']
+        dot = self.render(lines)
+        for text, color in (('Top', 'b'), ('Strong', 'r'), ('code', 'r'), ('Quoted', 'b'),
+                            ('Listed', 'g'), ('Inside', 'r'), ('Last', 'b'), ('SiblingBody', 'def')):
+            self.assertRegex(dot, r'<FONT [^>]*COLOR="' + fontcolor[color] + r'"><B>' + text + r'</B></FONT>')
+        self.graphviz(dot)
+
+    def test_markdown_title_colors_validate_selectors_with_outline_location(self):
+        for token in ('mt[]r', 'mt[1,]r', 'mt[1-]r', 'mt[1,,2]r', 'mt[1,5]z', 'mt0r', 'mt[0-5]r'):
+            for root in (False, True):
+                attrs = 'md ' + token
+                lines = (['# Root', '\t: fname=out.jpg ' + attrs, '\t: # Heading']
+                         if root else self.outline('# Heading', attrs))
+                with self.subTest(token=token, root=root), self.assertRaisesRegex(
+                    ValueError, r'<input>:\d+: Markdown node .*Markdown title',
+                ):
+                    self.render(lines)
+
     def test_file_and_stdin_preserve_trailing_spaces_and_file_boundaries(self):
         for name in ('a.otl', 'b.otl'):
             Path(self.temp.name, name).write_text('\n'.join(self.outline('first  \nsecond')))

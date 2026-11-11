@@ -16,6 +16,24 @@ def _tokens(line):
     return re.findall(r'''(?:[^\s"']|"[^"]*"|'[^']*')+''', line)
 
 
+def ParseMarkdownTitleColors(attributes):
+    """Select titles by document position; later selectors win."""
+    colors = []
+    for token in _tokens(attributes or ''):
+        if not token.startswith('mt'):
+            continue
+        match = re.fullmatch(r'mt(\d+|\[\d+(?:[,-]\d+)?\])([rgbycpkt])', token)
+        if not match:
+            raise ValueError(f'invalid Markdown title color {token!r}; use mt[1,5]r or mt[1-3]r')
+        selector, color = match.groups()
+        bounds = re.split(r'[,-]', selector.strip('[]'))
+        start, end = int(bounds[0]), int(bounds[-1])
+        if start < 1 or end < 1:
+            raise ValueError('Markdown title positions must be positive integers')
+        colors.append((range(min(start, end), max(start, end) + 1), color))
+    return colors
+
+
 def DecodeMarkdownBody(title):
     match = PAYLOAD.search(title)
     if not match:

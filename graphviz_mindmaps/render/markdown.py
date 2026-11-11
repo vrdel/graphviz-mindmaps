@@ -13,7 +13,7 @@ from urllib.parse import unquote, urlparse
 from PIL import Image, ImageFont
 
 from graphviz_mindmaps.constants import font, fontcolor
-from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown
+from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown, ParseMarkdownTitleColors
 from graphviz_mindmaps.render.code_image import RenderCodeImage
 from graphviz_mindmaps.render.mermaid import RenderMermaidImage
 from graphviz_mindmaps.render.svgbob import RenderSvgbobImage
@@ -59,7 +59,7 @@ def AppendMarkdownLabel(label, body_label):
     return head + '<TR><TD ALIGN="LEFT" CELLPADDING="2">' + body_label + '</TD></TR></TABLE>' + closing
 
 
-def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None):
+def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None, title_colors=None):
     # Standalone diagrams grow to their natural dimensions, independent of mdw.
     if body.diagram:
         width = 420
@@ -98,6 +98,10 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     face = face or font['comic']
     foreground = foreground or fontcolor['def']
     size = max(1, float(size))
+    try:
+        heading_colors = ParseMarkdownTitleColors(title_colors)
+    except ValueError as exc:
+        raise body.error(str(exc)) from exc
     diagram_font = {'face': face, 'size': size} if mermaid_font else {}
     blocks = ([Block('fence', source=body.source, language=body.diagram)]
               if body.diagram else ParseMarkdown(body, preserve_newlines=not wrap))
@@ -231,10 +235,18 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
             raise body.error(f'cannot read image {path}: {exc}', line) from exc
         return '<IMG SRC="%s"/>' % escape(str(path), quote=True)
 
+    heading_number = 0
+
     def render(items, available, item_content=False):
+        nonlocal heading_number
         rows = []
         for block in items:
             kind = block.kind
+            ink = None
+            if kind == 'heading':
+                heading_number += 1
+                ink = next((fontcolor[color] for positions, color in reversed(heading_colors)
+                            if heading_number in positions), None)
             if kind == 'heading' and block is not blocks[0]:
                 gap = max(4, round(size * 0.5))
                 rows.append(f'<TR><TD HEIGHT="{gap}" CELLPADDING="0"><FONT POINT-SIZE="1">&#160;</FONT></TD></TR>')
@@ -253,7 +265,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     rows.append('<TR><TD ALIGN="LEFT" CELLPADDING="0">' + image(path, available, block.source_line) + '</TD></TR>')
                 else:
                     ratio = (1.65, 1.4, 1.2, 1.1, 1.0, 1.0)[block.level - 1] if kind == 'heading' else 1
-                    rows.append(textrow(wrapped(block.runs, available, round(size * ratio), kind == 'heading')))
+                    rows.append(textrow(wrapped(block.runs, available, round(size * ratio), kind == 'heading', ink=ink)))
             elif kind == 'hr':
                 # A separate tiny table guarantees legal HR placement even at EOF.
                 # Empty cells avoid inheriting a full text line's height from

@@ -443,6 +443,26 @@
 			: Lorem **ipsum** dolor sit amet, *consectetur* adipiscing elit.
 			: Use `inline code` and ==highlighted text== within a paragraph.
 			:
+		# title colors by position
+			: md mdw=420 mt[1,5]r mt[3-4]b mt5g
+			: ### First title: red
+			:
+			: # Second title: red
+			:
+			: #### Third title: blue
+			:
+			: ## Fourth title: blue
+			:
+			: ### Fifth title: green
+			:
+			: ## Sixth title: default color
+			:
+			: `mt[1,5]r` colors the first five titles red.
+			: `mt[3-4]b` overrides titles 3-4 with blue.
+			: `mt5g` overrides title 5 with green.
+			:
+			: Titles are counted in source order, regardless of heading level.
+			:
 		# noheader (outline heading hidden)
 			: md noheader mdw=360 cteal
 			: ## Body-only Markdown

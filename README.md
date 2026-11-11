@@ -571,6 +571,31 @@ uses `:` at the same tab indentation as that attribute line:
 		: node
 ```
 
+Color Markdown titles with `mt` (Markdown title) selectors on the node's
+attribute line. Titles are counted in document order, starting at 1, regardless
+of their heading level. `mt[1,5]r` colors the first five titles red;
+`mt[1-5]r` is equivalent. Use `mt2b` to color only the second title blue:
+
+```text
+	# Colored Markdown headings
+		: md noheader mt[1,5]r mt2b
+		: # Red heading
+		:
+		: ## Blue heading
+		:
+		: # Third title, also red
+		:
+		: Ordinary text keeps its normal color.
+```
+
+All Markdown headings count, including headings inside lists, blockquotes, and
+containers. Numbering continues past six titles and restarts for each node.
+The outline heading and ordinary body text do not count. Selectors apply only within that node;
+outline titles and neighboring nodes keep their own styles. Colors use the
+existing theme-aware text codes `r`, `g`, `b`, `y`, `c`, `p`, `k`, and `t`.
+Later selectors override earlier ones for overlapping positions. Without an `mt`
+attribute, heading colors retain their current behavior.
+
 The outer node title is retained by default. Add `noheader` to an `md`/`markdown`
 or `block`/`verbatim` attribute line to show only the body. Attached `symb` icons
 remain visible above the body, including their color and size settings:
