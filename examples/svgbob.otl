@@ -1,0 +1,20 @@
+# Svgbob ASCII diagrams
+	: fname=svgbob.jpg notitle theme=github-light
+	# Standalone diagram
+		: svgbob
+		:
+		: +---------+     +----------+
+		: | outline |---->| renderer |
+		: +---------+     +----------+
+	# Diagram inside Markdown
+		: md noheader md_wrap=off ctrans
+		:
+		: ### Local rendering pipeline
+		:
+		: ```svgbob
+		: +-------+     +-----+     +-----+
+		: | ASCII |---->| SVG |---->| PNG |
+		: +-------+     +-----+     +-----+
+		: ```
+		:
+		: Source spacing is preserved; the node grows to fit the diagram.

@@ -397,7 +397,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     dotbuf = session.dotbuf
     title = session.title
     notitle = session.notitle
-    if root_markdown is not None and root_markdown.mermaid:
+    if root_markdown is not None and root_markdown.diagram:
         notitle = True
     bgcolor = session.bgcolor
     tmpdir = session.tmpdir
@@ -459,7 +459,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     root_attrs = ResolveRootNodeAttributes(lines, nodetype["root"])
     root_label = BuildRootLabel(lines, match.group(2), runtime.fontawesome_symb, tree)
     if root_markdown is not None:
-        if root_markdown.mermaid:
+        if root_markdown.diagram:
             hidden_label = [root_label]
             HideNodeHeader(hidden_label, allow_empty=True)
             root_label = ''.join(hidden_label)
@@ -469,7 +469,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 break
             root_options.append(attr)
         root_options = ' '.join(root_options)
-        if root_markdown.mermaid and ParseInlineAttrLine('root_bg', root_options) is None:
+        if root_markdown.diagram and ParseInlineAttrLine('root_bg', root_options) is None:
             fill_token = ExtractVerbatimFillToken(root_options) or ''
             fill = ResolveVerbatimFillColorToken(fill_token, vrbtcolors) or 'transparent'
             root_attrs = re.sub(r'fillcolor="[^"]*"', f'fillcolor="{fill}"', root_attrs)
@@ -540,7 +540,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             noheader = (vrbt or markdown_body is not None) and bool(
                 re.search(r"(?<!\S)noheader(?!\S)", nextline)
             )
-            if markdown_body is not None and markdown_body.mermaid:
+            if markdown_body is not None and markdown_body.diagram:
                 noheader = True
 
             if code_source is not None:
@@ -670,7 +670,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             if markdown_body is not None:
                 state_obj.bgcolor = state_obj.bgcolor or (
                     ResolveVerbatimFillColorToken(verbatim_fill_token or ntype, vrbtcolors)
-                    or ('transparent' if markdown_body.mermaid else vrbtcolors["def"])
+                    or ('transparent' if markdown_body.diagram else vrbtcolors["def"])
                 )
                 state_obj.bordercolor = (
                     state_obj.bordercolor or tree.default_bordercolor

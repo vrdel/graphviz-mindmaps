@@ -16,6 +16,7 @@ from graphviz_mindmaps.constants import font, fontcolor
 from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown
 from graphviz_mindmaps.render.code_image import RenderCodeImage
 from graphviz_mindmaps.render.mermaid import RenderMermaidImage
+from graphviz_mindmaps.render.svgbob import RenderSvgbobImage
 
 
 @lru_cache(maxsize=128)
@@ -60,7 +61,7 @@ def AppendMarkdownLabel(label, body_label):
 
 def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None):
     # Standalone diagrams grow to their natural dimensions, independent of mdw.
-    if body.mermaid:
+    if body.diagram:
         width = 420
     if wrap is None:
         wrap = True
@@ -98,8 +99,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     foreground = foreground or fontcolor['def']
     size = max(1, float(size))
     diagram_font = {'face': face, 'size': size} if mermaid_font else {}
-    blocks = ([Block('fence', source=body.source, language='mermaid')]
-              if body.mermaid else ParseMarkdown(body, preserve_newlines=not wrap))
+    blocks = ([Block('fence', source=body.source, language=body.diagram)]
+              if body.diagram else ParseMarkdown(body, preserve_newlines=not wrap))
 
     def temporary():
         if not tmpdirs:
@@ -264,19 +265,25 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
             elif kind in {'fence', 'code_block'}:
                 directory = temporary()
                 is_mermaid = kind == 'fence' and block.language.lower() == 'mermaid'
-                natural_mermaid = is_mermaid and (body.mermaid or not wrap)
+                is_svgbob = kind == 'fence' and block.language.lower() == 'svgbob'
+                natural_diagram = (is_mermaid or is_svgbob) and (body.diagram or not wrap)
                 if is_mermaid:
                     try:
                         path = RenderMermaidImage(block.source, directory,
-                                                  None if natural_mermaid else max(1, available),
+                                                  None if natural_diagram else max(1, available),
                                                   colors=diagram_colors, **diagram_font)
+                    except ValueError as exc:
+                        raise body.error(str(exc), block.source_line) from exc
+                elif is_svgbob:
+                    try:
+                        path = RenderSvgbobImage(block.source, directory, foreground=foreground)
                     except ValueError as exc:
                         raise body.error(str(exc), block.source_line) from exc
                 else:
                     path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
                                            code_theme, transparent_background=True)
                 rows.append('<TR><TD ALIGN="LEFT" VALIGN="MIDDLE" CELLPADDING="0">'
-                            + image(Path(path), available, block.source_line, constrain=not natural_mermaid)
+                            + image(Path(path), available, block.source_line, constrain=not natural_diagram)
                             + '</TD></TR>')
             elif kind == 'container':
                 inner_width = max(1, available - 20)
