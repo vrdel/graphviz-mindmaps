@@ -9,6 +9,8 @@ from xml.etree import ElementTree
 from PIL import Image
 
 from graphviz_mindmaps.render.svgbob import FindSvgbob, RenderSvgbobImage
+from graphviz_mindmaps.constants import vrbtcolors
+from graphviz_mindmaps.theme import ApplyTheme
 
 
 SOURCE = '+---------+     +----------+\n| outline |---->| renderer |\n+---------+     +----------+\n'
@@ -88,6 +90,68 @@ class SvgbobTests(unittest.TestCase):
             with patch('graphviz_mindmaps.render.svgbob.subprocess.run') as run:
                 self.assertEqual(outputs[1], RenderSvgbobImage(SOURCE, directory, stroke_width='0.5'))
                 run.assert_not_called()
+
+    @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
+    def test_real_color_tokens_gradients_pixels_and_theme_cache(self):
+        self.addCleanup(ApplyTheme, 'default')
+        source = '''+--------------------+      +--------------------+
+|{front}             |      |{jobs}              |
+| ccyan API          | ---> | Background workers |
++--------------------+      +--------------------+
+
+# Legend:
+front = { fill: linear-gradient(90deg, ccyan, cblue); stroke: cred-10; }
+jobs = { fill: radial-gradient(cwhite, cgreen); stroke: cgreen-100; }
+'''
+        with tempfile.TemporaryDirectory() as directory:
+            outputs = []
+            for theme in ('default', 'nord', 'default'):
+                ApplyTheme(theme)
+                output = RenderSvgbobImage(source, directory)
+                outputs.append(output)
+                root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
+                self.assertEqual(4, len(list(root.iter('{http://www.w3.org/2000/svg}stop'))))
+                self.assertIn(vrbtcolors['ccyan'], output.with_suffix('.svg').read_text())
+                labels = [element.text for element in root.iter('{http://www.w3.org/2000/svg}text')]
+                self.assertIn('ccyan', labels)
+                self.assertIn('API', labels)
+                rectangle = next(element for element in root.iter()
+                                 if 'front' in element.get('class', '').split())
+                x, y, w, h = [float(rectangle.get(key)) for key in ('x', 'y', 'width', 'height')]
+                with Image.open(output) as image:
+                    rgba = image.convert('RGBA')
+                    self.assertNotEqual(rgba.getpixel((round(x + w * .2), round(y + h * .2))),
+                                        rgba.getpixel((round(x + w * .8), round(y + h * .2))))
+                    self.assertEqual(0, rgba.getchannel('A').getextrema()[0])
+            self.assertNotEqual(outputs[0], outputs[1])
+            self.assertEqual(outputs[0], outputs[2])
+            with patch.dict(vrbtcolors, {'ccyan': '#123456'}):
+                output = RenderSvgbobImage(source, directory)
+                self.assertNotEqual(outputs[0], output)
+                self.assertIn('#123456', output.with_suffix('.svg').read_text())
+
+    @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
+    def test_real_gradient_fades_to_transparency_without_black_fringe(self):
+        source = '''+--------------------+
+|{fade}              |
+| Transparent fade   |
++--------------------+
+
+# Legend:
+fade = { fill: linear-gradient(90deg, ccyan, ctrans); }
+'''
+        with tempfile.TemporaryDirectory() as directory:
+            output = RenderSvgbobImage(source, directory)
+            root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
+            rectangle = next(element for element in root.iter()
+                             if 'fade' in element.get('class', '').split())
+            x, y, w, h = [float(rectangle.get(key)) for key in ('x', 'y', 'width', 'height')]
+            with Image.open(output) as image:
+                rgba = image.convert('RGBA')
+                left = rgba.getpixel((round(x + w * .2), round(y + h * .2)))
+                right = rgba.getpixel((round(x + w * .8), round(y + h * .2)))
+                self.assertGreater(left[3], right[3])
+                self.assertLess(max(abs(a - b) for a, b in zip(left[:3], right[:3])), 4)
 
     @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
     def test_real_spacing_unicode_and_literal_xml_characters(self):
