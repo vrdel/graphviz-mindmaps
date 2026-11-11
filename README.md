@@ -12,6 +12,10 @@ The repo currently provides user-facing command-line tools:
 - `montage` builds image montages from YAML specs
 - `montage-title` adds a title bar to an image
 
+| Single mindmap | Montage |
+| :---: | :---: |
+| [![Single mindmap preview](templates/Single/mindmap-01.jpg)](templates/Single/mindmap-01.jpg) | [![Montage preview](templates/Montage/final_montage.jpg)](templates/Montage/final_montage.jpg) |
+
 ## Install
 
 The Python package depends on:
