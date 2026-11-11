@@ -51,3 +51,85 @@
 		:
 		: The diagram uses `svgbob_stroke_width=1.5` and an explicit foreground color.
 		: All diagram lines retain their natural size.
+	# Colored event-driven platform
+		: svgbob svgbob_stroke_width=1.5 fg="#263238"
+		:
+		: +-----------------------+       +-----------------------+       +-----------------------+
+		: |{front}                |       |{front}                |       |{security}             |
+		: |     Web and mobile    | ----> |    Ingress gateway    | ----> |    Identity service   |
+		: +-----------------------+       +-----------------------+       +-----------------------+
+		:
+		:                                                                             |
+		:                                                                             v
+		:
+		:                                 +-----------------------+       +-----------------------+       +-----------------------+
+		:                                 |{cache}                |       |{app}                  |       |{data}                 |
+		:                                 |   Read-through cache  | <---> |    Application API    | <---> |    Primary database   |
+		:                                 +-----------------------+       +-----------------------+       +-----------------------+
+		:
+		:                                                                             |
+		:                                                                             v
+		:
+		:                                                                 +-----------------------+
+		:                                                                 |{broker}               |
+		:                                                                 |      Event broker     |
+		:                                                                 +-----------------------+
+		:
+		:                                                                             |
+		:                                                                             |
+		:                                             +-------------------------------+-------------------------------+
+		:                                             v                               v                               v
+		:
+		: +-----------------------+       +-----------------------+       +-----------------------+       +-----------------------+
+		: |{observe}              |       |{worker}               |       |{worker}               |       |{retry}                |
+		: |   Metrics collector   | <---- |      Email worker     |       |     Billing worker    |       |      Retry queue      |
+		: +-----------------------+       +-----------------------+       +-----------------------+       +-----------------------+
+		:
+		:             |                               |                               |                               |
+		:             |                               |                               |                               |
+		:             |                               +---------------+---------------+                               |
+		:             v                                               v                                               v
+		:
+		: +-----------------------+                       +-----------------------+                       +-----------------------+
+		: |{observe}              |                       |{data}                 |                       |{failure}              |
+		: |    Log aggregation    |                       |     Audit database    |                       |   Dead-letter queue   |
+		: +-----------------------+                       +-----------------------+                       +-----------------------+
+		:
+		:                                                             |
+		:                                                             v
+		:
+		:                                                 +-----------------------+
+		:                                                 |{archive}              |
+		:                                                 |     Object archive    |
+		:                                                 +-----------------------+
+		:
+		: # Legend:
+		: front = { fill: linear-gradient(90deg, ccyan, cblue); stroke: ccyan-100; }
+		: security = { fill: radial-gradient(cwhite, cpeach); stroke: corange-100; }
+		: app = { fill: linear-gradient(180deg, cblue, cwhite); stroke: cblue-100; }
+		: cache = { fill: linear-gradient(90deg, cmint, cgreen); stroke: cgreen-100; }
+		: data = { fill: radial-gradient(cwhite, claven); stroke: cviolet-100; }
+		: broker = { fill: linear-gradient(45deg, corang, cwhite); stroke: corang-100; }
+		: worker = { fill: linear-gradient(90deg, cgreen, cwhite); stroke: cgreen-100; }
+		: retry = { fill: linear-gradient(90deg, cyellow, corang); stroke: corang-100; }
+		: observe = { fill: linear-gradient(180deg, cgrey10, cwhite); stroke: cgrey-100; }
+		: failure = { fill: linear-gradient(90deg, cred, cpeach); stroke: cred-100; }
+		: archive = { fill: linear-gradient(90deg, ccyan, ctrans); stroke: ccyan-100; }
+	# Colors, gradients, and flow notes
+		: md noheader mdw=440
+		: ### Event-driven processing
+		:
+		: 1. An ingress gateway sends clients to identity verification.
+		: 2. The API accesses a cache and a primary database, then publishes events.
+		: 3. The broker fans out to email, billing, and retry processing.
+		: 4. Workers write audit data; exhausted retries reach a dead-letter queue.
+		: 5. Metrics and logs support operations; audit data is archived.
+		:
+		: Native `{tag}` markers select the styles in `# Legend:`.
+		: `fill:ccyan` and `stroke:cred-10` follow the active theme.
+		: Aliases such as `cyellow`, `corange`, and `claven` also work.
+		:
+		: **Linear:** `fill:linear-gradient(90deg, ccyan, cblue)`.
+		: **Radial:** `fill:radial-gradient(cwhite, cpeach)`.
+		: The archive uses `ctrans` to fade into the transparent background.
+		: Stops are evenly spaced; gradient direction can use degrees or `to right`.

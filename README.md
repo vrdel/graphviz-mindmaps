@@ -877,6 +877,9 @@ tokens, hex colors, CSS color names, or `rgb(...)`. Linear directions accept
 degrees or `to top`, `to right`, `to bottom`, `to left`, and diagonal combinations.
 Solid CSS colors continue to work. Explicit styles override the diagram's
 foreground setting, and rendered images are cached separately for each palette.
+The colored event-driven platform in [examples/svgbob.otl](examples/svgbob.otl)
+demonstrates gradients, color aliases, shade adjustments, and transparency
+alongside the original monochrome architecture diagram.
 
 The `svgbob`, `mermaid`, `md`, `code`, `block`, and `draw` body modes are mutually
 exclusive. See [examples/svgbob.otl](examples/svgbob.otl) for a complete example.
