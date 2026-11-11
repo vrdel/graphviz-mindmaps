@@ -853,6 +853,8 @@ color tokens as Mermaid: `ccyan`, `cred-10`, aliases such as `corange`, and
 `ctrans`. Tokens use the block/Markdown fill palette, with regular node fills
 for colors such as `cblack` and `cgrey`. They work in color declarations such
 as `fill` and `stroke`; labels and tag names remain literal.
+Tagged rectangular boxes also retain their styles when arrows touch their
+borders; the tag itself is hidden from the rendered label.
 
 The renderer also supports linear and radial gradients in `fill` or `stroke`:
 
