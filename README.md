@@ -848,6 +848,36 @@ fences. The option is local to that node and does not change the diagram's
 dimensions or text size. With `md_wrap=on`, fitting the rendered image to `mdw`
 also scales its visible strokes.
 
+Svgbob's native `{tag}` markers and `# Legend:` styles support the same theme
+color tokens as Mermaid: `ccyan`, `cred-10`, aliases such as `corange`, and
+`ctrans`. Tokens use the block/Markdown fill palette, with regular node fills
+for colors such as `cblack` and `cgrey`. They work in color declarations such
+as `fill` and `stroke`; labels and tag names remain literal.
+
+The renderer also supports linear and radial gradients in `fill` or `stroke`:
+
+```svgbob
++------------------+
+|{service}         |
+| API gateway      |
++------------------+
+
+# Legend:
+service = { fill: linear-gradient(90deg, ccyan, cblue); stroke: ccyan-100; }
+```
+
+- `linear-gradient(90deg, ccyan, cblue)` runs left to right.
+- `linear-gradient(to bottom, cgreen, cwhite)` runs top to bottom, the default
+  direction when none is specified.
+- `radial-gradient(cwhite, cpeach)` runs from the center outward.
+- `linear-gradient(90deg, ccyan, ctrans)` fades to transparency.
+
+Gradients accept two or more evenly spaced color stops. Stops can use mindmap
+tokens, hex colors, CSS color names, or `rgb(...)`. Linear directions accept
+degrees or `to top`, `to right`, `to bottom`, `to left`, and diagonal combinations.
+Solid CSS colors continue to work. Explicit styles override the diagram's
+foreground setting, and rendered images are cached separately for each palette.
+
 The `svgbob`, `mermaid`, `md`, `code`, `block`, and `draw` body modes are mutually
 exclusive. See [examples/svgbob.otl](examples/svgbob.otl) for a complete example.
 
