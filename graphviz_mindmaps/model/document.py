@@ -22,12 +22,17 @@ class MarkdownBody:
     locations: list = field(default_factory=list)
     rawmarkers: bool = False
     mermaid: bool = False
+    svgbob: bool = False
+
+    @property
+    def diagram(self):
+        return 'mermaid' if self.mermaid else 'svgbob' if self.svgbob else None
 
     def error(self, message, source_line=None):
         line = self.attribute_line
         if source_line is not None and 0 <= source_line < len(self.locations):
             line = self.locations[source_line][0]
-        kind = 'Mermaid' if self.mermaid else 'Markdown'
+        kind = 'Mermaid' if self.mermaid else 'Svgbob' if self.svgbob else 'Markdown'
         return ValueError(f"{self.filename}:{line}: {kind} node {self.title!r}: {message}")
 
 
