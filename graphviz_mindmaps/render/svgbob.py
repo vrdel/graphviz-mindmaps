@@ -39,8 +39,19 @@ def ParseSvgbobStrokeWidth(value):
     return width
 
 
-def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2):
+def ParseSvgbobFontSize(value):
+    try:
+        size = 14.0 if value is None else float(value)
+    except (TypeError, ValueError, OverflowError):
+        raise ValueError('svgbob_font_size must be a positive integer') from None
+    if not math.isfinite(size) or size < 1 or not size.is_integer():
+        raise ValueError('svgbob_font_size must be a positive integer')
+    return int(size)
+
+
+def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font_size=14):
     stroke_width = ParseSvgbobStrokeWidth(stroke_width)
+    font_size = ParseSvgbobFontSize(font_size)
     executable = FindSvgbob()
     rasterizer = shutil.which('rsvg-convert')
     if not executable:
@@ -54,6 +65,7 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2):
         payload = json.dumps({'source': source, 'foreground': foreground, 'font': font['mono'],
                               'render_version': 2,
                               'stroke_width': stroke_width,
+                              'font_size': font_size,
                               'color_tokens': color_tokens,
                               'executable': executable, 'mtime': stamp.st_mtime_ns,
                               'size': stamp.st_size}, sort_keys=True, ensure_ascii=False)
@@ -70,6 +82,7 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2):
                 executable, '--background', 'transparent', '--font-family', font['mono'],
                 '--stroke-color', foreground, '--fill-color', foreground,
                 '--stroke-width', str(stroke_width),
+                '--font-size', str(font_size), '--scale', str(font_size / 14),
             ], input=source, text=True, capture_output=True, timeout=30)
             if result.returncode:
                 raise ValueError('Svgbob rendering failed: ' + (result.stderr.strip() or

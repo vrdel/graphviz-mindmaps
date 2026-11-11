@@ -182,6 +182,40 @@ cpas = { fill: ccyan; stroke: cred-10; }
                 self.assertEqual(ImageColor.getcolor(vrbtcolors['ccyan'], 'RGBA'), pixel)
 
     @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
+    def test_real_font_size_scales_text_grid_and_cache(self):
+        source = '''+------------+     +------------------+     +------------+
+| Source     |---->| Filter processor |---->| Topology   |
+|            |     |           {cpas} |     |            |
++------------+     +------------------+     +------------+
+
+# Legend:
+cpas = { fill: linear-gradient(90deg, ccyan, cblue); }
+'''
+        with tempfile.TemporaryDirectory() as directory:
+            default = RenderSvgbobImage(source, directory)
+            with Image.open(default) as image:
+                baseline = image.size
+            outputs = []
+            for size in (10, 14, 18, 28):
+                output = RenderSvgbobImage(source, directory, font_size=size)
+                outputs.append(output)
+                root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
+                self.assertIn(f'font-size: {size}px', ''.join(root.itertext()))
+                self.assertIn('stroke-width: 2;', ''.join(root.itertext()))
+                self.assertTrue(any('cpas' in node.get('class', '').split()
+                                    for node in root.iter('{http://www.w3.org/2000/svg}rect')))
+                self.assertNotIn('{cpas}', ''.join(root.itertext()))
+                with Image.open(output) as image:
+                    for expected, actual in zip(baseline, image.size):
+                        self.assertAlmostEqual(expected * size / 14, actual, delta=1)
+                if size == 14:
+                    self.assertEqual(default, output)
+            self.assertEqual(4, len(set(outputs)))
+            with patch('graphviz_mindmaps.render.svgbob.subprocess.run') as run:
+                self.assertEqual(outputs[2], RenderSvgbobImage(source, directory, font_size='18'))
+                run.assert_not_called()
+
+    @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
     def test_real_spacing_unicode_and_literal_xml_characters(self):
         source = '┌───────────────┐\n│ a < b & c > d │\n└───────────────┘\n'
         with tempfile.TemporaryDirectory() as directory:
