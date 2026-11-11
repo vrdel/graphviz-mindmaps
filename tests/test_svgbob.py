@@ -70,6 +70,26 @@ class SvgbobTests(unittest.TestCase):
             self.assertNotEqual(*outputs)
 
     @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
+    def test_real_stroke_width_defaults_fractional_values_and_cache(self):
+        with tempfile.TemporaryDirectory() as directory:
+            default = RenderSvgbobImage(SOURCE, directory)
+            outputs, sizes = [], []
+            for width in (0, 0.5, 2, 4):
+                output = RenderSvgbobImage(SOURCE, directory, stroke_width=width)
+                outputs.append(output)
+                svg = output.with_suffix('.svg').read_text()
+                self.assertIn(f'stroke-width: {width};', svg)
+                with Image.open(output) as image:
+                    sizes.append(image.size)
+                if width == 2:
+                    self.assertEqual(default, output)
+            self.assertEqual(4, len(set(outputs)))
+            self.assertEqual(1, len(set(sizes)))
+            with patch('graphviz_mindmaps.render.svgbob.subprocess.run') as run:
+                self.assertEqual(outputs[1], RenderSvgbobImage(SOURCE, directory, stroke_width='0.5'))
+                run.assert_not_called()
+
+    @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
     def test_real_spacing_unicode_and_literal_xml_characters(self):
         source = '┌───────────────┐\n│ a < b & c > d │\n└───────────────┘\n'
         with tempfile.TemporaryDirectory() as directory:
