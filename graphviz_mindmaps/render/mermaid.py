@@ -1,6 +1,7 @@
 """Render Mermaid fences with Pele and rasterize their SVG for Graphviz."""
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import shutil
@@ -62,8 +63,21 @@ def _static_svg(svg, colors=None, color_tokens=None):
     return ElementTree.tostring(root, encoding='unicode')
 
 
+def ParseMermaidFontSize(value):
+    if value is None:
+        return None
+    try:
+        size = float(value)
+    except (TypeError, ValueError, OverflowError):
+        raise ValueError('mermaid_font_size must be a positive finite number') from None
+    if not math.isfinite(size) or size <= 0:
+        raise ValueError('mermaid_font_size must be a positive finite number')
+    return size
+
+
 def RenderMermaidImage(source, tmpdir, width=420, colors=None, face=None, size=None):
     """Use width=None for a natural-size diagram without a layout width limit."""
+    size = ParseMermaidFontSize(size)
     node = shutil.which('node')
     rasterizer = shutil.which('rsvg-convert')
     if not node:

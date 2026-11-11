@@ -778,6 +778,25 @@ on an `md` or `mermaid` node to use Pele's own font and text-size defaults inste
 
 The option applies only to diagrams in that node, including root nodes and
 diagrams nested inside Markdown containers, lists, or blockquotes.
+Use `mermaid_font_size=24` to override the diagram text size while retaining
+the inherited font family. The value must be a positive finite number;
+fractional sizes are supported. Without this attribute, the existing behavior
+remains: inherit the node's size with `mermaid_font=on`, or use Pele's default
+size with `mermaid_font=off`. An explicit `mermaid_font_size` also works with
+`mermaid_font=off`, retaining Pele's font family and overriding only its size.
+
+```text
+	# Larger Mermaid labels
+		: mermaid mermaid_font_size=24
+		: flowchart LR
+		:   A[Build] --> B[Deploy]
+```
+
+The option works on standalone `mermaid` nodes and on `md` nodes for their
+Mermaid fences, including nested fences and root nodes. Pele recalculates the
+layout for the chosen text size. Use `md_wrap=off` to retain that size in
+Markdown fences; fitting a diagram to `mdw` can reduce its displayed text size.
+
 Repeated identical diagrams at the same width, font, size, and palette reuse their rendered image
 within the render session. Both standalone Mermaid nodes and fenced diagrams
 automatically follow the active mindmap theme (`--theme` or root `theme=`): text,
