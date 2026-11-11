@@ -505,6 +505,73 @@ if ready:
                 self.assertIn('<IMG SRC=', dot)
                 self.graphviz(dot)
 
+    def test_svgbob_standalone_nodes_preserve_source_hide_headers_and_grow_naturally(self):
+        source = '+---------+     +----------+\n| outline |---->| renderer |\n+---------+     +----------+'
+        path = Path(self.temp.name, 'svgbob.png')
+        Image.new('RGBA', (1200, 1400), (20, 30, 40, 255)).save(path)
+        for root in (False, True):
+            lines = (['# Hidden diagram title', '\t: fname=out.jpg svgbob mdw=20'] +
+                     ['\t: ' + line for line in source.splitlines()]
+                     if root else self.outline(source, 'svgbob mdw=20', 'Hidden diagram title'))
+            with self.subTest(root=root), patch(
+                'graphviz_mindmaps.render.markdown.RenderSvgbobImage', return_value=path,
+            ) as render:
+                dot = self.render(lines, 'nord')
+                self.assertEqual(source + '\n', render.call_args.args[0])
+                self.assertEqual([str(path)], re.findall(r'<IMG SRC="([^"]+)"', dot))
+                self.assertNotIn('Hidden&nbsp;diagram', dot)
+                node = 'node1' if root else 'node101'
+                attrs = re.search(r'\b' + node + r'\[([^\n]+)', dot).group(1)
+                self.assertIn('fillcolor="transparent"', attrs)
+                self.assertEqual(PeleThemeColors('nord')['--pele-fg'], render.call_args.kwargs['foreground'])
+                self.graphviz(dot)
+        lines = self.outline(source, 'svgbob ccyan', 'Diagram')
+        lines += ['\t\t# child', '\t\t\t: node', '\t# sibling', '\t\t: node']
+        with patch('graphviz_mindmaps.render.markdown.RenderSvgbobImage', return_value=path):
+            dot = self.render(lines)
+        from graphviz_mindmaps.constants import vrbtcolors
+        self.assertIn('fillcolor="' + vrbtcolors['ccyan'] + '"', dot)
+        self.assertIn('child', dot)
+        self.assertIn('sibling', dot)
+
+    def test_svgbob_fences_render_nested_and_follow_markdown_wrapping(self):
+        path = Path(self.temp.name, 'svgbob.png')
+        Image.new('RGBA', (1000, 1100), (20, 30, 40, 255)).save(path)
+        fence = '```svgbob\n+---+\n| A |\n+---+\n```'
+        for source in (fence, '> ' + fence.replace('\n', '\n> '),
+                       '- item\n\n  ' + fence.replace('\n', '\n  '),
+                       '::: info Diagram\n' + fence + '\n:::'):
+            for wrap in ('on', 'off'):
+                for root in (False, True):
+                    attrs = 'md mdw=100 md_wrap=' + wrap
+                    lines = (['# Root', '\t: fname=out.jpg ' + attrs] +
+                             ['\t: ' + line for line in source.splitlines()]
+                             if root else self.outline(source, attrs))
+                    with self.subTest(source=source, wrap=wrap, root=root), patch(
+                        'graphviz_mindmaps.render.markdown.RenderSvgbobImage', return_value=path,
+                    ) as render:
+                        dot = self.render(lines)
+                        self.assertEqual('+---+\n| A |\n+---+\n', render.call_args.args[0])
+                        image = re.findall(r'<IMG SRC="([^"]+)"', dot)[0]
+                        if wrap == 'off':
+                            self.assertEqual(str(path), image)
+                        else:
+                            with Image.open(image) as resized:
+                                self.assertLessEqual(resized.width, 100)
+                                self.assertLessEqual(resized.height, 900)
+
+    def test_svgbob_conflicting_modes_and_errors_report_outline_location(self):
+        for attrs in ('svgbob md', 'svgbob mermaid', 'svgbob code python',
+                      'svgbob block', 'svgbob draw', 'svgbob verbatim'):
+            with self.subTest(attrs=attrs), self.assertRaisesRegex(ValueError, 'mutually exclusive'):
+                PrepareMarkdownBodies(self.outline('+--+', attrs))
+        for mode, source, location in (('svgbob', '+--+', "<input>:5: Svgbob node"),
+                                       ('md', '```svgbob\n+--+\n```', "<input>:5: Markdown node")):
+            with patch('graphviz_mindmaps.render.markdown.RenderSvgbobImage',
+                       side_effect=ValueError('Svgbob is not installed')):
+                with self.assertRaisesRegex(ValueError, location + ".*Svgbob is not installed"):
+                    self.render(self.outline(source, mode))
+
     def test_mermaid_theme_uses_root_override_and_does_not_leak_between_maps(self):
         path = Path(self.temp.name, 'diagram.png')
         Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)
