@@ -1,44 +1,278 @@
-# Markdown nodes
-	: fname=markdown.jpg notitle theme=github-light
+# Markdown feature gallery
+	: fname=markdown.jpg notitle theme=github-light code_theme=default
 	: root_symb=book root_sym1bf30
-	# node with markdown
-		: md md_width=380 bg="#f5f5f5" bw=1 bc="#8a8a8a"
+	: md md_width=260 mt1b
+	: ## Root Markdown
+	:
+	: Each branch demonstrates a supported Markdown feature.
+	: This introduction is itself a root Markdown body.
+	# Headings and title colors
+		: md mdw=420 mt[1,5]r mt[3-4]b mt5g
+		: ### First title: red
 		:
-		: # header title 1
+		: # Second title: red
 		:
-		: i'm text of **bolded** text of paragraph.
+		: #### Third title: blue
 		:
-		: Use ==highlighted text== or ==highlighted **bold** text== for emphasis.
+		: ## Fourth title: blue
+		:
+		: ##### Fifth title: green
+		:
+		: ###### Sixth title: default
+		:
+		: `mt[1,5]r` selects the first five titles; `mt[3-4]b` overrides titles 3-4;
+		: `mt5g` makes the fifth green. Heading levels do not affect the count.
+		:
+		: **Bold**, *italic*, ~~strikethrough~~, `inline code`, and ==highlighting==.
+		: Combinations: ***bold italic*** and ==highlighted **bold** text==.
+		:
+		: ---
 		:
 		: A paragraph can span
-		: several source lines and wrap at the configured width.
+		: several source lines; with wrapping enabled, these are joined.
 		:
-		: ## Technical notes
+		: This line ends with a backslash.\
+		: This is a hard break.
 		:
-		: Inline `models.User` is monospace; *emphasis* and ~~strikethrough~~ work too.
+		: Two trailing spaces are an alternative hard-break syntax.
+	# Bullet, numbered, and task lists
+		: md mdw=380
+		: * Star bullets use a dot.
+		: * [x] Completed task keeps its bullet and checkbox.
+		: * [ ] Pending task
+		:   - A nested minus bullet
+		:   - [x] Nested completed task
 		:
-		: 3. Ordered lists keep their starting number.
-		: 4. A longer item wraps with a hanging indent instead of starting beneath the number.
-		:    - Nested list item
-		:    - [x] Implemented
-		:    - [ ] Next task
+		: - Minus bullets use a Unicode minus.
+		: - [ ] A task with a minus marker
 		:
-		: > A blockquote with **bold text**.
+		: + Plus bullets also use a dot.
+		:
+		: 3. Numbered lists preserve the starting number.
+		: 4. Long list items wrap beneath the text, leaving the marker outside the continuation.
+		:    * A nested bullet with **bold** text
+		:    * Another nested item
+	# List callouts
+		: md mdw=400 cwhite fg="#202020"
+		: * ! **Warning:** verify the backup before proceeding.
+		:   This continuation shares the warning background.
+		: * ? **Check:** confirm the configuration.
+		: * $ **Success:** the deployment completed.
+		: * @ **Info:** read the logs for details.
+		:
+		: * \! An escaped marker is ordinary text.
+		: * `!` A marker inside inline code is literal.
+	# Containers and nesting
+		: md mdw=420
+		: :::: note **Outer note**
+		: Container titles support *inline formatting*.
+		:
+		: ::: tip
+		: A nested tip with a ==highlighted detail==.
+		: :::
+		:
+		: * [x] Review the nested message
+		: ::::
+		:
+		: ::: warning Before deployment
+		: Back up the configuration.
+		: :::
+		:
+		: ::: danger Stop on errors
+		: Do not continue after a failed verification.
+		: :::
+		:
+		: ::: success Complete
+		: The checks passed.
+		: :::
+		:
+		: ::: custom Neutral container
+		: Unknown container names use a neutral title background.
+		: :::
+	# Quotes and containers inside lists
+		: md mdw=400 mt[1-2]p
+		: > ## First nested title
+		: >
+		: > A quote containing **bold text** and a list:
+		: >
+		: > * First quoted item
+		: > * Second quoted item
+		:
+		: - A list item containing a container:
+		:
+		:   ::: info Nested information
+		:   ### Second nested title
+		:
+		:   Both nested titles participate in the node's title numbering.
+		:   :::
+		:
+		: Setext heading
+		: --------------
+		:
+		: Setext headings also render as Markdown titles.
+	# Links and autolinks
+		: md fontsans mdw=420
+		: [Website](https://example.org) and [reference link][guide].
+		:
+		: HTTP autolink: <https://example.org/docs>.
+		:
+		: Local autolink: <file://filename.md>.
+		:
+		: [Local notes](file:///home/user/notes.md) and [local reference][notes].
+		:
+		: Links are styled text in the rendered image. File links do not load files.
+		:
+		: [guide]: https://spec.commonmark.org/
+		: [notes]: file://filename.md
+	# Tables with alignment
+		: md fontsans mdw=440
+		: | Left aligned | Centered | Right aligned |
+		: | :--- | :---: | ---: |
+		: | **Ready** | *Review* | 12 |
+		: | `code` | ==Marked== | 345 |
+		: | Long content can wrap within a cell. | [Link](https://example.org) | 6789 |
+	# Local image
+		: md noheader mdw=300 cwhite bw=1 bc="#64748b"
+		: ## Embedded local image
+		:
+		: ![Outline rendering pipeline](assets/markdown-image.png)
+		:
+		: The path is relative to this `.otl` file. The image fits the available width.
+	# Fenced and indented code
+		: md mdw=440
+		: ## Python with syntax highlighting
 		:
 		: ```python
 		: # A comment is not an outline node.
-		: if user.is_active:
-		:     update(user)
+		: def summarize(items):
+		:     return {"count": len(items), "ready": True}
 		: ```
 		:
-		: | Feature | State |
-		: | :--- | ---: |
-		: | Heading | **Ready** |
-		: | Code | `python` |
+		: ```sh
+		: python3 -m venv .venv
+		: source .venv/bin/activate
+		: ```
 		:
-		: [CommonMark](https://spec.commonmark.org/) is shown as a styled link.
-	# za models.User ide posebna logika
-		: md hl1w2fmld md_width=320
-		: The outer title uses a header selector. The body uses **Markdown**.
+		: An unknown fence language falls back to plain text:
+		:
+		: ```unknown-example-language
+		: <literal text> & symbols
+		: ```
+		:
+		: Indented code also renders as an image:
+		:
+		:     total = 1 + 2
+		:     print(total)
+	# Line and list spacing
+		: md md_width=330 md_line_spacing=4 md_list_spacing=8 md_list_indent=30
+		: This paragraph deliberately contains enough text to wrap into several lines,
+		: so the additional spacing between lines is visible.
+		:
+		: * First item has an eight-point gap before the next item.
+		: * The marker and its gap occupy the configured indentation.
+		:   - Nested lists use the same indentation setting.
+		:   - Another nested item
+	# Compact spacing aliases
+		: md mdw=330 mdlns=0 mdls=0 mdli=20
+		: The short forms are `mdw`, `mdlns`, `mdls`, and `mdli`.
+		: This paragraph wraps with no extra line gap.
+		:
+		: * Compact item
+		: * Another item
+		:   - Nested compact item
+	# Preserve command newlines
+		: md noheader fontmono mdw=160 md_wrap=off ctrans
+		: #### Installation commands
+		:
+		: python3 -m venv .venv
+		: source .venv/bin/activate
+		: python3 -m pip install graphviz-mindmaps
+		:
+		: #### Verification
+		:
+		: python3 -m graphviz_mindmaps.cli --help
+		: deactivate
+		:
+		: With md_wrap=off, source newlines survive and the longest line controls width.
+	# Mermaid with theme color tokens
+		: md noheader mdw=500 md_wrap=off ctrans fontsans
+		: ## Deployment workflow
+		:
+		: ```mermaid
+		: ---
+		: config:
+		:   flowchart:
+		:     wrappingWidth: 1000
+		: ---
+		: flowchart LR
+		:   A[Build] --> B[Test]
+		:   B --> C{Passed?}
+		:   C -->|Yes| D[Deploy]
+		:   C -->|No| A
+		:   style A fill:ccyan,stroke:cblue,stroke-width:2px
+		:   classDef done fill:cgreen10,stroke:cgreen-10,color:cblack
+		:   class D done
+		:   linkStyle 3 stroke:cred-10,stroke-width:2px
+		: ```
+		:
+		: The default `mermaid_font=on` passes this node's font and text size to Pele.
+		: With `md_wrap=off`, the diagram keeps its natural dimensions.
+	# Mermaid with Pele fonts and width fitting
+		: md mdw=320 md_wrap=on mermaid_font=off
+		: ```mermaid
+		: sequenceDiagram
+		:   Client->>API: Request
+		:   API-->>Client: Response
+		: ```
+		:
+		: `mermaid_font=off` uses Pele's font defaults.
+		: With wrapping enabled, diagrams fit the available Markdown width.
+	# Svgbob inside a container
+		: md noheader md_wrap=off ctrans svgbob_stroke_width=0.75
+		: ::: info Local conversion
+		: ```svgbob
+		: +-------+     +-----+     +-----+
+		: | ASCII |---->| SVG |---->| PNG |
+		: +-------+     +-----+     +-----+
+		: ```
+		: :::
+		:
+		: `svgbob_stroke_width=0.75` gives thin lines; the default is `2`.
+		: Svgbob uses a monospace font and this node's foreground color.
+	# Svgbob with width fitting
+		: md mdw=200 svgbob_stroke_width=4
+		: ```svgbob
+		: +---------+     +-----------+     +----------+
+		: | Request |---->| Processor |---->| Response |
+		: +---------+     +-----------+     +----------+
+		: ```
+		:
+		: The image is fitted to `mdw`; strokes are scaled along with the image.
+	# Literal markers and HTML
+		: md rawmarkers mdw=420
+		: The emoticons :-) and :-( stay literal with `rawmarkers`.
+		:
+		: * ! This stays an ordinary list item instead of a warning callout.
+		:
+		: Escaped markers: \=\=not highlighted\=\= and \*not italic\*.
+		:
+		: Inline code is literal: `==not highlighted==`, `:-)`, and `<b>text</b>`.
+		:
+		: <b>Raw HTML is displayed as text.</b>
+		:
+		: \::: info This escaped opener is not a container.
+	# Emoticons and node styling
+		: md noheader fontserif mdw=360 cteal fg="#202020" bw=1 bc="#64748b" bs=dashed symb=book
+		: ## Body-only node with an icon
+		:
+		: Ordinary text emoticons become emoji: :-) ;-) :-( <3.
+		:
+		: The outline title is hidden; the icon remains visible.
+		: Node colors, borders, and font attributes still apply to Markdown.
+	# Outer title formatting
+		: md hl1w2fmld mdw=320
+		: The second word of the outer title uses a monospace bold header selector.
+		:
+		: Body formatting remains ordinary **Markdown**.
 	# Ordinary sibling
 		: node
