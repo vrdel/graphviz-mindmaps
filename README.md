@@ -848,6 +848,24 @@ fences. The option is local to that node and does not change the diagram's
 dimensions or text size. With `md_wrap=on`, fitting the rendered image to `mdw`
 also scales its visible strokes.
 
+Use `svgbob_font_size=18` to change Svgbob's text size. The default remains
+`14`; values must be positive integers. This option scales the character grid,
+boxes, and arrows proportionally with the text, while keeping the configured
+stroke width. It works on standalone `svgbob` nodes and on `md` nodes for their
+Svgbob fences, including nested fences and root nodes. The setting is local to
+each node. For example:
+
+```text
+	# Larger diagram text
+		: svgbob svgbob_font_size=18 svgbob_stroke_width=1
+		: +---------+     +----------+
+		: | outline |---->| renderer |
+		: +---------+     +----------+
+```
+
+With `md_wrap=on`, fitting the image to `mdw` can reduce the displayed text size.
+Use `md_wrap=off` to retain the requested size in Markdown fences.
+
 Svgbob's native `{tag}` markers and `# Legend:` styles support the same theme
 color tokens as Mermaid: `ccyan`, `cred-10`, aliases such as `corange`, and
 `ctrans`. Tokens use the block/Markdown fill palette, with regular node fills
