@@ -44,6 +44,10 @@ Used in some workflows:
   from this repository to install the pinned Pele version. For a Python wheel
   installation, run `npm install pele@1.13.0` in the directory from which you
   invoke `gvmm`.
+- Svgbob and `rsvg-convert` for ASCII diagrams. With Cargo and Rust installed,
+  run `python3 tools/install_svgbob.py` to build the pinned upstream revision
+  into `.tools/svgbob`. The renderer finds that local installation automatically;
+  `svgbob` or `svgbob_cli` on PATH also works.
 
 ## Entrypoints
 
@@ -772,6 +776,43 @@ missing dependencies produce an error identifying the outline node and fence
 line. Pele supplies the diagram layout and styles; it does not guarantee the
 same appearance as Mermaid.js. External images and interactive links within
 diagrams are disabled for this static output.
+
+ASCII diagrams can use [Svgbob](https://github.com/ivanceras/svgbob), either as
+`svgbob` fences inside Markdown or as standalone `svgbob` nodes:
+
+````otl
+	# Diagram in Markdown
+		: md noheader md_wrap=off ctrans
+		:
+		: ```svgbob
+		: +---------+     +----------+
+		: | outline |---->| renderer |
+		: +---------+     +----------+
+		: ```
+	# Diagram only
+		: svgbob
+		: +-----+     +-----+
+		: | SVG |---->| PNG |
+		: +-----+     +-----+
+````
+
+The optional installer builds upstream commit
+`6d00ad9b1b091eb08f0a149cc58d1abf24a30859` from `master`, pinned in
+`tools/svgbob-revision.txt`, using its locked Cargo dependencies. No browser or
+Node.js is needed for Svgbob. Wheel users can install `svgbob_cli` on PATH, or
+run from a directory containing `.tools/svgbob/bin/svgbob_cli`.
+
+Svgbob preserves source whitespace and uses the `fontmono` family to keep its
+character grid aligned. Text, lines, and solid shapes use the node's foreground
+color (the theme's text color unless overridden with `fg=`). SVG intermediates
+are converted into transparent PNGs and cached within the render session.
+Standalone nodes discard their heading, default to a transparent background,
+and retain their natural dimensions. A color attribute such as `ccyan` sets the
+surrounding node's background. Fences fit `mdw` with `md_wrap=on`; with
+`md_wrap=off`, they retain natural dimensions and the node expands to fit them.
+Root nodes and fences nested in lists, blockquotes, and containers also work.
+The `svgbob`, `mermaid`, `md`, `code`, `block`, and `draw` body modes are mutually
+exclusive. See [examples/svgbob.otl](examples/svgbob.otl) for a complete example.
 
 Use `md_wrap=off` to preserve source newlines and disable automatic text wrapping
 for an individual Markdown node. The text width fits the longest rendered line,
