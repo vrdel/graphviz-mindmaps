@@ -101,13 +101,13 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     try:
         heading_colors = ParseMarkdownTitleColors(title_colors)
         svgbob_stroke_width = ParseSvgbobStrokeWidth(svgbob_stroke_width)
-        svgbob_font_size = ParseSvgbobFontSize(svgbob_font_size)
+        svgbob_font_size = size if svgbob_font_size is None else ParseSvgbobFontSize(svgbob_font_size)
         mermaid_font_size = ParseMermaidFontSize(mermaid_font_size)
     except ValueError as exc:
         raise body.error(str(exc)) from exc
-    diagram_font = {'face': face, 'size': size} if mermaid_font else {}
-    if mermaid_font_size is not None:
-        diagram_font['size'] = mermaid_font_size
+    diagram_font = {'size': size if mermaid_font_size is None else mermaid_font_size}
+    if mermaid_font:
+        diagram_font['face'] = face
     blocks = ([Block('fence', source=body.source, language=body.diagram)]
               if body.diagram else ParseMarkdown(body, preserve_newlines=not wrap))
 

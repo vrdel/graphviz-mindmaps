@@ -9,6 +9,8 @@ from xml.etree import ElementTree
 from PIL import Image, ImageColor
 
 from graphviz_mindmaps.render.svgbob import FindSvgbob, RenderSvgbobImage
+from graphviz_mindmaps.model.document import MarkdownBody
+from graphviz_mindmaps.render.markdown import RenderMarkdown
 from graphviz_mindmaps.constants import vrbtcolors
 from graphviz_mindmaps.theme import ApplyTheme
 
@@ -214,6 +216,20 @@ cpas = { fill: linear-gradient(90deg, ccyan, cblue); }
             with patch('graphviz_mindmaps.render.svgbob.subprocess.run') as run:
                 self.assertEqual(outputs[2], RenderSvgbobImage(source, directory, font_size='18'))
                 run.assert_not_called()
+
+    @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
+    def test_real_markdown_inherits_font_size_and_explicit_override_wins(self):
+        body = MarkdownBody('```svgbob\n' + SOURCE + '```', '<test>', 'Inherited size', 1)
+        with tempfile.TemporaryDirectory() as directory:
+            inherited = RenderSvgbobImage(SOURCE, directory, font_size=22)
+            label = RenderMarkdown(body, [directory], size=22, foreground='#000000', wrap=False)
+            self.assertIn(str(inherited), label)
+            self.assertIn('font-size: 22px', inherited.with_suffix('.svg').read_text())
+            overridden = RenderSvgbobImage(SOURCE, directory, font_size=14)
+            label = RenderMarkdown(body, [directory], size=22, foreground='#000000', wrap=False,
+                                   svgbob_font_size=14)
+            self.assertIn(str(overridden), label)
+            self.assertNotEqual(inherited, overridden)
 
     @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
     def test_real_spacing_unicode_and_literal_xml_characters(self):

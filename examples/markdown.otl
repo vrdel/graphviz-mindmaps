@@ -225,7 +225,7 @@
 		:   API-->>Client: Response
 		: ```
 		:
-		: `mermaid_font=off` uses Pele's font defaults.
+		: `mermaid_font=off` uses Pele's font family; text size follows this node.
 		: With wrapping enabled, diagrams fit the available Markdown width.
 	# Svgbob inside a container
 		: md noheader md_wrap=off ctrans svgbob_stroke_width=0.75

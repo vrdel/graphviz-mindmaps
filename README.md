@@ -766,8 +766,10 @@ Fences also work in root nodes, containers, lists, and blockquotes. Diagram
 directions are preserved; very large fenced diagrams are scaled down only when
 wrapping is enabled. Diagram labels use the containing node's font family and
 text size, including font attributes such as `fontmono` and `fontserif`.
-`mermaid_font=on` (the default) enables this inheritance. Set `mermaid_font=off`
-on an `md` or `mermaid` node to use Pele's own font and text-size defaults instead:
+Both Mermaid and Svgbob use the containing node's text size by default.
+`mermaid_font=on` (the default) also inherits its font family. Set
+`mermaid_font=off` on an `md` or `mermaid` node to use Pele's font family;
+the size still follows the node unless `mermaid_font_size` overrides it:
 
 ```otl
 \t# Diagram with Pele fonts
@@ -780,10 +782,9 @@ The option applies only to diagrams in that node, including root nodes and
 diagrams nested inside Markdown containers, lists, or blockquotes.
 Use `mermaid_font_size=24` to override the diagram text size while retaining
 the inherited font family. The value must be a positive finite number;
-fractional sizes are supported. Without this attribute, the existing behavior
-remains: inherit the node's size with `mermaid_font=on`, or use Pele's default
-size with `mermaid_font=off`. An explicit `mermaid_font_size` also works with
-`mermaid_font=off`, retaining Pele's font family and overriding only its size.
+fractional sizes are supported. Without this attribute, the node's text size
+is passed to Pele, including with `mermaid_font=off`. An explicit
+`mermaid_font_size` overrides only the diagram's size.
 
 ```text
 	# Larger Mermaid labels
@@ -867,8 +868,9 @@ fences. The option is local to that node and does not change the diagram's
 dimensions or text size. With `md_wrap=on`, fitting the rendered image to `mdw`
 also scales its visible strokes.
 
-Use `svgbob_font_size=18` to change Svgbob's text size. The default remains
-`14`; values must be positive integers. This option scales the character grid,
+Svgbob inherits the containing node's text size by default. Use
+`svgbob_font_size=18` to override it for diagrams; values must be positive
+integers. The selected size scales the character grid,
 boxes, and arrows proportionally with the text, while keeping the configured
 stroke width. It works on standalone `svgbob` nodes and on `md` nodes for their
 Svgbob fences, including nested fences and root nodes. The setting is local to

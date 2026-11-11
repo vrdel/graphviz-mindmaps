@@ -218,12 +218,12 @@ class MermaidTests(unittest.TestCase):
             self.assertEqual(3, len(set(outputs)))
             label = RenderMarkdown(body, [directory], face='Dejavu Serif', size=26,
                                    wrap=False, mermaid_font='off')
-            default = RenderMermaidImage('flowchart LR\nA[Node label]\n', directory, width=None)
+            default = RenderMermaidImage('flowchart LR\nA[Node label]\n', directory, width=None, size=26)
             self.assertIn(str(default), label)
             self.assertNotIn(default, outputs)
             style = ElementTree.fromstring(default.with_suffix('.svg').read_text()).get('style')
             self.assertIn('font-family:sans-serif', style)
-            self.assertIn('font:16px ', style)
+            self.assertIn('font:26px ', style)
             with patch('graphviz_mindmaps.render.mermaid.subprocess.run') as run:
                 self.assertEqual(outputs[-1], RenderMermaidImage(
                     'flowchart LR\nA[Node label]\n', directory, width=None,
