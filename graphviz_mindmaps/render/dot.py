@@ -483,6 +483,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             wrap=ParseInlineAttrLine('md_wrap', root_options),
             mermaid_font=ParseInlineAttrLine('mermaid_font', root_options),
             diagram_colors=diagram_colors,
+            title_colors=root_options,
         ))
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
@@ -523,6 +524,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             markdown_list_indent = ResolveMarkdownOption('md_list_indent', nextline)
             markdown_line_spacing = ResolveMarkdownOption('md_line_spacing', nextline)
             markdown_wrap = ParseInlineAttrLine('md_wrap', nextline)
+            markdown_title_colors = nextline
             mermaid_font = ParseInlineAttrLine('mermaid_font', nextline)
             code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\"(?: style=\"([^\"]+)\")? data=\"([^\"]*)\"/>", label)
             code_source = None
@@ -731,6 +733,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     wrap=markdown_wrap,
                     mermaid_font=mermaid_font,
                     diagram_colors=diagram_colors,
+                    title_colors=markdown_title_colors,
                 )
                 node._label = [AppendMarkdownLabel(''.join(node._label), body_label)]
 
