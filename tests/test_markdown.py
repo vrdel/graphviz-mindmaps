@@ -649,16 +649,42 @@ if ready:
                     'graphviz_mindmaps.render.markdown.RenderSvgbobImage', return_value=path,
                 ) as render:
                     self.render(lines(''))
-                    self.assertEqual(14, render.call_args.kwargs['font_size'])
+                    self.assertEqual(18 if root else 16, render.call_args.kwargs['font_size'])
                     self.render(lines('svgbob_font_size=18'))
                     self.assertEqual(18, render.call_args.kwargs['font_size'])
                     siblings = lines('svgbob_font_size=28') + [
                         '\t# sibling', '\t\t: svgbob', '\t\t: +---+']
                     self.render(siblings)
-                    self.assertEqual(14, render.call_args.kwargs['font_size'])
+                    self.assertEqual(16, render.call_args.kwargs['font_size'])
                     for value in ('0', '-1', '14.5', 'nan', 'inf', 'text'):
                         with self.assertRaisesRegex(ValueError, r'<input>:\d+: .*svgbob_font_size'):
                             self.render(lines('svgbob_font_size=' + value))
+
+    def test_diagram_sizes_follow_node_and_only_explicit_attributes_override_them(self):
+        path = Path(self.temp.name, 'diagram.png')
+        Image.new('RGBA', (100, 50), (20, 30, 40, 255)).save(path)
+        source = ('BodyText\n\n```mermaid\nflowchart LR\nA-->B\n```\n\n'
+                  '> ```svgbob\n> +---+\n> | A |\n> +---+\n> ```')
+        for size in (12, 22, 30):
+            for inheritance in ('on', 'off'):
+                attrs = f'md f{size} mermaid_font={inheritance}'
+                with self.subTest(size=size, inheritance=inheritance), patch(
+                    'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                ) as mermaid, patch(
+                    'graphviz_mindmaps.render.markdown.RenderSvgbobImage', return_value=path,
+                ) as svgbob:
+                    dot = self.render(self.outline(source, attrs))
+                    self.assertEqual(size, mermaid.call_args.kwargs['size'])
+                    self.assertEqual(size, svgbob.call_args.kwargs['font_size'])
+                    self.assertEqual(inheritance == 'on', 'face' in mermaid.call_args.kwargs)
+                    self.assertRegex(dot, f'POINT-SIZE="{size}"[^>]*>BodyText')
+                    dot = self.render(self.outline(source, attrs + ' mermaid_font_size=18 svgbob_font_size=24'))
+                    self.assertEqual(18, mermaid.call_args.kwargs['size'])
+                    self.assertEqual(24, svgbob.call_args.kwargs['font_size'])
+                    self.assertRegex(dot, f'POINT-SIZE="{size}"[^>]*>BodyText')
+                    self.render(self.outline(source, attrs))
+                    self.assertEqual(size, mermaid.call_args.kwargs['size'])
+                    self.assertEqual(size, svgbob.call_args.kwargs['font_size'])
 
     def test_svgbob_conflicting_modes_and_errors_report_outline_location(self):
         for attrs in ('svgbob md', 'svgbob mermaid', 'svgbob code python',
@@ -768,7 +794,7 @@ if ready:
                     self.assertEqual(inherited, render.call_args.kwargs)
                     self.render(lines('mermaid_font=off'))
                     self.assertNotIn('face', render.call_args.kwargs)
-                    self.assertNotIn('size', render.call_args.kwargs)
+                    self.assertEqual(inherited['size'], render.call_args.kwargs['size'])
                     # A sibling with no option still inherits its font.
                     siblings = lines('mermaid_font=off') + [
                         '\t# Sibling', '\t\t: mermaid fontserif',
