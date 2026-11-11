@@ -18,3 +18,36 @@
 		: ```
 		:
 		: Source spacing is preserved; the node grows to fit the diagram.
+	# Application architecture
+		: svgbob svgbob_stroke_width=1.5 fg="#334155"
+		:
+		: +---------------+       +---------------+       +---------------+
+		: |    Clients    |------>|  API gateway  |------>|  Application  |
+		: +---------------+       +---------------+       +-------+-------+
+		:                                                         |
+		:                                 +-----------------------+-----------------------+
+		:                                 |                       |                       |
+		:                                 v                       v                       v
+		:                         +---------------+       +---------------+       +---------------+
+		:                         |     Cache     |       |    Database   |       |   Job queue   |
+		:                         +---------------+       +---------------+       +-------+-------+
+		:                                                                                 |
+		:                                                                                 v
+		:                                                                         +---------------+
+		:                                                                         |    Workers    |
+		:                                                                         +-------+-------+
+		:                                                                                 |
+		:                                                                                 v
+		:                                                                         +---------------+
+		:                                                                         |   Audit log   |
+		:                                                                         +---------------+
+	# Architecture notes
+		: md noheader mdw=400
+		: ### Request processing
+		:
+		: 1. Clients reach the application through an API gateway.
+		: 2. Requests can use the cache, database, or background job queue.
+		: 3. Workers consume queued jobs and write an audit log.
+		:
+		: The diagram uses `svgbob_stroke_width=1.5` and an explicit foreground color.
+		: All diagram lines retain their natural size.
