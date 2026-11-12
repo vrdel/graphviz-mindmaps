@@ -423,44 +423,6 @@ Pygments' default yellow highlight. Ranges and end-relative selectors also
 accept colors, for example `l[2-5]g` and `El1b`. If selectors overlap, the last
 one wins. Selectors without a color keep the selected Pygments style's highlight color.
 
-Build a montage from a YAML file:
-
-```bash
-montage -o output.jpg montage.yml
-montage -s 80 -b '#4b5262' -o output.jpg montage.yml
-```
-
-Montages use PNG intermediates and apply `-s` before encoding the final image,
-so an unscaled layout can exceed JPEG's 65,500-pixel dimension limit when the
-scaled result fits. Titles are included before scaling. If the requested JPG
-still exceeds that limit, use a smaller scale or select a `.png` output to keep
-the full dimensions. Failed renders preserve the previous output file.
-Some viewers have stricter limits: feh/Imlib2 can reject images above 32,767
-pixels in either dimension even when the JPEG is valid. Montage preserves the
-requested scale and does not shrink output to accommodate viewer limits.
-
-Montage YAML supports image entries, joined image groups, row breaks, and nested submontages:
-
-```yaml
-title: simple montage
-entries:
-  - image: mindmap-01.jpg
-  - image_negate: mindmap-02.jpg|50
-  - image_negate_contrast: mindmap-02.jpg
-  - image_gray: mindmap-03.jpg
-  - image_negate_gray: mindmap-04.jpg
-  - image_negate_gray_contrast: mindmap-04.jpg
-  - image_sketch: mindmap-03.jpg
-  - image_negate_sketch: mindmap-04.jpg
-  - image_negate_gray_contrast_sketch: mindmap-04.jpg|50
-  - join: [mindmap-01.jpg, mindmap-02.jpg]
-  - new_row: true
-  - submontage:
-      title: nested montage
-      entries:
-        - join: [detail-01.jpg, detail-02.jpg]
-```
-
 Find and run a generated build target:
 
 ```bash
@@ -493,13 +455,6 @@ Repeat an image attribute on consecutive lines to add multiple images to one nod
 # Example node
     : img_neg_sk_cred40=first.png|65
     : img_neg_sk_cred40=second.png|65
-```
-
-Add a title bar to an image:
-
-```bash
-montage-title -s s -t "Title" image.jpg
-montage-title -s m -t "Title" input.jpg output.jpg
 ```
 
 Run the same tools through the local `pyenv` helper:
@@ -983,6 +938,53 @@ alongside the original monochrome architecture diagram.
 
 The `svgbob`, `mermaid`, `md`, `code`, `block`, and `draw` body modes are mutually
 exclusive. See [examples/svgbob.otl](examples/svgbob.otl) for a complete example.
+
+## Montage
+
+Build a montage from a YAML file:
+
+```bash
+montage -o output.jpg montage.yml
+montage -s 80 -b '#4b5262' -o output.jpg montage.yml
+```
+
+Montages use PNG intermediates and apply `-s` before encoding the final image,
+so an unscaled layout can exceed JPEG's 65,500-pixel dimension limit when the
+scaled result fits. Titles are included before scaling. If the requested JPG
+still exceeds that limit, use a smaller scale or select a `.png` output to keep
+the full dimensions. Failed renders preserve the previous output file.
+Some viewers have stricter limits: feh/Imlib2 can reject images above 32,767
+pixels in either dimension even when the JPEG is valid. Montage preserves the
+requested scale and does not shrink output to accommodate viewer limits.
+
+Montage YAML supports image entries, joined image groups, row breaks, and nested submontages:
+
+```yaml
+title: simple montage
+entries:
+  - image: mindmap-01.jpg
+  - image_negate: mindmap-02.jpg|50
+  - image_negate_contrast: mindmap-02.jpg
+  - image_gray: mindmap-03.jpg
+  - image_negate_gray: mindmap-04.jpg
+  - image_negate_gray_contrast: mindmap-04.jpg
+  - image_sketch: mindmap-03.jpg
+  - image_negate_sketch: mindmap-04.jpg
+  - image_negate_gray_contrast_sketch: mindmap-04.jpg|50
+  - join: [mindmap-01.jpg, mindmap-02.jpg]
+  - new_row: true
+  - submontage:
+      title: nested montage
+      entries:
+        - join: [detail-01.jpg, detail-02.jpg]
+```
+
+Add a title bar to an image:
+
+```bash
+montage-title -s s -t "Title" image.jpg
+montage-title -s m -t "Title" input.jpg output.jpg
+```
 
 ## License
 
