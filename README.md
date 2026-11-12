@@ -941,6 +941,12 @@ exclusive. See [examples/svgbob.otl](examples/svgbob.otl) for a complete example
 
 ## Montage
 
+Bundled template example: [view the full-size Montage JPG](templates/Montage/final_montage.jpg).
+**Large image:** opening it may take time and use substantial memory.
+
+Sources: [montage.yml](templates/Montage/montage.yml) and
+[mindmap-01.otl](templates/Montage/mindmap-01.otl).
+
 Build a montage from a YAML file:
 
 ```bash
