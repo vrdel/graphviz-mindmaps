@@ -12,9 +12,9 @@ The repo currently provides user-facing command-line tools:
 - `montage` builds image montages from YAML specs
 - `montage-title` adds a title bar to an image
 
-| [![Single template preview](templates/Single/mindmap-01.jpg)](templates/Single/mindmap-01.jpg) | [![Svgbob example preview](examples/svgbob.jpg)](examples/svgbob.jpg) | [![Markdown example preview](examples/markdown.jpg)](examples/markdown.jpg) |
-| :---: | :---: | :---: |
-| [Single template source (.otl)](templates/Single/mindmap-01.otl) | [Svgbob example source (.otl)](examples/svgbob.otl) | [Markdown example source (.otl)](examples/markdown.otl) |
+| [![Single template preview](templates/Single/mindmap-01.jpg)](templates/Single/mindmap-01.jpg) | [![Markdown example preview](examples/markdown.jpg)](examples/markdown.jpg)<br>[![Svgbob example preview](examples/svgbob.jpg)](examples/svgbob.jpg) |
+| :---: | :---: |
+| [Single template source (.otl)](templates/Single/mindmap-01.otl) | [Markdown example source (.otl)](examples/markdown.otl)<br>[Svgbob example source (.otl)](examples/svgbob.otl) |
 
 ## Install
 
