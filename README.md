@@ -12,7 +12,7 @@ The repo currently provides user-facing command-line tools:
 - `montage` builds image montages from YAML specs
 - `montage-title` adds a title bar to an image
 
-| [![Single template preview](templates/Single/mindmap-01.jpg)](templates/Single/mindmap-01.jpg) | [![Markdown example preview](examples/markdown.jpg)](examples/markdown.jpg)<br>[![Svgbob example preview](examples/svgbob.jpg)](examples/svgbob.jpg) |
+| **Single template**<br>[![Single template preview](templates/Single/mindmap-01.jpg)](templates/Single/mindmap-01.jpg) | **Markdown**<br>[![Markdown example preview](examples/markdown.jpg)](examples/markdown.jpg)<br><br>**Svgbob**<br>[![Svgbob example preview](examples/svgbob.jpg)](examples/svgbob.jpg) |
 | :---: | :---: |
 | [Single template source (.otl)](templates/Single/mindmap-01.otl) | [Markdown example source (.otl)](examples/markdown.otl)<br>[Svgbob example source (.otl)](examples/svgbob.otl) |
 
@@ -826,6 +826,65 @@ line. Pele supplies the diagram layout and styles; it does not guarantee the
 same appearance as Mermaid.js. External images and interactive links within
 diagrams are disabled for this static output.
 
+Use `md_wrap=off` to preserve source newlines and disable automatic text wrapping
+for an individual Markdown node. The text width fits the longest rendered line,
+including list markers and indentation, rather than reserving `mdw`. Long lines
+can exceed `mdw`, and short lines can produce a narrower node. Lists remain
+left-aligned when other paragraphs or headings are wider than the list. Markdown
+formatting, headings, and blank-line paragraph boundaries still work. This also
+works on root Markdown nodes. `md_wrap=on` (the default) joins ordinary paragraph
+lines with spaces and wraps text to the target width. Mermaid fences keep their
+natural size when wrapping is off, including inside lists, quotes, and containers.
+Other code and image sizing continues to follow `mdw` in either mode.
+
+```text
+\t# Project setup
+\t\t: md noheader fontmono mdw=450 md_wrap=off
+\t\t: #### Setup commands
+\t\t:
+\t\t: python -m venv .venv
+\t\t: source .venv/bin/activate
+\t\t: python -m pip install -r requirements.txt
+```
+
+`md_width=420` sets the target body width in points. By default, prose wraps while retaining
+inline styles; lists use hanging indentation and table columns share the available
+width. An indivisible word or inline-code span may exceed that width. Fenced and
+indented code are left-aligned and centered vertically within their cells, and
+use transparent backgrounds so the node background shows through;
+syntax colors still follow the code theme. Code and local images are scaled down
+to fit. Markdown image syntax is supported for one
+image in its own paragraph; relative paths resolve against the `.otl` file.
+Remote images are not downloaded. Missing images produce a source-located error.
+
+Normal node colors, borders, icons, and edges still work. Use `hl1w2fmld`, for
+example, to style the second word of the first **outer title** line. Body line/word
+selectors (`l...` and `w...`) are rejected on Markdown nodes: use Markdown markup
+for the body. The existing selector behavior on ordinary nodes is unchanged.
+`md`, `code`, `block`, and `draw` cannot be combined on the same node.
+
+Root Markdown uses the same body syntax. The attribute line containing `md` ends
+the root's attribute group; subsequent colon-prefixed lines are body text:
+
+```text
+# Root title
+# second title line
+	: fname=mindmap.jpg notitle
+	: theme=github-light root_symb=book
+	: md hl2fm md_width=400
+	: ## Heading inside the root
+	:
+	: A **Markdown** paragraph.
+	# Child
+		: node
+```
+
+See [examples/markdown.otl](examples/markdown.otl) for a complete example. Render it
+from the example directory with `gvmm -f markdown.otl`, or choose an explicit
+output with `gvmm -f examples/markdown.otl -i /tmp/markdown.jpg`.
+
+## Svgbob nodes
+
 ASCII diagrams can use [Svgbob](https://github.com/ivanceras/svgbob), either as
 `svgbob` fences inside Markdown or as standalone `svgbob` nodes:
 
@@ -924,63 +983,6 @@ alongside the original monochrome architecture diagram.
 
 The `svgbob`, `mermaid`, `md`, `code`, `block`, and `draw` body modes are mutually
 exclusive. See [examples/svgbob.otl](examples/svgbob.otl) for a complete example.
-
-Use `md_wrap=off` to preserve source newlines and disable automatic text wrapping
-for an individual Markdown node. The text width fits the longest rendered line,
-including list markers and indentation, rather than reserving `mdw`. Long lines
-can exceed `mdw`, and short lines can produce a narrower node. Lists remain
-left-aligned when other paragraphs or headings are wider than the list. Markdown
-formatting, headings, and blank-line paragraph boundaries still work. This also
-works on root Markdown nodes. `md_wrap=on` (the default) joins ordinary paragraph
-lines with spaces and wraps text to the target width. Mermaid fences keep their
-natural size when wrapping is off, including inside lists, quotes, and containers.
-Other code and image sizing continues to follow `mdw` in either mode.
-
-```text
-\t# Project setup
-\t\t: md noheader fontmono mdw=450 md_wrap=off
-\t\t: #### Setup commands
-\t\t:
-\t\t: python -m venv .venv
-\t\t: source .venv/bin/activate
-\t\t: python -m pip install -r requirements.txt
-```
-
-`md_width=420` sets the target body width in points. By default, prose wraps while retaining
-inline styles; lists use hanging indentation and table columns share the available
-width. An indivisible word or inline-code span may exceed that width. Fenced and
-indented code are left-aligned and centered vertically within their cells, and
-use transparent backgrounds so the node background shows through;
-syntax colors still follow the code theme. Code and local images are scaled down
-to fit. Markdown image syntax is supported for one
-image in its own paragraph; relative paths resolve against the `.otl` file.
-Remote images are not downloaded. Missing images produce a source-located error.
-
-Normal node colors, borders, icons, and edges still work. Use `hl1w2fmld`, for
-example, to style the second word of the first **outer title** line. Body line/word
-selectors (`l...` and `w...`) are rejected on Markdown nodes: use Markdown markup
-for the body. The existing selector behavior on ordinary nodes is unchanged.
-`md`, `code`, `block`, and `draw` cannot be combined on the same node.
-
-Root Markdown uses the same body syntax. The attribute line containing `md` ends
-the root's attribute group; subsequent colon-prefixed lines are body text:
-
-```text
-# Root title
-# second title line
-	: fname=mindmap.jpg notitle
-	: theme=github-light root_symb=book
-	: md hl2fm md_width=400
-	: ## Heading inside the root
-	:
-	: A **Markdown** paragraph.
-	# Child
-		: node
-```
-
-See [examples/markdown.otl](examples/markdown.otl) for a complete example. Render it
-from the example directory with `gvmm -f markdown.otl`, or choose an explicit
-output with `gvmm -f examples/markdown.otl -i /tmp/markdown.jpg`.
 
 ## License
 
