@@ -1003,6 +1003,82 @@ if ready:
                     self.assertNotIn('&lt;', dot)
                     self.graphviz(dot)
 
+    def test_multiline_file_links_color_the_whole_span_without_leaking(self):
+        from graphviz_mindmaps.constants import fontcolor
+        content = ('file://notes/project/\n'
+                   'reference-guide.md\n'
+                   '5.2 Configuration overview — detailed notes\n'
+                   '10. Additional considerations')
+        source = 'See: <' + content + '>\n\nAnother paragraph outside the link.'
+        for wrap in ('on', 'off'):
+            blocks = ParseMarkdown(MarkdownBody(source, '<test>', 'Multiline file link', 1),
+                                   preserve_newlines=wrap == 'off')
+            self.assertFalse(blocks[0].runs[0].link)
+            self.assertTrue(all(run.link for run in blocks[0].runs[1:]))
+            self.assertFalse(any(run.link for run in blocks[1].runs))
+            self.assertEqual(3 if wrap == 'off' else 0, sum(run.hardbreak for run in blocks[0].runs))
+            for theme in ('default', 'nord'):
+                for root in (False, True):
+                    attrs = 'md noheader mdw=260 md_wrap=' + wrap
+                    lines = (['# Root', '\t: fname=out.jpg ' + attrs] +
+                             ['\t: ' + line for line in source.splitlines()]
+                             if root else self.outline(source, attrs))
+                    with self.subTest(wrap=wrap, theme=theme, root=root):
+                        dot = self.render(lines, theme)
+                        for word in ('file://notes/project/', 'reference-guide.md',
+                                     '5.2', 'Configuration', '10.', 'Additional', 'considerations'):
+                            self.assertIn(f'COLOR="{fontcolor["b"]}">{word}</FONT>', dot)
+                        for word in ('See:', 'Another'):
+                            self.assertIn(f'COLOR="{fontcolor["def"]}">{word}</FONT>', dot)
+                        self.assertNotIn('&lt;file:', dot)
+                        self.graphviz(dot)
+
+    def test_multiline_file_links_are_literal_and_independent(self):
+        source = 'before <file://notes/project_config/\n_Section_ **literal**> between <FILE://other/\nNext> after'
+        blocks = ParseMarkdown(MarkdownBody(source, '<test>', 'File spans', 1))
+        linked = [run for run in blocks[0].runs if run.link]
+        self.assertTrue(any('_Section_ **literal**' in run.text for run in linked))
+        self.assertTrue(all(not run.bold and not run.italic for run in linked))
+        self.assertEqual(2, len({run.link for run in linked}))
+        self.assertEqual('before  between  after', ''.join(run.text for run in blocks[0].runs if not run.link))
+        blocks = ParseMarkdown(MarkdownBody('<file:///tmp/my notes.md>', '<test>', 'Spaces', 1))
+        self.assertEqual('file:///tmp/my notes.md', ''.join(run.text for run in blocks[0].runs))
+        self.assertTrue(all(run.link for run in blocks[0].runs))
+
+    def test_multiline_file_links_do_not_capture_code_or_unclosed_spans(self):
+        for source in ('<file://notes/\nunclosed', '<file://notes/\n\nseparate paragraph>',
+                       r'\<file://notes/' + '\nsection>', '`<file://notes/\nsection>`',
+                       '```text\n<file://notes/\nsection>\n```',
+                       '<javascript:\nalert(1)>'):
+            with self.subTest(source=source):
+                blocks = ParseMarkdown(MarkdownBody(source, '<test>', 'Literal', 1))
+                self.assertFalse(any(run.link for block in blocks for run in block.runs))
+
+    def test_multiline_autolinks_support_http_and_other_validated_targets(self):
+        from graphviz_mindmaps.constants import fontcolor
+        for url in ('http://example.org/path/', 'https://example.org/path/', 'ftp://example.org/path/',
+                    'ssh://host/path/', 'mailto:person@example.org', 'person@example.org'):
+            for wrap in ('on', 'off'):
+                source = 'before <' + url + '\nSection title> after'
+                with self.subTest(url=url, wrap=wrap):
+                    blocks = ParseMarkdown(MarkdownBody(source, '<test>', 'References', 1),
+                                           preserve_newlines=wrap == 'off')
+                    linked = [run for run in blocks[0].runs if run.link]
+                    self.assertEqual(url, linked[0].text)
+                    self.assertEqual('Section title', linked[-1].text)
+                    self.assertEqual(1, len({run.link for run in linked}))
+                    self.assertEqual('before  after', ''.join(run.text for run in blocks[0].runs if not run.link))
+                    self.assertEqual(1 if wrap == 'off' else 0, sum(run.hardbreak for run in linked))
+                    dot = self.render(self.outline(source, 'md md_wrap=' + wrap))
+                    self.assertIn(f'COLOR="{fontcolor["b"]}">Section</FONT>', dot)
+                    self.assertIn(f'COLOR="{fontcolor["b"]}">title</FONT>', dot)
+        for source in ('<javascript:alert(1)\nDetails>', '<vbscript:example\nDetails>',
+                       '<data:text/html,example\nDetails>', '<not a url\nDetails>',
+                       '<file:relative-path\nDetails>'):
+            with self.subTest(rejected=source):
+                blocks = ParseMarkdown(MarkdownBody(source, '<test>', 'Invalid', 1))
+                self.assertFalse(any(run.link for block in blocks for run in block.runs))
+
     def test_file_links_do_not_enable_other_rejected_schemes(self):
         for source in ('[bad](javascript:alert%281%29)', '<javascript:alert%281%29>',
                        '[bad](vbscript:example)', '[bad](data:text/html,example)'):

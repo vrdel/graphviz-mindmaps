@@ -247,6 +247,46 @@ def _highlight_postprocess(state):
                 token.content = ''
 
 
+def _autolink_span(state, silent):
+    """Color whitespace-containing angle references with normal link validation."""
+    from markdown_it.rules_inline.autolink import AUTOLINK_RE, EMAIL_RE
+
+    start = state.pos
+    if state.linkLevel or state.src[start] != '<':
+        return False
+    end = state.src.find('>', start + 1, state.posMax)
+    if end < 0:
+        return False
+    value = state.src[start + 1:end]
+    if '<' in value or not any(char.isspace() for char in value):
+        return False
+    head = re.split(r'\s', value, maxsplit=1)[0]
+    if AUTOLINK_RE.fullmatch(head):
+        target = value
+    elif EMAIL_RE.fullmatch(head):
+        target = 'mailto:' + value
+    else:
+        return False
+    target = state.md.normalizeLink(target)
+    if not state.md.validateLink(target):
+        return False
+    if not silent:
+        opening = state.push('link_open', 'a', 1)
+        opening.attrs = {'href': target}
+        opening.markup = 'autolink'
+        opening.info = 'auto'
+        for index, line in enumerate(value.split('\n')):
+            if index:
+                state.push('softbreak', 'br', 0)
+            token = state.push('text', '', 0)
+            token.content = state.md.normalizeLinkText(line)
+        closing = state.push('link_close', 'a', -1)
+        closing.markup = 'autolink'
+        closing.info = 'auto'
+    state.pos = end + 1
+    return True
+
+
 def ParseMarkdown(body, preserve_newlines=False):
     """CommonMark plus tables, strikethrough and ==marks==, without HTML."""
     from markdown_it import MarkdownIt
@@ -259,6 +299,7 @@ def ParseMarkdown(body, preserve_newlines=False):
     validate_link = parser.validateLink
     parser.validateLink = lambda url: url.lower().startswith('file://') or validate_link(url)
     parser.enable(['strikethrough', 'table'])
+    parser.inline.ruler.before('autolink', 'autolink_span', _autolink_span)
     parser.block.ruler.before('fence', 'container', _container,
                               {'alt': ['paragraph', 'reference', 'blockquote', 'list']})
     parser.inline.ruler.before('emphasis', 'highlight', _highlight_tokenize)

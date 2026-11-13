@@ -631,6 +631,28 @@ Angle-bracket autolinks support both HTTP and local-file URLs, for example
 `<https://example.org>` and `<file://filename.md>`. File URLs also work in
 explicit links (`[notes](file:///home/user/notes.md)`) and reference links,
 with the same styling as HTTP links. These links do not load the target file.
+Angle-bracket references can also contain spaces, descriptive text, and source
+line breaks within the same paragraph. This works for `file://`, HTTP, HTTPS,
+other supported URI schemes such as FTP and SSH, and email references.
+The whole span uses the usual link color, for example:
+
+```text
+	# Reference to notes
+		: md noheader md_wrap=off
+		: See: <file://notes/project/
+		: reference-guide.md
+		: 5.2 Configuration overview — detailed notes
+		: 10. Additional considerations>
+		:
+		: <https://example.org/documentation/
+		: Deployment and troubleshooting notes>
+```
+
+`md_wrap=off` preserves the displayed line breaks; normal wrapping joins those
+source lines and wraps the colored text to `mdw`. Code spans and fences keep
+this syntax literal. An unclosed span or one separated by a blank paragraph
+is not treated as a link.
+
 For embedded images, use a filesystem path such as `![image](images/map.png)`.
 
 Markdown list items written with `-` render with a Unicode minus (`−`);
