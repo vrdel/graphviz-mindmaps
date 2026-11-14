@@ -20,6 +20,9 @@ class MontageTests(unittest.TestCase):
         self.previous = Path.cwd()
         os.chdir(self.temp.name)
         self.addCleanup(os.chdir, self.previous)
+        environment = patch.dict(os.environ, {'XDG_CACHE_HOME': str(Path(self.temp.name) / 'cache')})
+        environment.start()
+        self.addCleanup(environment.stop)
         quiet = patch('graphviz_mindmaps.tools.montage.run_command',
                       side_effect=lambda command: subprocess.run(command, check=True, capture_output=True))
         quiet.start()
@@ -28,7 +31,7 @@ class MontageTests(unittest.TestCase):
         Image.new('RGB', (8, 33000), 'blue').save('blue.png')
 
     def renderer(self, output='result.jpg', scale=None):
-        renderer = MontageRenderer(Path('montage.yml'), output, scale=scale)
+        renderer = MontageRenderer(Path('montage.yml'), output, scale=scale, cache='off')
         self.addCleanup(renderer.cleanup)
         return renderer
 
