@@ -985,6 +985,39 @@ Some viewers have stricter limits: feh/Imlib2 can reject images above 32,767
 pixels in either dimension even when the JPEG is valid. Montage preserves the
 requested scale and does not shrink output to accommodate viewer limits.
 
+### Montage caching
+
+Montage caching is enabled by default. SQLite stores recipes, dependencies, and
+source observations; immutable image files store the rendered artifacts. The
+cache lives in `${XDG_CACHE_HOME:-~/.cache}/graphviz-mindmaps/montage/v1/` and is
+intended for a local disk.
+
+Every run checks source contents with SHA-256. If nothing changed, montage
+reuses the final image without repeating image rendering. When one input
+changes, it reuses independent transforms, columns, and rows, then rebuilds the
+affected ancestors and final export. Title-only changes reuse the raw canvas;
+scale-only changes reuse the full-size titled canvas. Image dimensions and
+requested scale are preserved.
+
+```bash
+montage --cache-explain --cache-stats -o output.jpg montage.yml
+montage --cache=off -o output.jpg montage.yml
+montage --cache-dir /local/ssd/montage-cache --cache-max-bytes 21474836480 -o output.jpg montage.yml
+```
+
+`--cache-max-bytes` sets the retained-image budget (10 GiB by default). Objects
+larger than one quarter of that budget are rendered but not retained. Least
+recently used objects are evicted as needed. Active builds can temporarily use
+additional space for private inputs and results. Cache failures fall back to
+ordinary rendering; missing source files remain errors. `-n` also materializes
+named nested montage images when the final export is cached.
+
+`--cache-explain` reports source changes and operation hits/misses;
+`--cache-stats` reports evaluated hits, render counts by operation, and timing.
+Repeated identical operations are reused within one invocation even with
+persistent caching disabled. Sources that change between checking and rendering
+produce a clear error; run the command again after the inputs settle.
+
 Montage YAML supports image entries, joined image groups, row breaks, and nested submontages:
 
 ```yaml
