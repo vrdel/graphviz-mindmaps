@@ -13,7 +13,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from graphviz_mindmaps.render.image_transform import ParseImageTransformSpec, TransformImage
+from graphviz_mindmaps.render.image_transform import TransformImage
+from graphviz_mindmaps.render.montage_cache import MontageCache, DEFAULT_CACHE_BYTES, default_cache_dir
+from graphviz_mindmaps.render.montage_plan import MontagePlan, MontageExecutor
 
 
 TITLE_BACKGROUND = "#a0a0a0"
@@ -309,24 +311,22 @@ def run_command(cmd: list[str]) -> None:
     subprocess.run(cmd, check=True)
 
 
-def symlink_or_copy(src: Path, dst: Path) -> None:
-    try:
-        if dst.exists() or dst.is_symlink():
-            dst.unlink()
-        os.symlink(src, dst)
-    except OSError:
-        from shutil import copyfile
-        copyfile(src, dst)
-
-
-def copy_output(src: Path, dst: Path) -> None:
-    if dst.exists() or dst.is_symlink():
-        dst.unlink()
-    shutil.copyfile(src, dst)
-
-
 class MontageRenderer:
-    def __init__(self, spec_path: Path, outfile: str, scale: str | None = None, no_clean: bool = False, background: str = DEFAULT_BACKGROUND):
+    def __init__(self, spec_path: Path, outfile: str, scale: str | None = None, no_clean: bool = False, background: str = DEFAULT_BACKGROUND,
+                 cache: str = "on", cache_dir: Path | None = None,
+                 cache_max_bytes: int = DEFAULT_CACHE_BYTES, cache_explain: bool = False,
+                 cache_stats: bool = False):
+        if cache not in ('on', 'off'):
+            raise ValueError('cache must be on or off')
+        if cache_max_bytes < 0:
+            raise ValueError('cache budget must be nonnegative')
+        self.cache_mode = cache
+        self.cache_dir = Path(cache_dir) if cache_dir is not None else default_cache_dir()
+        self.cache_max_bytes = cache_max_bytes
+        self.cache_explain = cache_explain
+        self.cache_stats = cache_stats
+        self.cache = None
+        self.last_stats = {}
         self.spec_path = spec_path
         self.outfile = outfile
         self.scale = scale
@@ -370,120 +370,38 @@ class MontageRenderer:
             return str(size)
         return "s" if nested else "m"
 
-    def render_image_group(self, images: list[str], background: str) -> Path:
-        tmp_path = self.temp_root / f"group-{next(tempfile._get_candidate_names())}.png"
-        if len(images) == 1:
-            symlink_or_copy(self.curdir / images[0], tmp_path)
-            return tmp_path
-
-        cmd = [
-            "gm", "montage",
-            "-monitor",
-            "-background", background,
-            "-geometry", "+0+0",
-            "-tile", "1x",
-            *images,
-            str(tmp_path),
-        ]
-        run_command(cmd)
-        return tmp_path
-
-    def render_transformed_image(self, image: str, transform_key: str) -> Path:
-        image, scale_percent = ParseImageTransformSpec(image)
-        tmp_path = self.temp_root / f"{transform_key}-{next(tempfile._get_candidate_names())}.png"
-        TransformImage(
-            self.curdir / image,
-            tmp_path,
-            scale_percent=scale_percent,
-            **IMAGE_TRANSFORMS[transform_key],
-        )
-        return tmp_path
-
-    def render_row(self, row: list[Any], background: str) -> Path:
-        item_paths: list[Path] = []
-
-        for item in row:
-            if isinstance(item, str):
-                item_paths.append(self.curdir / item)
-            elif isinstance(item, list):
-                images = [str(elem) for elem in item]
-                item_paths.append(self.render_image_group(images, background))
-            elif isinstance(item, dict):
-                transform_key = next((key for key in IMAGE_TRANSFORMS if key in item), None)
-                if transform_key:
-                    item_paths.append(self.render_transformed_image(str(item[transform_key]), transform_key))
-                else:
-                    item_paths.append(self.render_spec(item, nested=True, inherited_background=background))
-            else:
-                raise ValueError(f"unsupported row item: {item!r}")
-
-        tmp_path = self.temp_root / f"row-{next(tempfile._get_candidate_names())}.png"
-        if len(item_paths) == 1:
-            symlink_or_copy(item_paths[0], tmp_path)
-            return tmp_path
-
-        cmd = [
-            "gm", "montage",
-            "-monitor",
-            "-background", background,
-            "-geometry", "+0+0",
-            "-tile", f"{len(item_paths)}x",
-            *[str(path) for path in item_paths],
-            str(tmp_path),
-        ]
-        run_command(cmd)
-        return tmp_path
-
     def render_spec(self, spec: dict[str, Any], nested: bool = False, inherited_background: str | None = None) -> Path:
-        output_path = self.resolve_output(spec, nested=nested)
-        if nested:
-            self.intermediate_outputs.append(output_path)
-        title = self.resolve_title(spec, output_path)
-        size = self.resolve_size(spec, nested=nested)
-        rows = ensure_list(spec.get("rows"), "rows")
-        background = self.background_for(spec, title, nested=nested, inherited_background=inherited_background or self.background)
+        self.auto_nested_index = 1
+        plan = MontagePlan(self, IMAGE_TRANSFORMS)
+        root, destination = plan.spec(spec, nested=nested, inherited_background=inherited_background)
+        if self.cache is not None:
+            self.cache.close()
+        self.cache = MontageCache(self.cache_dir, self.temp_root, self.cache_max_bytes,
+                                  enabled=self.cache_mode == 'on')
+        executor = MontageExecutor(self, plan, self.cache)
+        result = executor.run(root, destination)
+        self.last_stats = executor.stats
+        return result
 
-        row_paths: list[Path] = []
-        for row in rows:
-            row_items = ensure_list(row, "row")
-            row_paths.append(self.render_row(row_items, background))
-
-        raw_output = self.temp_root / f"raw-{next(tempfile._get_candidate_names())}.png"
-        if len(row_paths) == 1:
-            copy_output(row_paths[0], raw_output)
+    def render_operation(self, node, inputs: list[Path], output: Path) -> None:
+        parameters = node.parameters
+        if node.kind in ('group', 'row', 'stack'):
+            run_command(['gm', 'montage', '-monitor', '-background', parameters['background'],
+                         '-geometry', parameters['geometry'], '-tile', parameters['tile'],
+                         *map(str, inputs), str(output)])
+        elif node.kind == 'transform':
+            TransformImage(inputs[0], output, scale_percent=parameters['scale'],
+                           **parameters['options'])
+        elif node.kind == 'title':
+            run_command([sys.executable, str(self.tool_dir / 'montage_title.py'),
+                         '-s', parameters['size'], '-t', parameters['title'],
+                         '-b', parameters['background'], str(inputs[0]), str(output)])
+        elif node.kind == 'export':
+            self.write_output(inputs[0], output, parameters['scale'])
         else:
-            cmd = [
-                "gm", "montage",
-                "-monitor",
-                "-background", background,
-                "-geometry", "+0+0",
-                "-tile", "1x",
-                *[str(path) for path in row_paths],
-                str(raw_output),
-            ]
-            run_command(cmd)
+            raise ValueError(f'unsupported montage operation: {node.kind}')
 
-        if title:
-            titled_output = self.temp_root / f"titled-{next(tempfile._get_candidate_names())}.png"
-            run_command([
-                sys.executable,
-                str(self.tool_dir / "montage_title.py"),
-                "-s",
-                size,
-                "-t",
-                title,
-                "-b",
-                background,
-                str(raw_output),
-                str(titled_output),
-            ])
-            raw_output = titled_output
-
-        self.write_output(raw_output, output_path, self.scale if not nested else None)
-
-        return output_path
-
-    def write_output(self, source: Path, destination: Path, scale: str | None) -> None:
+    def write_output(self, source: Path, destination: Path, scale: str | float | None) -> None:
         """Scale before encoding JPEG, then atomically publish a valid result."""
         if destination.suffix.lower() in {'.jpg', '.jpeg'}:
             result = subprocess.run(['gm', 'identify', '-format', '%w %h', str(source)],
@@ -516,6 +434,9 @@ class MontageRenderer:
                         path.unlink()
                 except OSError:
                     pass
+        if self.cache is not None:
+            self.cache.close()
+            self.cache = None
         shutil.rmtree(self.temp_root, ignore_errors=True)
 
 
@@ -525,6 +446,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-o", dest="outfile", type=str, required=True)
     parser.add_argument("-b", "--background", dest="background", default=DEFAULT_BACKGROUND)
     parser.add_argument("-n", "--no-clean", dest="no_clean", action="store_true")
+    parser.add_argument('--cache', choices=('on', 'off'), default='on',
+                        help='reuse rendered montage artifacts (default: on)')
+    parser.add_argument('--cache-dir', type=Path, help='local persistent cache directory')
+    parser.add_argument('--cache-max-bytes', type=int, default=DEFAULT_CACHE_BYTES,
+                        help='retained image budget in bytes (default: 10 GiB)')
+    parser.add_argument('--cache-explain', action='store_true', help='show operation hits and misses')
+    parser.add_argument('--cache-stats', action='store_true', help='show render counts and timing')
     parser.add_argument("cmfile")
     return parser
 
@@ -549,10 +477,12 @@ def main(argv: list[str] | None = None) -> int:
             scale=scale,
             no_clean=args.no_clean,
             background=args.background,
+            cache=args.cache, cache_dir=args.cache_dir, cache_max_bytes=args.cache_max_bytes,
+            cache_explain=args.cache_explain, cache_stats=args.cache_stats,
         )
         spec = load_spec(spec_path)
         renderer.render_spec(spec, nested=False)
-    except (ValueError, subprocess.CalledProcessError) as exc:
+    except (OSError, ValueError, subprocess.CalledProcessError) as exc:
         print(f'montage: {exc}', file=sys.stderr)
         return 1
     finally:
