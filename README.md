@@ -1047,6 +1047,11 @@ montage-title -s s -t "Title" image.jpg
 montage-title -s m -t "Title" input.jpg output.jpg
 ```
 
+Title rendering draws the frame directly on the destination canvas to avoid
+full-size RGB and bordered copies. PNG title artifacts use fast, lossless
+compression, trading larger encoded files for faster generation. JPEG settings,
+title placement, colors, and image dimensions are preserved.
+
 ## License
 
 Licensed under the Apache License, Version 2.0.
