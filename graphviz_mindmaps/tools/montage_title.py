@@ -1,5 +1,8 @@
-import os, sys, argparse, subprocess, math
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+import argparse
+from pathlib import Path
+import subprocess
+
+from PIL import Image, ImageDraw, ImageFont
 
 Image.MAX_IMAGE_PIXELS = None
 DEFAULT_BACKGROUND = "#a0a0a0"
@@ -26,63 +29,65 @@ def Montage(argholder):
 
     subprocess.call(exe, shell = True)
 
+def render_title(source, output, title, size='s', background=DEFAULT_BACKGROUND):
+    """Add the existing frame/title without full-size RGB and border copies.
+
+    PNGs are lossless working artifacts. Use fast compression rather than the
+    default level 6; JPEG and other output encoders retain their defaults.
+    """
+    point_size = {'xs': 35, 's': 80, 'm': 148, 'b': 232}[size]
+    splice = point_size + {'xs': 30, 's': 50, 'm': 70, 'b': 100}[size]
+    image_x = SIDE_MARGIN
+    image_y = splice - BOTTOM_OVERLAP
+
+    with Image.open(source) as image:
+        width, height = image.size
+        canvas = Image.new('RGB', (width + SIDE_MARGIN * 2, height + splice), background)
+        try:
+            draw = ImageDraw.Draw(canvas)
+            # Draw just the border directly on the destination. ImageOps.expand
+            # would allocate a second full-size copy of the decoded source.
+            draw.rectangle((image_x - FRAME_BORDER, image_y - FRAME_BORDER,
+                            image_x + width + FRAME_BORDER - 1,
+                            image_y + height + FRAME_BORDER - 1),
+                           outline=FRAME_FILL, width=FRAME_BORDER)
+            # Paste converts non-RGB modes as needed, without retaining a separate
+            # RGB source copy. No mask: preserve the original alpha-flattening
+            # behavior of image.convert('RGB').
+            canvas.paste(image, (image_x, image_y))
+        except BaseException:
+            canvas.close()
+            raise
+
+    # The source is now closed, before text rendering and output compression.
+    try:
+        draw = ImageDraw.Draw(canvas)
+        title_rect = (TOP_MARGIN, TOP_MARGIN, canvas.width - TOP_MARGIN - 1, image_y)
+        draw.rectangle(title_rect, fill=TITLE_FILL)
+        font = ImageFont.truetype(TITLE_FONT, point_size)
+        text_bbox = draw.textbbox((0, 0), title, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+        text_x = title_rect[0] + max(0, ((title_rect[2] - title_rect[0]) - text_width) // 2) - text_bbox[0]
+        text_y = title_rect[1] + max(0, ((title_rect[3] - title_rect[1]) - text_height) // 2) - text_bbox[1]
+        draw.text((text_x, text_y), title, font=font, fill='white')
+        options = {'compress_level': 1} if Path(output).suffix.lower() == '.png' else {}
+        canvas.save(output, **options)
+    finally:
+        canvas.close()
+
+
 def TitleImg(argholder):
-    InImg = ""
-    OutImg = ""
-    SpliceFrac = {'xs': 30, 's' : 50, 'm' : 70, 'b' : 100}
-    TitleFrac = {'xs': 35, 's' : 80, 'm' : 148, 'b' : 232}
-
-    if not argholder.MontageTile:
-        if len(argholder.files) == 2:
-            InImg = argholder.files[0]
-            OutImg = argholder.files[1]
-        elif len(argholder.files) == 1:
-            InImg = OutImg = argholder.files[0]
-        elif len(argholder.files) == 0:
-            InImg = OutImg = argholder.ImgTitle
+    if argholder.MontageTile:
+        source = output = argholder.files[-1]
+    elif len(argholder.files) == 2:
+        source, output = argholder.files
+    elif len(argholder.files) == 1:
+        source = output = argholder.files[0]
     else:
-        InImg = OutImg = argholder.files[len(argholder.files) - 1]
+        source = output = argholder.ImgTitle
+    render_title(source, output, argholder.ImgTitle, argholder.TitleSize, argholder.Background)
 
-    with Image.open(InImg) as image:
-        im = image.convert("RGB")
-
-    # PointSize = math.floor(TitleFrac[argholder.TitleSize] * im.size[1])
-    # SpliceSize = math.floor(PointSize + SpliceFrac[argholder.TitleSize])
-
-
-    PointSize = TitleFrac[argholder.TitleSize]
-    SpliceSize = PointSize + SpliceFrac[argholder.TitleSize]
-
-    # exe = "convert \"%s\" -monitor -bordercolor black -border 4 -font DejaVu-Sans-Condensed-Bold -pointsize %d -fill white -gravity North -background black -splice 0x%d -bordercolor '#a0a0a0' -border 10 -annotate +5+20 '%s' \"%s\"" % (InImg, PointSize, SpliceSize, argholder.ImgTitle, OutImg)
-
-    frame_border = FRAME_BORDER
-    frame_fill = FRAME_FILL
-    title_fill = TITLE_FILL
-    side_margin = SIDE_MARGIN
-    top_margin = TOP_MARGIN
-    bottom_overlap = BOTTOM_OVERLAP
-    canvas_width = im.size[0] + (side_margin * 2)
-    canvas_height = im.size[1] + SpliceSize
-    image_x = side_margin
-    image_y = SpliceSize - bottom_overlap
-
-    framed = ImageOps.expand(im, border=frame_border, fill=frame_fill)
-    canvas = Image.new("RGB", (canvas_width, canvas_height), argholder.Background)
-    canvas.paste(framed, (image_x - frame_border, image_y - frame_border))
-
-    draw = ImageDraw.Draw(canvas)
-    title_rect = (top_margin, top_margin, canvas_width - top_margin - 1, SpliceSize - bottom_overlap)
-    draw.rectangle(title_rect, fill=title_fill)
-
-    font = ImageFont.truetype(TITLE_FONT, PointSize)
-    text_bbox = draw.textbbox((0, 0), argholder.ImgTitle, font=font)
-    text_width = text_bbox[2] - text_bbox[0]
-    text_height = text_bbox[3] - text_bbox[1]
-    text_x = title_rect[0] + max(0, ((title_rect[2] - title_rect[0]) - text_width) // 2) - text_bbox[0]
-    text_y = title_rect[1] + max(0, ((title_rect[3] - title_rect[1]) - text_height) // 2) - text_bbox[1]
-    draw.text((text_x, text_y), argholder.ImgTitle, font=font, fill="white")
-
-    canvas.save(OutImg)
 
 def main():
     class ArgHolder(object):

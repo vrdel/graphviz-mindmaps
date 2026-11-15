@@ -985,6 +985,97 @@ Some viewers have stricter limits: feh/Imlib2 can reject images above 32,767
 pixels in either dimension even when the JPEG is valid. Montage preserves the
 requested scale and does not shrink output to accommodate viewer limits.
 
+### Montage caching
+
+Montage caching is enabled by default. SQLite stores recipes, dependencies, and
+source observations; immutable image files store the rendered artifacts. The
+cache lives in `${XDG_CACHE_HOME:-~/.cache}/graphviz-mindmaps/montage/v1/` and is
+intended for a local disk.
+
+Every run checks source contents with SHA-256. If nothing changed, montage
+reuses the final image without repeating image rendering. When one input
+changes, it reuses independent transforms, columns, and rows, then rebuilds the
+affected ancestors and final export. Title-only changes reuse the raw canvas;
+scale-only changes reuse the full-size titled canvas. Image dimensions and
+requested scale are preserved.
+
+```bash
+montage --cache-explain --cache-stats -o output.jpg montage.yml
+montage --cache=off -o output.jpg montage.yml
+montage --cache-dir /local/ssd/montage-cache --cache-max-bytes 10737418240 -o output.jpg montage.yml
+```
+
+`--cache-max-bytes` sets the retained-image budget (10 GiB by default). Objects
+larger than one quarter of that budget are rendered but not retained. Least
+recently used objects are evicted automatically after cache writes and when a
+build closes; manual pruning is optional. Active builds can temporarily use
+additional space for private inputs and results. Cache failures fall back to
+ordinary rendering; missing source files remain errors. `-n` also materializes
+named nested montage images when the final export is cached.
+
+Inspect the existing cache without supplying a montage file or rendering:
+
+```bash
+montage cache-stats
+montage cache-stats --limit 10
+montage cache-stats --cache-dir /local/ssd/montage-cache --json
+# Through the pyenv wrapper:
+gvmm-exe.py montage cache-stats
+```
+
+The report shows image-file bytes, index/WAL and staging sizes, available,
+evicted, missing, and size-mismatched objects, recipes by operation, largest
+images with their paths and dimensions, and recent build timings and hit counts.
+Columns are labeled `column/group`. Multiple recipes can share one image, so
+per-operation byte totals can overlap. Sizes count encoded file bytes, rather
+than filesystem allocation or decoded pixel memory. The budget shown is the
+current 10 GiB default; individual builds can override it. Inspection does not
+render, prune, or check every image checksum, and files can change during an
+active build.
+
+Prune cached images without rebuilding a montage:
+
+```bash
+# Preview pruning to the default 10 GiB budget, then apply it:
+montage cache-prune --dry-run
+montage cache-prune
+
+# Keep at most 5 GiB, evicting least recently used images first:
+montage cache-prune --max-bytes 5368709120
+
+# Remove images last used more than 30 days ago:
+montage cache-prune --older-than 30
+
+# Preview or clear all cached images:
+montage cache-prune --all --dry-run
+montage cache-prune --all
+
+# Custom cache and machine-readable preview:
+montage cache-prune --cache-dir /local/ssd/montage-cache --older-than 30 --dry-run --json
+```
+
+`--older-than` takes days, including fractional days, and uses the object's last
+recorded access time. Used alone, it applies only the age cutoff; combine it with
+`--max-bytes` to remove old images first and then enforce a size budget. Size
+limits count unique encoded image files, so shared recipe results are removed
+only once. Pruning also removes inactive staging files, untracked/evicted image
+files, and size-mismatched objects, and marks missing object records evicted.
+
+These commands take an exclusive maintenance lock. If a build or another
+maintenance command is active, pruning reports `cache is busy` and removes
+nothing; retry after it finishes. `--dry-run` previews file removals without
+deleting files or updating index records. Pruning retains recipes, build history,
+source files, project outputs, and lock files. Retained parent images remain
+usable even if their intermediate children are pruned; missing artifacts are
+rendered again when needed. Through the wrapper, use
+`gvmm-exe.py montage cache-prune` with the same options.
+
+`--cache-explain` reports source changes and operation hits/misses;
+`--cache-stats` reports evaluated hits, render counts by operation, and timing.
+Repeated identical operations are reused within one invocation even with
+persistent caching disabled. Sources that change between checking and rendering
+produce a clear error; run the command again after the inputs settle.
+
 Montage YAML supports image entries, joined image groups, row breaks, and nested submontages:
 
 ```yaml
@@ -1013,6 +1104,11 @@ Add a title bar to an image:
 montage-title -s s -t "Title" image.jpg
 montage-title -s m -t "Title" input.jpg output.jpg
 ```
+
+Title rendering draws the frame directly on the destination canvas to avoid
+full-size RGB and bordered copies. PNG title artifacts use fast, lossless
+compression, trading larger encoded files for faster generation. JPEG settings,
+title placement, colors, and image dimensions are preserved.
 
 ## License
 
