@@ -1002,12 +1002,13 @@ requested scale are preserved.
 ```bash
 montage --cache-explain --cache-stats -o output.jpg montage.yml
 montage --cache=off -o output.jpg montage.yml
-montage --cache-dir /local/ssd/montage-cache --cache-max-bytes 21474836480 -o output.jpg montage.yml
+montage --cache-dir /local/ssd/montage-cache --cache-max-bytes 10737418240 -o output.jpg montage.yml
 ```
 
-`--cache-max-bytes` sets the retained-image budget (20 GiB by default). Objects
+`--cache-max-bytes` sets the retained-image budget (10 GiB by default). Objects
 larger than one quarter of that budget are rendered but not retained. Least
-recently used objects are evicted as needed. Active builds can temporarily use
+recently used objects are evicted automatically after cache writes and when a
+build closes; manual pruning is optional. Active builds can temporarily use
 additional space for private inputs and results. Cache failures fall back to
 ordinary rendering; missing source files remain errors. `-n` also materializes
 named nested montage images when the final export is cached.
@@ -1028,9 +1029,46 @@ images with their paths and dimensions, and recent build timings and hit counts.
 Columns are labeled `column/group`. Multiple recipes can share one image, so
 per-operation byte totals can overlap. Sizes count encoded file bytes, rather
 than filesystem allocation or decoded pixel memory. The budget shown is the
-current 20 GiB default; individual builds can override it. Inspection does not
+current 10 GiB default; individual builds can override it. Inspection does not
 render, prune, or check every image checksum, and files can change during an
 active build.
+
+Prune cached images without rebuilding a montage:
+
+```bash
+# Preview pruning to the default 10 GiB budget, then apply it:
+montage cache-prune --dry-run
+montage cache-prune
+
+# Keep at most 5 GiB, evicting least recently used images first:
+montage cache-prune --max-bytes 5368709120
+
+# Remove images last used more than 30 days ago:
+montage cache-prune --older-than 30
+
+# Preview or clear all cached images:
+montage cache-prune --all --dry-run
+montage cache-prune --all
+
+# Custom cache and machine-readable preview:
+montage cache-prune --cache-dir /local/ssd/montage-cache --older-than 30 --dry-run --json
+```
+
+`--older-than` takes days, including fractional days, and uses the object's last
+recorded access time. Used alone, it applies only the age cutoff; combine it with
+`--max-bytes` to remove old images first and then enforce a size budget. Size
+limits count unique encoded image files, so shared recipe results are removed
+only once. Pruning also removes inactive staging files, untracked/evicted image
+files, and size-mismatched objects, and marks missing object records evicted.
+
+These commands take an exclusive maintenance lock. If a build or another
+maintenance command is active, pruning reports `cache is busy` and removes
+nothing; retry after it finishes. `--dry-run` previews file removals without
+deleting files or updating index records. Pruning retains recipes, build history,
+source files, project outputs, and lock files. Retained parent images remain
+usable even if their intermediate children are pruned; missing artifacts are
+rendered again when needed. Through the wrapper, use
+`gvmm-exe.py montage cache-prune` with the same options.
 
 `--cache-explain` reports source changes and operation hits/misses;
 `--cache-stats` reports evaluated hits, render counts by operation, and timing.

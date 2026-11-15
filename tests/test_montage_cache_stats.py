@@ -40,8 +40,8 @@ class MontageCacheStatsTests(unittest.TestCase):
         cache.close()
         return image.stat().st_size
 
-    def test_default_budget_is_twenty_gib(self):
-        self.assertEqual(20 * 1024**3, DEFAULT_CACHE_BYTES)
+    def test_default_budget_is_ten_gib(self):
+        self.assertEqual(10 * 1024**3, DEFAULT_CACHE_BYTES)
         args = build_parser().parse_args(['-o', 'result.jpg', 'input.yaml'])
         self.assertEqual(DEFAULT_CACHE_BYTES, args.cache_max_bytes)
 
@@ -110,7 +110,7 @@ class MontageCacheStatsTests(unittest.TestCase):
             with contextlib.redirect_stdout(output):
                 self.assertEqual(0, main(['cache-stats', '--cache-dir', str(self.root)]))
             text = output.getvalue()
-            for phrase in ('20.00 GiB', 'column/group', '30x20', 'rendered=4', 'hits=2', 'output.jpg'):
+            for phrase in ('10.00 GiB', 'column/group', '30x20', 'rendered=4', 'hits=2', 'output.jpg'):
                 self.assertIn(phrase, text)
 
     def test_default_directory_and_corrupt_database_errors(self):
