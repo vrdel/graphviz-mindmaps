@@ -441,7 +441,7 @@ class MontageRenderer:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(epilog='Inspect existing cache: montage cache-stats [--cache-dir PATH] [--json]')
     parser.add_argument("-s", dest="scale", nargs="?", const="specified")
     parser.add_argument("-o", dest="outfile", type=str, required=True)
     parser.add_argument("-b", "--background", dest="background", default=DEFAULT_BACKGROUND)
@@ -450,7 +450,7 @@ def build_parser() -> argparse.ArgumentParser:
                         help='reuse rendered montage artifacts (default: on)')
     parser.add_argument('--cache-dir', type=Path, help='local persistent cache directory')
     parser.add_argument('--cache-max-bytes', type=int, default=DEFAULT_CACHE_BYTES,
-                        help='retained image budget in bytes (default: 10 GiB)')
+                        help='retained image budget in bytes (default: 20 GiB)')
     parser.add_argument('--cache-explain', action='store_true', help='show operation hits and misses')
     parser.add_argument('--cache-stats', action='store_true', help='show render counts and timing')
     parser.add_argument("cmfile")
@@ -465,7 +465,11 @@ def load_spec(path: Path) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments and arguments[0] == 'cache-stats':
+        from graphviz_mindmaps.tools.montage_cache_stats import main as cache_stats_main
+        return cache_stats_main(arguments[1:])
+    args = build_parser().parse_args(arguments)
 
     scale = None if args.scale in (None, "specified") else args.scale
     spec_path = Path(args.cmfile).resolve()

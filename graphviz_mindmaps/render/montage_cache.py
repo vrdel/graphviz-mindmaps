@@ -16,7 +16,7 @@ import time
 from PIL import Image
 
 
-DEFAULT_CACHE_BYTES = 10 * 1024**3
+DEFAULT_CACHE_BYTES = 20 * 1024**3
 
 
 def file_digest(path: Path) -> str:

@@ -1005,12 +1005,32 @@ montage --cache=off -o output.jpg montage.yml
 montage --cache-dir /local/ssd/montage-cache --cache-max-bytes 21474836480 -o output.jpg montage.yml
 ```
 
-`--cache-max-bytes` sets the retained-image budget (10 GiB by default). Objects
+`--cache-max-bytes` sets the retained-image budget (20 GiB by default). Objects
 larger than one quarter of that budget are rendered but not retained. Least
 recently used objects are evicted as needed. Active builds can temporarily use
 additional space for private inputs and results. Cache failures fall back to
 ordinary rendering; missing source files remain errors. `-n` also materializes
 named nested montage images when the final export is cached.
+
+Inspect the existing cache without supplying a montage file or rendering:
+
+```bash
+montage cache-stats
+montage cache-stats --limit 10
+montage cache-stats --cache-dir /local/ssd/montage-cache --json
+# Through the pyenv wrapper:
+gvmm-exe.py montage cache-stats
+```
+
+The report shows image-file bytes, index/WAL and staging sizes, available,
+evicted, missing, and size-mismatched objects, recipes by operation, largest
+images with their paths and dimensions, and recent build timings and hit counts.
+Columns are labeled `column/group`. Multiple recipes can share one image, so
+per-operation byte totals can overlap. Sizes count encoded file bytes, rather
+than filesystem allocation or decoded pixel memory. The budget shown is the
+current 20 GiB default; individual builds can override it. Inspection does not
+render, prune, or check every image checksum, and files can change during an
+active build.
 
 `--cache-explain` reports source changes and operation hits/misses;
 `--cache-stats` reports evaluated hits, render counts by operation, and timing.
