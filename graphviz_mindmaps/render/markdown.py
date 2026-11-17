@@ -37,8 +37,8 @@ def _measure(text, face, size, bold=False, italic=False):
 
 
 @lru_cache(maxsize=128)
-def _natural_list_table(label, face, size, foreground):
-    """Fix a list to its intrinsic size so Graphviz cannot stretch its columns."""
+def _natural_table(label, face, size, foreground, slack=1):
+    """Fix a table to its intrinsic size so Graphviz cannot stretch its cells."""
     font_label = ('<FONT FACE="%s" POINT-SIZE="%g" COLOR="%s">%s</FONT>' %
                   (escape(face, quote=True), size, escape(foreground, quote=True), label))
     source = 'digraph { node [shape=plain]; list [label=<' + font_label + '>]; }'
@@ -47,9 +47,12 @@ def _natural_list_table(label, face, size, foreground):
                                 text=True, check=True, timeout=30)
         node = next(line.split() for line in result.stdout.splitlines()
                     if line.startswith('node list '))
-        width, height = (math.ceil(float(value) * 72) + 1 for value in node[4:6])
+        # Plain output rounds inches; remove its tiny conversion noise when
+        # fixing an image table, which needs no extra text-layout safety margin.
+        width, height = ((math.ceil(float(value) * 72) + slack if slack else
+                          math.ceil(round(float(value) * 72, 2))) for value in node[4:6])
     except (OSError, subprocess.SubprocessError, StopIteration, ValueError) as exc:
-        raise ValueError('cannot determine Markdown list dimensions with Graphviz') from exc
+        raise ValueError('cannot determine Markdown table dimensions with Graphviz') from exc
     return label.replace('<TABLE ', f'<TABLE FIXEDSIZE="TRUE" WIDTH="{width}" HEIGHT="{height}" ', 1)
 
 
@@ -59,7 +62,7 @@ def AppendMarkdownLabel(label, body_label):
     return head + '<TR><TD ALIGN="LEFT" CELLPADDING="2">' + body_label + '</TD></TR></TABLE>' + closing
 
 
-def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None, title_colors=None, svgbob_stroke_width=None, svgbob_font_size=None, mermaid_font_size=None):
+def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None, title_colors=None, svgbob_stroke_width=None, svgbob_font_size=None, mermaid_font_size=None, svgbob_align=None):
     # Standalone diagrams grow to their natural dimensions, independent of mdw.
     if body.diagram:
         width = 420
@@ -69,6 +72,9 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
         wrap = wrap.lower() == 'on'
     elif not isinstance(wrap, bool):
         raise body.error('md_wrap must be on or off')
+    svgbob_align = 'left' if svgbob_align is None else str(svgbob_align).lower()
+    if svgbob_align not in {'left', 'center', 'right'}:
+        raise body.error('svgbob_align must be left, center, or right')
     if mermaid_font is None:
         mermaid_font = True
     elif isinstance(mermaid_font, str) and mermaid_font.lower() in {'on', 'off'}:
@@ -300,9 +306,21 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 else:
                     path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
                                            code_theme, transparent_background=True)
-                rows.append('<TR><TD ALIGN="LEFT" VALIGN="MIDDLE" CELLPADDING="0">'
-                            + image(Path(path), available, block.source_line, constrain=not natural_diagram)
-                            + '</TD></TR>')
+                alignment = svgbob_align.upper() if is_svgbob else 'LEFT'
+                content = image(Path(path), available, block.source_line, constrain=not natural_diagram)
+                if is_svgbob and alignment != 'LEFT':
+                    # Graphviz can change an IMG's viewport when its TD is
+                    # centered directly. Align an intrinsic-size table instead,
+                    # keeping the image's own cell left aligned and unscaled.
+                    content = (f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" '
+                               f'CELLPADDING="0" ALIGN="{alignment}"><TR><TD ALIGN="LEFT" '
+                               f'CELLPADDING="0">{content}</TD></TR></TABLE>')
+                    try:
+                        content = _natural_table(content, face, size, foreground, slack=0)
+                    except ValueError as exc:
+                        raise body.error(str(exc), block.source_line) from exc
+                rows.append(f'<TR><TD ALIGN="{alignment}" VALIGN="MIDDLE" CELLPADDING="0">'
+                            + content + '</TD></TR>')
             elif kind == 'container':
                 inner_width = max(1, available - 20)
                 title = wrapped(block.runs, inner_width, size, bold=True, ink='#000000')
@@ -363,7 +381,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 list_table = table(listrows, padding=0 if list_spacing is not None else 3)
                 if not wrap:
                     try:
-                        list_table = _natural_list_table(list_table, face, size, foreground)
+                        list_table = _natural_table(list_table, face, size, foreground)
                     except ValueError as exc:
                         raise body.error(str(exc), block.source_line) from exc
                 rows.append(textrow(list_table))

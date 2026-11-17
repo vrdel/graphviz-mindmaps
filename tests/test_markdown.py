@@ -606,6 +606,62 @@ if ready:
                                 self.assertLessEqual(resized.width, 100)
                                 self.assertLessEqual(resized.height, 900)
 
+    def test_svgbob_alignment_in_root_child_and_nested_fences_is_node_local(self):
+        path = Path(self.temp.name, 'aligned-svgbob.png')
+        Image.new('RGBA', (80, 40), (20, 30, 40, 255)).save(path)
+        fence = '```svgbob\n+---+\n| A |\n+---+\n```'
+        for nested in (fence, '> ' + fence.replace('\n', '\n> '),
+                       '- item\n\n  ' + fence.replace('\n', '\n  '),
+                       '::: info Diagram\n' + fence + '\n:::'):
+            for root in (False, True):
+                for wrap in ('on', 'off'):
+                    def lines(option):
+                        attrs = f'md noheader md_wrap={wrap} ' + option
+                        return (['# Root', '\t: fname=out.jpg ' + attrs] +
+                                ['\t: ' + line for line in nested.splitlines()]
+                                if root else self.outline(nested, attrs))
+                    with self.subTest(root=root, wrap=wrap, nested=nested), patch(
+                        'graphviz_mindmaps.render.markdown.RenderSvgbobImage', return_value=path,
+                    ):
+                        self.assertEqual(self.render(lines('')), self.render(lines('svgbob_align=left')))
+                        for align in ('center', 'right'):
+                            dot = self.render(lines('svgbob_align=' + align))
+                            self.assertIn(f'<TD ALIGN="{align.upper()}" VALIGN="MIDDLE" CELLPADDING="0"><TABLE', dot)
+                            self.graphviz(dot)
+                        siblings = lines('svgbob_align=center') + self.outline(fence)[2:]
+                        dot = self.render(siblings)
+                        image_cells = re.findall(r'<TD ALIGN="(\w+)" VALIGN="MIDDLE" CELLPADDING="0">', dot)
+                        self.assertCountEqual(['CENTER', 'LEFT'], image_cells)
+                        for value in ('off', 'middle', 'bad'):
+                            with self.assertRaisesRegex(ValueError, r'<input>:\d+: .*svgbob_align'):
+                                self.render(lines('svgbob_align=' + value))
+
+    @unittest.skipUnless(shutil.which('dot'), 'Graphviz required')
+    def test_centered_svgbob_moves_only_image_and_preserves_natural_size(self):
+        import xml.etree.ElementTree as ET
+        path = Path(self.temp.name, 'centered-svgbob.png')
+        Image.new('RGBA', (80, 40), (20, 30, 40, 255)).save(path)
+        source = ('* A sufficiently long explanation above the diagram stays left aligned.\n\n'
+                  '```svgbob\n+---+\n| A |\n+---+\n```')
+        positions = []
+        prose_positions = []
+        for align in ('left', 'center', 'right'):
+            with patch('graphviz_mindmaps.render.markdown.RenderSvgbobImage', return_value=path):
+                dot = self.render(self.outline(source, 'md noheader md_wrap=off svgbob_align=' + align))
+            svg = ET.fromstring(subprocess.run(['dot', '-Tsvg'], input=dot, text=True,
+                                               capture_output=True, check=True).stdout)
+            image = svg.find('.//{http://www.w3.org/2000/svg}image')
+            positions.append((float(image.get('x')), image.get('width'), image.get('height')))
+            prose_positions.append([(text.text, text.get('x'), text.get('y'))
+                                    for text in svg.findall('.//{http://www.w3.org/2000/svg}text')])
+        self.assertLess(positions[0][0], positions[1][0])
+        self.assertLess(positions[1][0], positions[2][0])
+        self.assertAlmostEqual((positions[0][0] + positions[2][0]) / 2, positions[1][0], delta=1)
+        self.assertEqual(positions[0][1:], positions[1][1:])
+        self.assertEqual(positions[1][1:], positions[2][1:])
+        self.assertEqual(prose_positions[0], prose_positions[1])
+        self.assertEqual(prose_positions[1], prose_positions[2])
+
     def test_svgbob_stroke_width_in_root_child_and_nested_fences_is_node_local(self):
         path = Path(self.temp.name, 'svgbob.png')
         Image.new('RGBA', (100, 50), (20, 30, 40, 255)).save(path)
