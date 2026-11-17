@@ -627,6 +627,13 @@ not clickable links in JPG output. Code is syntax-highlighted through Pygments
 and embedded as an image; unknown languages fall back to plain text. The root
 `code_theme=` selects the code style.
 
+Markdown prose converts `->`, `<-`, `=>`, and `<=` to →, ←, ⇒, and ⇐,
+including headings, lists, tables, emphasis, and callout titles. Inline code,
+code/diagram fences, and Markdown links keep their literal syntax. Use
+`md rawmarkers` to keep prose arrows literal, or escape either character of an
+individual arrow, for example `\->` or `-\>`. Longer sequences such as `-->`
+and `<==` remain literal.
+
 Angle-bracket autolinks support both HTTP and local-file URLs, for example
 `<https://example.org>` and `<file://filename.md>`. File URLs also work in
 explicit links (`[notes](file:///home/user/notes.md)`) and reference links,
@@ -913,6 +920,35 @@ both `md_wrap=on` and `md_wrap=off`. The setting is local to the node.
 	: +--------+     +--------+
 	: | input  |---->| output |
 	: +--------+     +--------+
+	: ```
+```
+
+Use `svgbob_fill=ccyan` to set the default fill of closed diagram shapes.
+It works on standalone `svgbob` nodes and on `md` nodes for their Svgbob fences.
+Colors can be mindmap tokens (including shades such as `cblue10`), literal
+colors such as `#dffdfa`, or quoted gradients such as
+`svgbob_fill="linear-gradient(ccyan, cblue)"`. The default without this attribute
+remains transparent. Use `svgbob_fill=none` or `svgbob_fill=ctrans` for an explicit
+transparent default.
+
+Legend fill rules override this default, including `fill: none` for individual
+transparent shapes. Text, connector strokes, arrowheads, and the outer diagram
+canvas keep their existing colors. The setting is local to the node and does
+not change the node's own background color. Connected rectangular outlines are
+also recovered for filling; open contours are not automatically closed.
+
+```text
+# Example
+	: md noheader md_wrap=off svgbob_fill=ccyan
+	:
+	: ```svgbob
+	: +------------+    +------------+
+	: | default    |--->| override   |
+	: |            |    |  {special} |
+	: +------------+    +------------+
+	:
+	: # Legend:
+	: special = { fill: cred; }
 	: ```
 ```
 
