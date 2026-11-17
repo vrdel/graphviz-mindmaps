@@ -155,6 +155,66 @@ class MarkdownTests(unittest.TestCase):
         self.assertIn('😐', dot)
         self.graphviz(dot)
 
+    def test_markdown_arrows_preserve_styles_and_work_in_nested_blocks(self):
+        source = ('# heading -> next\n\n'
+                  '**bold <- previous** *italic => next* ~~strike <= previous~~ ==marked a=>b==\n\n'
+                  '* list a->b\n\n> quote a<-b\n\n'
+                  '| relation | direction |\n| --- | --- |\n| a=>b | a<=b |\n\n'
+                  '::: note Callout -> title\nbody <- other\n:::')
+        def all_runs(blocks):
+            return [run for block in blocks for run in block.runs] + [
+                run for block in blocks for run in all_runs(block.children)]
+        blocks = ParseMarkdown(MarkdownBody(source, '<input>', 'arrows', 1))
+        runs = all_runs(blocks)
+        self.assertIn('heading → next', ''.join(run.text for run in runs))
+        self.assertTrue(any('←' in run.text and run.bold for run in runs))
+        self.assertTrue(any('⇒' in run.text and run.italic for run in runs))
+        self.assertTrue(any('⇐' in run.text and run.strike for run in runs))
+        self.assertTrue(any('a⇒b' in run.text and run.highlight for run in runs))
+        for text in ('list a→b', 'quote a←b', 'a⇒b', 'a⇐b', 'Callout → title', 'body ← other'):
+            self.assertIn(text, ''.join(run.text for run in runs))
+        for root in (False, True):
+            lines = (['# Root', '\t: fname=out.jpg md noheader'] +
+                     ['\t: ' + line for line in source.splitlines()]
+                     if root else self.outline(source, 'md noheader'))
+            dot = self.render(lines)
+            for arrow in '→←⇒⇐':
+                self.assertIn(arrow, dot)
+            self.graphviz(dot)
+
+    def test_markdown_arrows_preserve_escapes_code_links_and_diagram_syntax(self):
+        literals = '-> <- => <='
+        source = (r'\-> \<- \=> \<=' + '\n\n' + r'-\> <\- =\> <\=' + '\n\n'
+                  '`' + literals + '` [label -> <- => <=](file://notes/a=>b.md)\n\n'
+                  '<file://notes/a%3C=b.md>\n\n'
+                  'a-->b c<--d e==>f g<==h\n\n'
+                  '```text\n' + literals + '\n```\n\n'
+                  '```mermaid\nflowchart LR\nA --> B\n```\n\n'
+                  '```svgbob\n+---+   +---+\n| A |-->| B |\n+---+   +---+\n```')
+        body = MarkdownBody(source, '<input>', 'literal arrows', 1)
+        blocks = ParseMarkdown(body)
+        self.assertEqual(literals, ''.join(r.text for r in blocks[0].runs))
+        self.assertEqual(literals, ''.join(r.text for r in blocks[1].runs))
+        self.assertTrue(any(r.code and r.text == literals for r in blocks[2].runs))
+        self.assertTrue(any(r.link and r.text == 'label ' + literals for r in blocks[2].runs))
+        self.assertEqual('file://notes/a<=b.md', ''.join(r.text for r in blocks[3].runs))
+        self.assertEqual('a-->b c<--d e==>f g<==h', ''.join(r.text for r in blocks[4].runs))
+        self.assertEqual(literals + '\n', blocks[5].source)
+        self.assertEqual('flowchart LR\nA --> B\n', blocks[6].source)
+        self.assertIn('| A |-->| B |', blocks[7].source)
+        self.assertFalse(any(arrow in r.text for b in blocks for r in b.runs for arrow in '→←⇒⇐'))
+
+    def test_rawmarkers_preserves_markdown_arrows_and_unspaced_arrows_convert(self):
+        source = 'a->b a<-b a=>b a<=b'
+        body = MarkdownBody(source, '<input>', 'arrows', 1)
+        self.assertEqual('a→b a←b a⇒b a⇐b', ''.join(r.text for r in ParseMarkdown(body)[0].runs))
+        body.rawmarkers = True
+        self.assertEqual(source, ''.join(r.text for r in ParseMarkdown(body)[0].runs))
+        dot = self.render(self.outline(source, 'md rawmarkers md_wrap=off'))
+        for arrow in '→←⇒⇐':
+            self.assertNotIn(arrow, dot)
+        self.graphviz(dot)
+
     def test_markdown_emoticons_preserve_code_and_link_targets(self):
         body = MarkdownBody('**:-)** *:-|* `:-)` [:-)](<https://example.org/:-)>)\n\n'
                             '```text\n:-) :-|\n```', '<input>', 'test', 1)
@@ -1198,7 +1258,7 @@ if ready:
             command_rows = [''.join(parts).replace('\u00a0', ' ') for parts in positions.values()
                             if any(word in ''.join(parts) for word in ('curl', 'uv', 'vim'))]
             with self.subTest(root=root):
-                self.assertEqual(source.splitlines(), command_rows)
+                self.assertEqual(source.replace('<-', '←').splitlines(), command_rows)
                 self.graphviz(dot)
 
     @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')

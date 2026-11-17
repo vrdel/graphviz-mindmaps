@@ -287,6 +287,45 @@ def _autolink_span(state, silent):
     return True
 
 
+ARROWS = {'->': '→', '<-': '←', '=>': '⇒', '<=': '⇐'}
+ARROW_PATTERN = re.compile(r'(?<![<=>-])(?:->|<-|=>|<=)(?![<=>-])')
+
+
+def _arrows(state):
+    """Replace prose arrows before text_join loses Markdown escape boundaries.
+
+    Highlight tokenization can split a plain => into adjacent text tokens; join
+    those tokens here, while keeping escaped punctuation, code, and links opaque.
+    """
+    for block in state.tokens:
+        if block.type != 'inline' or not block.children:
+            continue
+        result = []
+        pending = []
+        link_depth = 0
+
+        def flush():
+            if pending:
+                first = pending[0]
+                first.content = ARROW_PATTERN.sub(lambda match: ARROWS[match.group()],
+                                                  ''.join(token.content for token in pending))
+                result.append(first)
+                pending.clear()
+
+        for token in block.children:
+            if token.type == 'text' and not link_depth:
+                pending.append(token)
+            else:
+                flush()
+                result.append(token)
+                if token.type == 'link_open':
+                    link_depth += 1
+                elif token.type == 'link_close':
+                    link_depth -= 1
+        flush()
+        block.children = result
+
+
 def ParseMarkdown(body, preserve_newlines=False):
     """CommonMark plus tables, strikethrough and ==marks==, without HTML."""
     from markdown_it import MarkdownIt
@@ -305,6 +344,7 @@ def ParseMarkdown(body, preserve_newlines=False):
     parser.inline.ruler.before('emphasis', 'highlight', _highlight_tokenize)
     parser.inline.ruler2.before('emphasis', 'highlight', _highlight_postprocess)
     if not body.rawmarkers:
+        parser.core.ruler.after('inline', 'arrows', _arrows)
         def emoticon(state, silent):
             match = MatchEmoticon(state.src, state.pos)
             if not match:
