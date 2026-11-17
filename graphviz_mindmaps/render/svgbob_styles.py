@@ -30,8 +30,8 @@ def _arguments(value):
     return parts
 
 
-def StyleSvgbobSvg(root, color_tokens):
-    """Transform only paint declarations, never labels, class names, or geometry."""
+def StyleSvgbobSvg(root, color_tokens, default_fill=None):
+    """Resolve diagram paints and give closed shapes an overridable default fill."""
     gradients = {}
     ids = {element.get('id') for element in root.iter()}
 
@@ -125,6 +125,26 @@ def StyleSvgbobSvg(root, color_tokens):
 
     def styles(value):
         return declaration.sub(lambda match: match['prefix'] + paint(match['property'], match['value']), value)
+
+    def shapes(parent):
+        for child in parent:
+            if child.tag == SVG + 'defs':
+                continue  # Default box fill must not recolor arrow markers.
+            yield child
+            yield from shapes(child)
+
+    if default_fill is not None:
+        for element in shapes(root):
+            classes = element.get('class', '').split()
+            closed = element.tag in {SVG + name for name in ('rect', 'circle', 'ellipse', 'polygon')}
+            closed = closed or (element.tag == SVG + 'path' and
+                                re.search(r'[zZ]\s*$', element.get('d', '')) is not None)
+            if 'nofill' in classes and closed and 'backdrop' not in classes:
+                # Presentation attributes have lower priority than legend CSS.
+                # Remove only the base nofill class; keep named tag overrides.
+                element.set('class', ' '.join(c for c in classes if c != 'nofill'))
+                if 'fill' not in element.attrib:
+                    element.set('fill', default_fill)
 
     # Snapshot the elements before adding gradient definitions during traversal.
     for element in list(root.iter()):

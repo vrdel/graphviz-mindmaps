@@ -16,7 +16,7 @@ from graphviz_mindmaps.constants import font, fontcolor
 from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown, ParseMarkdownTitleColors
 from graphviz_mindmaps.render.code_image import RenderCodeImage
 from graphviz_mindmaps.render.mermaid import ParseMermaidFontSize, RenderMermaidImage
-from graphviz_mindmaps.render.svgbob import ParseSvgbobFontSize, ParseSvgbobStrokeWidth, RenderSvgbobImage
+from graphviz_mindmaps.render.svgbob import ParseSvgbobFill, ParseSvgbobFontSize, ParseSvgbobStrokeWidth, RenderSvgbobImage
 
 
 @lru_cache(maxsize=128)
@@ -62,7 +62,7 @@ def AppendMarkdownLabel(label, body_label):
     return head + '<TR><TD ALIGN="LEFT" CELLPADDING="2">' + body_label + '</TD></TR></TABLE>' + closing
 
 
-def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None, title_colors=None, svgbob_stroke_width=None, svgbob_font_size=None, mermaid_font_size=None, svgbob_align=None):
+def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None, title_colors=None, svgbob_stroke_width=None, svgbob_font_size=None, mermaid_font_size=None, svgbob_align=None, svgbob_fill=None):
     # Standalone diagrams grow to their natural dimensions, independent of mdw.
     if body.diagram:
         width = 420
@@ -106,6 +106,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     size = max(1, float(size))
     try:
         heading_colors = ParseMarkdownTitleColors(title_colors)
+        svgbob_fill = ParseSvgbobFill(svgbob_fill)
         svgbob_stroke_width = ParseSvgbobStrokeWidth(svgbob_stroke_width)
         svgbob_font_size = size if svgbob_font_size is None else ParseSvgbobFontSize(svgbob_font_size)
         mermaid_font_size = ParseMermaidFontSize(mermaid_font_size)
@@ -300,7 +301,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 elif is_svgbob:
                     try:
                         path = RenderSvgbobImage(block.source, directory, foreground=foreground,
-                                                 stroke_width=svgbob_stroke_width, font_size=svgbob_font_size)
+                                                 stroke_width=svgbob_stroke_width, font_size=svgbob_font_size,
+                                                 fill=svgbob_fill)
                     except ValueError as exc:
                         raise body.error(str(exc), block.source_line) from exc
                 else:

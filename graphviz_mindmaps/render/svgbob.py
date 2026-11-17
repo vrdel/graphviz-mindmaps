@@ -3,15 +3,16 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
 from xml.etree import ElementTree
 
-from PIL import Image
+from PIL import Image, ImageColor
 
 from graphviz_mindmaps.constants import font
-from graphviz_mindmaps.render.diagram_colors import DiagramColorTokens
+from graphviz_mindmaps.render.diagram_colors import DiagramColorTokens, ResolveDiagramColor
 from graphviz_mindmaps.render.svgbob_styles import StyleSvgbobSvg
 from graphviz_mindmaps.render.svgbob_shapes import RecoverSvgbobRectangles
 
@@ -49,9 +50,29 @@ def ParseSvgbobFontSize(value):
     return int(size)
 
 
-def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font_size=14):
+def ParseSvgbobFill(value):
+    if value is None:
+        return None
+    value = str(value).strip()
+    tokens = DiagramColorTokens()
+    try:
+        if re.match(r'(?:linear|radial)-gradient\b', value, re.I):
+            root = ElementTree.Element('{http://www.w3.org/2000/svg}svg')
+            ElementTree.SubElement(root, '{http://www.w3.org/2000/svg}rect', fill=value)
+            StyleSvgbobSvg(root, tokens)
+        else:
+            color = ResolveDiagramColor(value, tokens)
+            if color.lower() not in {'none', 'transparent'}:
+                ImageColor.getcolor(color, 'RGBA')
+    except (ValueError, TypeError) as exc:
+        raise ValueError(f'svgbob_fill must be a valid color, mindmap color token, or gradient: {value!r}') from exc
+    return value
+
+
+def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font_size=14, fill=None):
     stroke_width = ParseSvgbobStrokeWidth(stroke_width)
     font_size = ParseSvgbobFontSize(font_size)
+    fill = ParseSvgbobFill(fill)
     executable = FindSvgbob()
     rasterizer = shutil.which('rsvg-convert')
     if not executable:
@@ -63,7 +84,8 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
         stamp = Path(executable).stat()
         color_tokens = DiagramColorTokens()
         payload = json.dumps({'source': source, 'foreground': foreground, 'font': font['mono'],
-                              'render_version': 2,
+                              'render_version': 3,
+                              'fill': fill,
                               'stroke_width': stroke_width,
                               'font_size': font_size,
                               'color_tokens': color_tokens,
@@ -93,8 +115,8 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
                 raise ValueError(f'Svgbob returned invalid SVG: {exc}') from exc
             if root.tag != '{http://www.w3.org/2000/svg}svg':
                 raise ValueError('Svgbob returned invalid SVG: missing SVG root')
-            RecoverSvgbobRectangles(root)
-            svgfile.write_text(StyleSvgbobSvg(root, color_tokens), encoding='utf-8')
+            RecoverSvgbobRectangles(root, all_rectangles=fill is not None)
+            svgfile.write_text(StyleSvgbobSvg(root, color_tokens, default_fill=fill), encoding='utf-8')
             result = subprocess.run([rasterizer, '-o', str(pending), str(svgfile)],
                                     text=True, capture_output=True, timeout=30)
             if result.returncode:

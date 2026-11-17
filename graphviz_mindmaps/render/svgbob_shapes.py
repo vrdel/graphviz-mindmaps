@@ -41,8 +41,8 @@ def _covers(segments, start, end):
     return False
 
 
-def RecoverSvgbobRectangles(root):
-    """Restore missing tag owners using closed SVG line cycles, without moving edges."""
+def RecoverSvgbobRectangles(root, all_rectangles=False):
+    """Recover tagged rectangles, or all closed rectangular faces when requested."""
     elements = list(_elements(root))
     tags = []
     for parent, element in elements:
@@ -50,7 +50,7 @@ def RecoverSvgbobRectangles(root):
             match = re.fullmatch(r'\{([A-Za-z_]\w*(?:,[A-Za-z_]\w*)*)\}', element.text or '')
             if match:
                 tags.append((parent, element, match.group(1).split(',')))
-    if not tags:
+    if not tags and not all_rectangles:
         return
     horizontal, vertical = defaultdict(list), defaultdict(list)
     for _, element in elements:
@@ -77,6 +77,20 @@ def RecoverSvgbobRectangles(root):
             bounds = min(candidates, key=lambda box: (box[2] - box[0]) * (box[3] - box[1]))
             recovered.setdefault(bounds, set()).update(classes)
             parent.remove(tag)
+    if all_rectangles:
+        # Untagged rectangles touching connectors can also be emitted as lines.
+        # Recover closed rectangular faces, excluding spans across grid columns.
+        xs = sorted(vertical)
+        for index, left in enumerate(xs):
+            for right in xs[index + 1:]:
+                levels = sorted(y for y, spans in horizontal.items() if _covers(spans, left, right))
+                for top, bottom in zip(levels, levels[1:]):
+                    if not (_covers(vertical[left], top, bottom) and _covers(vertical[right], top, bottom)):
+                        continue
+                    if any(left < x < right and _covers(spans, top, bottom)
+                           for x, spans in vertical.items()):
+                        continue
+                    recovered.setdefault((left, top, right, bottom), set())
     # Add enclosing fills first so nested rectangles remain visible.
     insertion = next((index + 1 for index, element in enumerate(root)
                       if 'backdrop' in element.get('class', '').split()), 0)

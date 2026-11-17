@@ -8,7 +8,7 @@ from xml.etree import ElementTree
 
 from PIL import Image, ImageColor
 
-from graphviz_mindmaps.render.svgbob import FindSvgbob, RenderSvgbobImage
+from graphviz_mindmaps.render.svgbob import FindSvgbob, ParseSvgbobFill, RenderSvgbobImage
 from graphviz_mindmaps.model.document import MarkdownBody
 from graphviz_mindmaps.render.markdown import RenderMarkdown
 from graphviz_mindmaps.constants import vrbtcolors
@@ -20,6 +20,54 @@ HAS_SVGBOB = bool(FindSvgbob() and shutil.which('rsvg-convert'))
 
 
 class SvgbobTests(unittest.TestCase):
+    def test_default_fill_validation(self):
+        self.assertIsNone(ParseSvgbobFill(None))
+        for value in ('ccyan', 'cred-10', 'ctrans', 'none', 'transparent', '#f9f', 'red',
+                      'linear-gradient(90deg, ccyan, cblue)', 'radial-gradient(cwhite, cgreen)'):
+            self.assertEqual(value, ParseSvgbobFill(value))
+        for value in ('', 'unknown', 'cunknown', 'linear-gradient(ccyan)', '#gggggg'):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'svgbob_fill'):
+                ParseSvgbobFill(value)
+
+    @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
+    def test_real_default_fill_legend_overrides_transparency_themes_and_cache(self):
+        source = '''+------------+    +------------+    +------------+
+| default    |--->| override   |--->| clear      |
+|            |    |  {special} |    |    {clear} |
++------------+    +------------+    +------------+
+
+# Legend:
+special = {fill: cred;}
+clear = {fill: none;}
+'''
+        self.addCleanup(ApplyTheme, 'default')
+        outputs = []
+        with tempfile.TemporaryDirectory() as directory:
+            for theme in ('default', 'nord'):
+                ApplyTheme(theme)
+                output = RenderSvgbobImage(source, directory, fill='ccyan')
+                outputs.append(output)
+                root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
+                boxes = sorted([e for e in root.iter('{http://www.w3.org/2000/svg}rect')
+                                if 'backdrop' not in e.get('class', '')], key=lambda e: float(e.get('x')))
+                self.assertEqual(3, len(boxes))
+                with Image.open(output) as image:
+                    rgba = image.convert('RGBA')
+                    pixels = [rgba.getpixel((round(float(b.get('x')) + 5), round(float(b.get('y')) + 5)))
+                              for b in boxes]
+                    self.assertEqual(ImageColor.getcolor(vrbtcolors['ccyan'], 'RGBA'), pixels[0])
+                    self.assertEqual(ImageColor.getcolor(vrbtcolors['cred'], 'RGBA'), pixels[1])
+                    self.assertEqual(0, pixels[2][3])
+                    self.assertEqual(0, rgba.getpixel((0, 0))[3])
+                with patch('graphviz_mindmaps.render.svgbob.subprocess.run') as run:
+                    self.assertEqual(output, RenderSvgbobImage(source, directory, fill='ccyan'))
+                    run.assert_not_called()
+                other = RenderSvgbobImage(source, directory, fill='#123456')
+                self.assertNotEqual(output, other)
+                gradient = RenderSvgbobImage(source, directory, fill='linear-gradient(ccyan,cblue)')
+                self.assertIn('linearGradient', gradient.with_suffix('.svg').read_text())
+            self.assertNotEqual(outputs[0], outputs[1])
+
     def test_missing_dependencies(self):
         with tempfile.TemporaryDirectory() as directory:
             with patch('graphviz_mindmaps.render.svgbob.FindSvgbob', return_value=None):

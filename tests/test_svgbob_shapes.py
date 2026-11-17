@@ -18,6 +18,20 @@ class SvgbobShapeTests(unittest.TestCase):
                                                       map(str, (x1, y1, x2, y2)))))
         return group
 
+    def test_untagged_connected_rectangles_and_grid_cells_recover_only_when_requested(self):
+        root = self.root()
+        self.outline(root, 10, 20, 110, 120)
+        self.outline(root, 110, 20, 210, 120)
+        connector = ET.SubElement(root, SVG + 'line', x1='210', y1='70', x2='250', y2='70')
+        before = ET.tostring(root)
+        RecoverSvgbobRectangles(root)
+        self.assertEqual(before, ET.tostring(root))
+        RecoverSvgbobRectangles(root, all_rectangles=True)
+        boxes = [node for node in root.iter(SVG + 'rect') if node.get('class') != 'backdrop']
+        self.assertEqual(2, len(boxes))
+        self.assertEqual(['100', '100'], [node.get('width') for node in boxes])
+        self.assertEqual([connector], list(root.iter(SVG + 'line')))
+
     def test_connected_box_recovers_tag_and_preserves_arrow_and_label(self):
         root = self.root()
         group = self.outline(root, 10, 20, 110, 120)

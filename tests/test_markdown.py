@@ -749,6 +749,34 @@ if ready:
                         with self.assertRaisesRegex(ValueError, r'<input>:\d+: .*svgbob_stroke_width'):
                             self.render(lines('svgbob_stroke_width=' + value))
 
+    def test_svgbob_fill_is_node_local_in_root_child_and_nested_fences(self):
+        path = Path(self.temp.name, 'filled-svgbob.png')
+        Image.new('RGBA', (80, 40), (20, 30, 40, 255)).save(path)
+        for mode in ('md', 'svgbob'):
+            source = ('> ```svgbob\n> +---+\n> | A |\n> +---+\n> ```'
+                      if mode == 'md' else '+---+\n| A |\n+---+')
+            for root in (False, True):
+                def lines(option):
+                    attrs = mode + ' ' + option
+                    return (['# Root', '\t: fname=out.jpg ' + attrs] +
+                            ['\t: ' + line for line in source.splitlines()]
+                            if root else self.outline(source, attrs))
+                with self.subTest(mode=mode, root=root), patch(
+                    'graphviz_mindmaps.render.markdown.RenderSvgbobImage', return_value=path,
+                ) as render:
+                    original = self.render(lines(''))
+                    self.assertIsNone(render.call_args.kwargs['fill'])
+                    self.assertEqual(original, self.render(lines('svgbob_fill=ccyan')))
+                    self.assertEqual('ccyan', render.call_args.kwargs['fill'])
+                    self.render(lines('svgbob_fill="linear-gradient(ccyan, cblue)"'))
+                    self.assertEqual('linear-gradient(ccyan, cblue)', render.call_args.kwargs['fill'])
+                    siblings = lines('svgbob_fill=cred') + self.outline('+---+', 'svgbob')[2:]
+                    self.render(siblings)
+                    self.assertCountEqual(['cred', None], [call.kwargs['fill'] for call in render.call_args_list[-2:]])
+                    for value in ('invalid-color', 'cunknown'):
+                        with self.assertRaisesRegex(ValueError, r'<input>:\d+: .*svgbob_fill'):
+                            self.render(lines('svgbob_fill=' + value))
+
     def test_svgbob_font_size_defaults_validation_and_node_scope(self):
         path = Path(self.temp.name, 'svgbob.png')
         Image.new('RGBA', (100, 50), (20, 30, 40, 255)).save(path)

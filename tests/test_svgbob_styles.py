@@ -9,6 +9,32 @@ PALETTE = {'ccyan': '#aaddff', 'cblue': '#224488', 'cred': '#ffaaaa',
 
 
 class SvgbobStyleTests(unittest.TestCase):
+    def test_default_fill_is_low_priority_and_excludes_canvas_text_and_markers(self):
+        root = ET.fromstring('''<svg xmlns="http://www.w3.org/2000/svg">
+          <style>.svgbob .nofill {fill:transparent;} .svgbob .special {fill:cred;}</style>
+          <rect class="backdrop" fill="transparent"/>
+          <rect class="solid nofill"/>
+          <rect class="solid nofill special"/>
+          <rect class="solid nofill" fill="none"/>
+          <path class="nofill" d="M0,0 L10,10"/>
+          <path class="nofill" d="M0,0 L10,10 Z"/>
+          <text fill="black">label</text><polygon class="filled" fill="black"/>
+          <defs><marker id="open"><circle class="nofill"/></marker></defs>
+        </svg>''')
+        result = ET.fromstring(StyleSvgbobSvg(root, PALETTE, default_fill='ccyan'))
+        rects = result.findall(SVG + 'rect')
+        self.assertEqual('transparent', rects[0].get('fill'))
+        self.assertEqual('#aaddff', rects[1].get('fill'))
+        self.assertEqual('#aaddff', rects[2].get('fill'))
+        self.assertEqual('solid special', rects[2].get('class'))
+        self.assertIn('.special {fill:#ffaaaa;}', result.find(SVG + 'style').text)
+        self.assertEqual('none', rects[3].get('fill'))
+        self.assertIsNone(result.findall(SVG + 'path')[0].get('fill'))
+        self.assertEqual('#aaddff', result.findall(SVG + 'path')[1].get('fill'))
+        self.assertEqual('black', result.find(SVG + 'text').get('fill'))
+        self.assertEqual('black', result.find(SVG + 'polygon').get('fill'))
+        self.assertIsNone(result.find('.//' + SVG + 'marker/' + SVG + 'circle').get('fill'))
+
     def test_tokens_aliases_shades_and_literal_text(self):
         root = ET.fromstring('''<svg xmlns="http://www.w3.org/2000/svg">
           <style>.box {fill:ccyan;stroke:cred-10;stroke-width:4px;color:corange10;}
