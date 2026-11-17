@@ -896,6 +896,26 @@ and retain their natural dimensions. A color attribute such as `ccyan` sets the
 surrounding node's background. Fences fit `mdw` with `md_wrap=on`; with
 `md_wrap=off`, they retain natural dimensions and the node expands to fit them.
 Root nodes and fences nested in lists, blockquotes, and containers also work.
+Use `svgbob_align=center` on an `md` node to center its fenced Svgbob diagrams
+within the Markdown content width. `svgbob_align=left` is the default;
+`svgbob_align=right` is also supported. This affects only Svgbob image placement,
+including fences inside lists, blockquotes, or callouts, within their containing
+block. It leaves prose alignment and diagram size unchanged, and works with
+both `md_wrap=on` and `md_wrap=off`. The setting is local to the node.
+
+```text
+# noheader
+	: md md_wrap=off noheader ctrans svgbob_stroke_width=1 svgbob_align=center
+	:
+	: * A longer explanation stays left aligned above the diagram.
+	:
+	: ```svgbob
+	: +--------+     +--------+
+	: | input  |---->| output |
+	: +--------+     +--------+
+	: ```
+```
+
 Use `svgbob_stroke_width=1` for thinner lines or `svgbob_stroke_width=4` for
 thicker lines. The default remains `2`. Values must be finite and nonnegative;
 fractions such as `0.5` are supported. Set the attribute on a standalone
