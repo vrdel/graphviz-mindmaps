@@ -309,7 +309,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
                                            code_theme, transparent_background=True)
                 alignment = svgbob_align.upper() if is_svgbob else 'LEFT'
-                content = image(Path(path), available, block.source_line, constrain=not natural_diagram)
+                content = image(Path(path), available, block.source_line,
+                                constrain=wrap and not body.diagram)
                 if is_svgbob and alignment != 'LEFT':
                     # Graphviz can change an IMG's viewport when its TD is
                     # centered directly. Align an intrinsic-size table instead,

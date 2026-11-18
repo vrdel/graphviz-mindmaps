@@ -817,9 +817,13 @@ can exceed `mdw`, and short lines can produce a narrower node. Lists remain
 left-aligned when other paragraphs or headings are wider than the list. Markdown
 formatting, headings, and blank-line paragraph boundaries still work. This also
 works on root Markdown nodes. `md_wrap=on` (the default) joins ordinary paragraph
-lines with spaces and wraps text to the target width. Mermaid fences keep their
-natural size when wrapping is off, including inside lists, quotes, and containers.
-Other code and image sizing continues to follow `mdw` in either mode.
+lines with spaces and wraps text to the target width. Mermaid and Svgbob
+diagrams, fenced code, and indented code blocks keep their natural width and
+height when wrapping is off, including inside lists, quotes, and containers.
+The node expands to fit
+these blocks instead of shrinking them to `mdw` or the usual image-height cap.
+With wrapping on, they continue to fit `mdw`. Ordinary Markdown image sizing
+continues to follow `mdw` in either mode.
 
 ```text
 \t# Project setup

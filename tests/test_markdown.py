@@ -1035,6 +1035,56 @@ if ready:
             with self.assertRaisesRegex(ValueError, "<input>:5: Mermaid node 'Diagram': Pele"):
                 self.render(self.outline('bad diagram', 'mermaid', 'Diagram'))
 
+    def test_code_blocks_follow_wrap_setting_without_changing_source_images(self):
+        path = Path(self.temp.name, 'large-code.png')
+        Image.new('RGBA', (1200, 1100), (20, 30, 40, 255)).save(path, dpi=(96, 96))
+        original = path.read_bytes()
+        fence = '```sh\nsudo flatpak install example.flatpak\nflatpak info org.example.App\n```'
+        for root in (False, True):
+            for wrap in ('off', 'on'):
+                for source in (fence, '    command one\n    command two',
+                               '> ' + fence.replace('\n', '\n> '),
+                               '* item\n\n  ' + fence.replace('\n', '\n  '),
+                               '::: note Commands\n' + fence + '\n:::'):
+                    attrs = 'md noheader mdw=100 md_wrap=' + wrap
+                    lines = (['# Root', '\t: fname=out.jpg ' + attrs] +
+                             ['\t: ' + line for line in source.splitlines()]
+                             if root else self.outline(source, attrs))
+                    with self.subTest(root=root, wrap=wrap, source=source), patch(
+                        'graphviz_mindmaps.render.markdown.RenderCodeImage', return_value=str(path),
+                    ):
+                        dot = self.render(lines)
+                        image = re.findall(r'<IMG SRC="([^"]+)"', dot)[0]
+                        if wrap == 'off':
+                            self.assertEqual(str(path), image)
+                            if shutil.which('dot'):
+                                result = subprocess.run(['dot', '-Tplain'], input=dot, text=True,
+                                                        capture_output=True, check=True)
+                                name = 'node node1 ' if root else 'node node101 '
+                                node = next(line.split() for line in result.stdout.splitlines()
+                                            if line.startswith(name))
+                                self.assertGreaterEqual(float(node[4]) * 72, 900)
+                                self.assertGreaterEqual(float(node[5]) * 72, 825)
+                        else:
+                            self.assertNotEqual(str(path), image)
+                            with Image.open(image) as resized:
+                                self.assertLessEqual(resized.width, 100)
+                                self.assertLessEqual(resized.height, 900)
+        self.assertEqual(original, path.read_bytes())
+
+    def test_shell_example_keeps_original_highlighted_code_image_when_unwrapped(self):
+        source = ('<https://github.com/deskflow/deskflow/releases>\n\n```sh\n'
+                  'sudo flatpak install deskflow-1.27.0-linux-x86_64.flatpak\n'
+                  'flatpak info --show-location org.deskflow.deskflow\n```')
+        dot = self.render(self.outline(source, 'md noheader cyello md_wrap=off'))
+        image = Path(re.findall(r'<IMG SRC="([^"]+)"', dot)[0])
+        self.assertEqual('code', image.parent.name)
+        with Image.open(image) as code:
+            self.assertGreater(code.width, 420)
+            self.assertEqual('RGBA', code.mode)
+        self.assertFalse(list(Path(self.temp.name).glob('md-image-*')))
+        self.graphviz(dot)
+
     def test_unwrapped_mermaid_fences_keep_natural_width_and_height(self):
         path = Path(self.temp.name, 'large-diagram.png')
         Image.new('RGBA', (1200, 1000), (220, 240, 240, 255)).save(path, dpi=(96, 96))
