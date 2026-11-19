@@ -1073,9 +1073,9 @@ if ready:
         self.assertEqual(original, path.read_bytes())
 
     def test_shell_example_keeps_original_highlighted_code_image_when_unwrapped(self):
-        source = ('<https://github.com/deskflow/deskflow/releases>\n\n```sh\n'
-                  'sudo flatpak install deskflow-1.27.0-linux-x86_64.flatpak\n'
-                  'flatpak info --show-location org.deskflow.deskflow\n```')
+        source = ('<https://example.org/downloads/releases>\n\n```sh\n'
+                  'sudo flatpak install sample-app-1.2.3-linux-x86_64.flatpak\n'
+                  'flatpak info --show-location org.example.SampleApp\n```')
         dot = self.render(self.outline(source, 'md noheader cyello md_wrap=off'))
         image = Path(re.findall(r'<IMG SRC="([^"]+)"', dot)[0])
         self.assertEqual('code', image.parent.name)
@@ -1320,8 +1320,8 @@ if ready:
     @unittest.skipUnless(shutil.which('dot'), 'Graphviz is required')
     def test_markdown_wrap_off_preserves_source_lines_without_auto_wrapping(self):
         from xml.etree import ElementTree
-        source = ('curl -LsSf https://astral.sh/uv/install.sh | sh\n'
-                  'uv\nvim .oh-my-zsh/oh-my-zsh.sh <- uv plugin')
+        source = ('curl -LsSf https://example.org/tools/install.sh | sh\n'
+                  'toolctl\nvim config/shell/plugins.sh <- tool plugin')
         for root in (False, True):
             attrs = 'md noheader fontmono mdw=90 md_wrap=off'
             lines = (['# Root', '\t: fname=out.jpg ' + attrs] +
@@ -1334,7 +1334,7 @@ if ready:
             for element in ElementTree.fromstring(result.stdout).iter('{http://www.w3.org/2000/svg}text'):
                 positions.setdefault(float(element.attrib['y']), []).append(element.text or '')
             command_rows = [''.join(parts).replace('\u00a0', ' ') for parts in positions.values()
-                            if any(word in ''.join(parts) for word in ('curl', 'uv', 'vim'))]
+                            if any(word in ''.join(parts) for word in ('curl', 'toolctl', 'vim'))]
             with self.subTest(root=root):
                 self.assertEqual(source.replace('<-', '←').splitlines(), command_rows)
                 self.graphviz(dot)

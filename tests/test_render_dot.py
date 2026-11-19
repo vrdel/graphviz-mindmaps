@@ -53,7 +53,7 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
                         with self.subTest(theme=theme, tokens=tokens):
                             runtime = build_runtime(theme)
                             blocks = ExtractMindmapBlocks([
-                                '# Root', '\t: fname=out.jpg', '\t# CRV, NEAR',
+                                '# Root', '\t: fname=out.jpg', '\t# Item A, B',
                                 '\t\t: ' + ' '.join(tokens),
                             ], ApplyInlineBacktickBold)
                             session = RenderSession(tmpdir=[directory])

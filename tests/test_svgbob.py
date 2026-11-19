@@ -207,19 +207,19 @@ fade = { fill: linear-gradient(90deg, ccyan, ctrans); }
     def test_real_tagged_rectangle_with_touching_arrows_gets_colored(self):
         source = '''+------------+     +------------------+     +------------+
 | Source     |---->| Filter processor |---->| Topology   |
-|            |     |           {cpas} |     |            |
+|            |     |           {base} |     |            |
 +------------+     +------------------+     +------------+
 
 # Legend:
-cpas = { fill: ccyan; stroke: cred-10; }
+base = { fill: ccyan; stroke: cred-10; }
 '''
         with tempfile.TemporaryDirectory() as directory:
             output = RenderSvgbobImage(source, directory, stroke_width=1)
             root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
             namespace = '{http://www.w3.org/2000/svg}'
             rectangle = next(node for node in root.iter(namespace + 'rect')
-                             if 'cpas' in node.get('class', '').split())
-            self.assertNotIn('{cpas}', ''.join(node.text or '' for node in root.iter(namespace + 'text')))
+                             if 'base' in node.get('class', '').split())
+            self.assertNotIn('{base}', ''.join(node.text or '' for node in root.iter(namespace + 'text')))
             self.assertIn('Filter', ''.join(root.itertext()))
             raw = subprocess.run([FindSvgbob()], input=source, text=True,
                                  capture_output=True, check=True)
@@ -235,11 +235,11 @@ cpas = { fill: ccyan; stroke: cred-10; }
     def test_real_font_size_scales_text_grid_and_cache(self):
         source = '''+------------+     +------------------+     +------------+
 | Source     |---->| Filter processor |---->| Topology   |
-|            |     |           {cpas} |     |            |
+|            |     |           {base} |     |            |
 +------------+     +------------------+     +------------+
 
 # Legend:
-cpas = { fill: linear-gradient(90deg, ccyan, cblue); }
+base = { fill: linear-gradient(90deg, ccyan, cblue); }
 '''
         with tempfile.TemporaryDirectory() as directory:
             default = RenderSvgbobImage(source, directory)
@@ -252,9 +252,9 @@ cpas = { fill: linear-gradient(90deg, ccyan, cblue); }
                 root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
                 self.assertIn(f'font-size: {size}px', ''.join(root.itertext()))
                 self.assertIn('stroke-width: 2;', ''.join(root.itertext()))
-                self.assertTrue(any('cpas' in node.get('class', '').split()
+                self.assertTrue(any('base' in node.get('class', '').split()
                                     for node in root.iter('{http://www.w3.org/2000/svg}rect')))
-                self.assertNotIn('{cpas}', ''.join(root.itertext()))
+                self.assertNotIn('{base}', ''.join(root.itertext()))
                 with Image.open(output) as image:
                     for expected, actual in zip(baseline, image.size):
                         self.assertAlmostEqual(expected * size / 14, actual, delta=1)
