@@ -962,6 +962,28 @@ automatically closed.
 	: ```
 ```
 
+Use `svgbob_sketch=on` for hand-drawn borders and connectors. Adjust their
+irregularity with `svgbob_roughness=0.5` (subtle), `1` (default), or `2` (stronger);
+the accepted range is 0–5. Sketching is off by default. Text, solid/gradient
+fills, and arrowheads keep their existing rendering. A fixed seed makes repeated
+renders consistent. The canvas can expand slightly to include the rough strokes.
+It works on standalone Svgbob nodes and Markdown fences, with node-local settings.
+
+```text
+# Diagram
+	: md noheader md_wrap=off svgbob_sketch=on svgbob_roughness=1 svgbob_fill=ccyan
+	:
+	: ```svgbob
+	: +---------+     +---------+
+	: | input   |---->| output  |
+	: +---------+     +---------+
+	: ```
+```
+
+Sketching requires Node.js and the optional [Rough.js](https://roughjs.com/) dependency. Run `npm ci`
+in this repository, or `npm install roughjs@4.6.6` in a wheel project's working
+directory. Regular Svgbob rendering continues to work without Node.js/Rough.js.
+
 Svgbob text prefers **Comic True Mono** when fontconfig finds that installed
 family, falling back to **DejaVu Sans Mono** otherwise. The selected font is used
 for both standalone nodes and Markdown fences, label bounds, and the image
