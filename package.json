@@ -1,11 +1,12 @@
 {
   "name": "graphviz-mindmaps-diagrams",
   "private": true,
-  "description": "Optional Pele renderer for Mermaid fences in Markdown nodes",
+  "description": "Optional Pele and Rough.js diagram renderers",
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
-    "pele": "1.13.0"
+    "pele": "1.13.0",
+    "roughjs": "4.6.6"
   }
 }

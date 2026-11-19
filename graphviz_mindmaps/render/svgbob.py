@@ -14,6 +14,7 @@ from PIL import Image, ImageColor, ImageFont
 
 from graphviz_mindmaps.constants import SVGBOB_FONT, SVGBOB_FALLBACK_FONT
 from graphviz_mindmaps.render.diagram_colors import DiagramColorTokens, ResolveDiagramColor
+from graphviz_mindmaps.render.svgbob_sketch import ApplySvgbobSketch, ParseSvgbobSketch, SketchProfile
 from graphviz_mindmaps.render.svgbob_styles import StyleSvgbobSvg
 from graphviz_mindmaps.render.svgbob_shapes import RecoverSvgbobRectangles, RecoverSvgbobRoundedRectangles
 
@@ -118,10 +119,12 @@ def ParseSvgbobFill(value):
     return value
 
 
-def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font_size=14, fill=None):
+def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font_size=14, fill=None, sketch=None, roughness=None):
     stroke_width = ParseSvgbobStrokeWidth(stroke_width)
     font_size = ParseSvgbobFontSize(font_size)
     fill = ParseSvgbobFill(fill)
+    sketch, roughness = ParseSvgbobSketch(sketch, roughness)
+    sketch_profile = SketchProfile() if sketch else None
     executable = FindSvgbob()
     rasterizer = shutil.which('rsvg-convert')
     if not executable:
@@ -134,7 +137,9 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
         color_tokens = DiagramColorTokens()
         family = FindSvgbobFont()
         payload = json.dumps({'source': source, 'foreground': foreground, 'font': family,
-                              'render_version': 5,
+                              'render_version': 6,
+                              'sketch': sketch, 'roughness': roughness if sketch else None,
+                              'sketch_profile': sketch_profile,
                               'fill': fill,
                               'stroke_width': stroke_width,
                               'font_size': font_size,
@@ -168,7 +173,12 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
             RecoverSvgbobRectangles(root, all_rectangles=fill is not None)
             RecoverSvgbobRoundedRectangles(root, all_rectangles=fill is not None)
             ExpandSvgbobTextBounds(root, family, font_size)
-            svgfile.write_text(StyleSvgbobSvg(root, color_tokens, default_fill=fill), encoding='utf-8')
+            styled = StyleSvgbobSvg(root, color_tokens, default_fill=fill)
+            if sketch:
+                root = ElementTree.fromstring(styled)
+                ApplySvgbobSketch(root, roughness, stroke_width)
+                styled = ElementTree.tostring(root, encoding='unicode')
+            svgfile.write_text(styled, encoding='utf-8')
             result = subprocess.run([rasterizer, '-o', str(pending), str(svgfile)],
                                     text=True, capture_output=True, timeout=30)
             if result.returncode:

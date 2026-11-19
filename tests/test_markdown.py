@@ -749,6 +749,28 @@ if ready:
                         with self.assertRaisesRegex(ValueError, r'<input>:\d+: .*svgbob_stroke_width'):
                             self.render(lines('svgbob_stroke_width=' + value))
 
+    def test_svgbob_sketch_options_are_node_local_and_validate_with_source_location(self):
+        path = Path(self.temp.name, 'sketch.png')
+        Image.new('RGBA', (80,40), 'black').save(path)
+        for mode in ('svgbob','md'):
+            source = '+---+' if mode == 'svgbob' else '> ```svgbob\n> +---+\n> ```'
+            for root in (False,True):
+                def lines(options):
+                    attrs = mode + ' ' + options
+                    return (['# Root','\t: fname=out.jpg '+attrs] + ['\t: '+l for l in source.splitlines()]
+                            if root else self.outline(source,attrs))
+                with self.subTest(mode=mode,root=root), patch(
+                    'graphviz_mindmaps.render.markdown.RenderSvgbobImage',return_value=path,
+                ) as render:
+                    self.render(lines('svgbob_sketch=on svgbob_roughness=2'))
+                    self.assertTrue(render.call_args.kwargs['sketch'])
+                    self.assertEqual(2,render.call_args.kwargs['roughness'])
+                    self.render(lines('svgbob_sketch=on') + self.outline('+---+','svgbob')[2:])
+                    self.assertCountEqual([True,False],[c.kwargs['sketch'] for c in render.call_args_list[-2:]])
+                    for option in ('svgbob_sketch=bad','svgbob_roughness=nan','svgbob_roughness=6'):
+                        with self.assertRaisesRegex(ValueError,r'<input>:\d+: .*svgbob_'):
+                            self.render(lines(option))
+
     def test_svgbob_fill_is_node_local_in_root_child_and_nested_fences(self):
         path = Path(self.temp.name, 'filled-svgbob.png')
         Image.new('RGBA', (80, 40), (20, 30, 40, 255)).save(path)

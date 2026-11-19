@@ -489,6 +489,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             svgbob_font_size=ParseInlineAttrLine('svgbob_font_size', root_options),
             svgbob_align=ParseInlineAttrLine('svgbob_align', root_options),
             svgbob_fill=ParseInlineAttrLine('svgbob_fill', root_options),
+            svgbob_sketch=ParseInlineAttrLine('svgbob_sketch', root_options),
+            svgbob_roughness=ParseInlineAttrLine('svgbob_roughness', root_options),
         ))
 
     dotbuf += "digraph G {\n\n\tnodesep=\"0.1\";\n\tnewrank=\"true\";\n\tcompound=\"false\";\n\tsplines=\"true\";\n\tordering=out;\n\trankdir=%s;\n\tranksep=0.1;\n\tfontpath=\"%s\";\n\tbgcolor=\"%s\";\n\n\tnode[%s];\n" % (rankdir, FONT_DIR, bgcolor, node_default_attr)
@@ -534,6 +536,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             svgbob_font_size = ParseInlineAttrLine('svgbob_font_size', nextline)
             svgbob_align = ParseInlineAttrLine('svgbob_align', nextline)
             svgbob_fill = ParseInlineAttrLine('svgbob_fill', nextline)
+            svgbob_sketch = ParseInlineAttrLine('svgbob_sketch', nextline)
+            svgbob_roughness = ParseInlineAttrLine('svgbob_roughness', nextline)
             mermaid_font = ParseInlineAttrLine('mermaid_font', nextline)
             mermaid_font_size = ParseInlineAttrLine('mermaid_font_size', nextline)
             code_match = re.search(r"<CODEBLOCK lang=\"([^\"]+)\"(?: style=\"([^\"]+)\")? data=\"([^\"]*)\"/>", label)
@@ -749,6 +753,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     svgbob_font_size=svgbob_font_size,
                     svgbob_align=svgbob_align,
                     svgbob_fill=svgbob_fill,
+                    svgbob_sketch=svgbob_sketch,
+                    svgbob_roughness=svgbob_roughness,
                 )
                 node._label = [AppendMarkdownLabel(''.join(node._label), body_label)]
 
