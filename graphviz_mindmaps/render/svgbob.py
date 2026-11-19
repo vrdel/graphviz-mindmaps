@@ -1,4 +1,5 @@
 """Render ASCII diagrams with the optional Svgbob CLI and librsvg."""
+from functools import lru_cache
 import hashlib
 import json
 import math
@@ -9,12 +10,46 @@ import shutil
 import subprocess
 from xml.etree import ElementTree
 
-from PIL import Image, ImageColor
+from PIL import Image, ImageColor, ImageFont
 
 from graphviz_mindmaps.constants import font
 from graphviz_mindmaps.render.diagram_colors import DiagramColorTokens, ResolveDiagramColor
 from graphviz_mindmaps.render.svgbob_styles import StyleSvgbobSvg
 from graphviz_mindmaps.render.svgbob_shapes import RecoverSvgbobRectangles, RecoverSvgbobRoundedRectangles
+
+
+@lru_cache(maxsize=64)
+def _text_font(family, size):
+    try:
+        path = subprocess.run(['fc-match', '-f', '%{file}', family],
+                              capture_output=True, text=True, check=True, timeout=5).stdout.strip()
+        return ImageFont.truetype(path, size)
+    except (OSError, subprocess.SubprocessError):
+        return ImageFont.truetype('DejaVuSansMono.ttf', size)
+
+
+def ExpandSvgbobTextBounds(root, family, size):
+    """Include quoted labels omitted from Svgbob's geometry-based viewport."""
+    width, height = float(root.get('width')), float(root.get('height'))
+    right, bottom = width, height
+    metric = None
+    for element in root.iter('{http://www.w3.org/2000/svg}text'):
+        text = ''.join(element.itertext()).rstrip()
+        if not text:
+            continue
+        if metric is None:
+            metric = _text_font(family, size)
+        bounds = metric.getbbox(text, anchor='ls')
+        right = max(right, float(element.get('x', 0)) + bounds[2] + 2)
+        bottom = max(bottom, float(element.get('y', 0)) + bounds[3] + 2)
+    if right > width:
+        root.set('width', str(math.ceil(right)))
+    if bottom > height:
+        root.set('height', str(math.ceil(bottom)))
+    for rect in root.findall('{http://www.w3.org/2000/svg}rect'):
+        if 'backdrop' in rect.get('class', '').split():
+            rect.set('width', root.get('width'))
+            rect.set('height', root.get('height'))
 
 
 def FindSvgbob():
@@ -84,7 +119,7 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
         stamp = Path(executable).stat()
         color_tokens = DiagramColorTokens()
         payload = json.dumps({'source': source, 'foreground': foreground, 'font': font['mono'],
-                              'render_version': 4,
+                              'render_version': 5,
                               'fill': fill,
                               'stroke_width': stroke_width,
                               'font_size': font_size,
@@ -117,6 +152,7 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
                 raise ValueError('Svgbob returned invalid SVG: missing SVG root')
             RecoverSvgbobRectangles(root, all_rectangles=fill is not None)
             RecoverSvgbobRoundedRectangles(root, all_rectangles=fill is not None)
+            ExpandSvgbobTextBounds(root, font['mono'], font_size)
             svgfile.write_text(StyleSvgbobSvg(root, color_tokens, default_fill=fill), encoding='utf-8')
             result = subprocess.run([rasterizer, '-o', str(pending), str(svgfile)],
                                     text=True, capture_output=True, timeout=30)

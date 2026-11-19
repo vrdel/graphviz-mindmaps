@@ -122,6 +122,30 @@ clear = {fill: none;}
                         self.assertEqual(ImageColor.getcolor(vrbtcolors['cwhite'],'RGBA'),
                                          image.convert('RGBA').getpixel((round(x+w/2),round(y+h*.8))))
 
+    @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
+    def test_quoted_query_labels_expand_viewport_instead_of_getting_clipped(self):
+        source = ('" ?tags=scope:GROUP_A,GROUP_B "\n'
+                  '" &tags=status:active,inactive "\n'
+                  '" &tags=category:example "\n'
+                  '" &type=GROUP_A,GROUP_B "\n')
+        with tempfile.TemporaryDirectory() as directory:
+            for size in (14,18):
+                with self.subTest(font_size=size):
+                    output = RenderSvgbobImage(source, directory, font_size=size)
+                    root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
+                    labels = list(root.iter('{http://www.w3.org/2000/svg}text'))
+                    self.assertIn('&type=GROUP_A,GROUP_B', labels[-1].text)
+                    baseline = float(labels[-1].get('y'))
+                    self.assertGreater(float(root.get('height')), baseline)
+                    self.assertGreater(float(root.get('width')), 100)
+                    with Image.open(output) as image:
+                        self.assertEqual((int(root.get('width')),int(root.get('height'))), image.size)
+                        alpha = image.convert('RGBA').getchannel('A')
+                        self.assertGreater(alpha.getbbox()[3], baseline - size / 2)
+                    with patch('graphviz_mindmaps.render.svgbob.subprocess.run') as run:
+                        self.assertEqual(output, RenderSvgbobImage(source, directory, font_size=size))
+                        run.assert_not_called()
+
     def test_missing_dependencies(self):
         with tempfile.TemporaryDirectory() as directory:
             with patch('graphviz_mindmaps.render.svgbob.FindSvgbob', return_value=None):
