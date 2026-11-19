@@ -18,6 +18,30 @@
 		: ```
 		:
 		: Source spacing is preserved; the node grows to fit the diagram.
+	# Sketchy standalone diagram
+		: svgbob svgbob_sketch=on svgbob_roughness=1 svgbob_stroke_width=1 svgbob_fill=ccyan
+		:
+		:  .----------.     +-------------+
+		:  |  input   +---->| worker {out}|
+		:  '----------'     +-------------+
+		:
+		: # Legend:
+		: out = { fill: linear-gradient(ccyan, cblue); }
+	# Sketchy Svgbob within Markdown
+		: md noheader md_wrap=off ctrans svgbob_sketch=on svgbob_roughness=2 svgbob_stroke_width=1 svgbob_fill=cwhite svgbob_align=center
+		:
+		: ### Hand-drawn processing pipeline
+		:
+		: ```svgbob
+		:  .----------.     +------------+     +----------+
+		:  | request  +---->| processor  +---->| response |
+		:  '----------'     +------------+     +----------+
+		: ```
+		:
+		: `svgbob_sketch=on` adds repeatable sketch strokes; text and fills stay crisp.
+		: `svgbob_roughness=0.5` is subtle, `1` is the default, and `2` is stronger.
+		: Sketch mode prefers Comic True Mono; regular diagrams use DejaVu Sans Mono.
+		: Set `svgbob_sketch=off` for straight lines. Requires Node.js and Rough.js (`npm ci`).
 	# Application architecture
 		: svgbob svgbob_stroke_width=1.5 fg="#334155"
 		:
