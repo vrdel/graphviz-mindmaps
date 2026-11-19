@@ -447,6 +447,11 @@ move-mm montage.yml archive/
 
 When the source is a justfile, `copy-mm` and `move-mm` include referenced `.otl`, `.yml/.yaml`, wiki, output, and image files. When the source is an individual `.otl` or montage YAML file, the tools first look for a related `justfile`, `Justfile`, or `*.just` in the same directory and then move the same complete bundle. If no related justfile exists, `.otl` sources include their `fname=` output and `img=` attachments; montage YAML sources include referenced images and sibling `.otl` files where present.
 
+Node color attributes such as `cyello` are preserved when images are attached,
+regardless of attribute order. They color the node behind its title and around
+its images. Opaque image pixels cover that background; use a transform color
+suffix such as `img_neg_sk_cyello20=photo.png` to tint the image itself.
+
 Image nodes and attached images support temporary transforms with `img_neg=`, `img_neg_cn=`, `img_gr=`, `img_neg_gr=`, and `img_neg_gr_cn=`. Add the final `sk` stage for a grayscale contour sketch, for example `img_sk=`, `img_neg_sk=`, or `img_neg_gr_cn_sk=`. `cn` applies automatic contrast after the preceding transforms. A final theme color adds an overlay after the other effects. The optional numeric suffix sets its opacity percentage, so `img_sk_cgreen10:photo.png` blends the theme's green into the image at 10%; without a suffix, the overlay defaults to 20%. The supported colors are `cdef`, `cgreen`, `ccyan`, `cblue`, `cpink`, `cred`, `cyello`, `corang`, and `cwhite`. Append `|percent` to proportionally scale a transformed image, for example `img_neg_gr_cn_sk:photo.png|20`. The original image is preserved.
 
 Repeat an image attribute on consecutive lines to add multiple images to one node. Images are placed next to each other in one row, in source order, and the node text spans the full image row:

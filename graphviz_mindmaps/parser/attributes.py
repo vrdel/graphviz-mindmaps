@@ -601,7 +601,8 @@ def ApplyNodeAttributeTokens(
             )
             labelhtml.insert(len(labelhtml) - 1, image_cell)
             state.embedded_image_count += 1
-            state.ntype = "imgil"
+            if state.ntype in {"", "def"}:
+                state.ntype = "imgil"
             continue
 
         if token.find("=") <= 0:

@@ -33,6 +33,48 @@ from graphviz_mindmaps.render.label_html import SpanRowsAcrossImages
 
 
 class RenderDotNodeAttributeTests(unittest.TestCase):
+    def test_attached_images_preserve_explicit_node_colors_in_any_attribute_order(self):
+        from PIL import Image
+        from pathlib import Path
+        from graphviz_mindmaps.cli import build_runtime
+        from graphviz_mindmaps.model.document import RenderSession
+        from graphviz_mindmaps.render.dot import GenDot
+        from graphviz_mindmaps.theme import ApplyTheme
+        self.addCleanup(ApplyTheme, 'default')
+        with tempfile.TemporaryDirectory() as directory:
+            first, second = Path(directory, 'first.png'), Path(directory, 'second.png')
+            Image.new('RGB', (30, 20), 'white').save(first)
+            Image.new('RGB', (30, 20), 'white').save(second)
+            for theme in ('default', 'nord'):
+                for key in ('img', 'img_neg_sk'):
+                    images = [f'{key}={first}', f'{key}={second}']
+                    for tokens in (["cyello", *images], [images[0], "cyello", images[1]],
+                                   [*images, "cyello"], ["ctrans", *images], images):
+                        with self.subTest(theme=theme, tokens=tokens):
+                            runtime = build_runtime(theme)
+                            blocks = ExtractMindmapBlocks([
+                                '# Root', '\t: fname=out.jpg', '\t# CRV, NEAR',
+                                '\t\t: ' + ' '.join(tokens),
+                            ], ApplyInlineBacktickBold)
+                            session = RenderSession(tmpdir=[directory])
+                            with patch('graphviz_mindmaps.render.dot.WriteDot'):
+                                GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None), session, runtime)
+                            node = next(line for line in session.dotbuf.splitlines() if 'node101[' in line)
+                            expected = 'cyello' if 'cyello' in tokens else ('ctrans' if 'ctrans' in tokens else 'imgil')
+                            fill = re.search(r'fillcolor="([^"]+)"', nodetype[expected]).group(1)
+                            self.assertIn(f'fillcolor="{fill}"', node)
+                            self.assertEqual(2, node.count('<IMG SRC='))
+                            self.assertIn('COLSPAN="2"', node)
+                            if shutil.which('dot'):
+                                result = subprocess.run(['dot', '-Tsvg'], input=session.dotbuf, text=True,
+                                                        capture_output=True, check=True)
+                                if fill == 'transparent':
+                                    self.assertRegex(result.stdout, r'fill="(?:none|transparent)"')
+                                else:
+                                    self.assertIn(fill, result.stdout)
+            with Image.open(first) as original:
+                self.assertEqual((255, 255, 255), original.getpixel((0, 0)))
+
     def test_word_font_and_bold_target_second_word_of_first_line(self):
         from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
         from graphviz_mindmaps.render.dot import GenDot
