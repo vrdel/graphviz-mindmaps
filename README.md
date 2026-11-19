@@ -984,8 +984,9 @@ Sketching requires Node.js and the optional [Rough.js](https://roughjs.com/) dep
 in this repository, or `npm install roughjs@4.6.6` in a wheel project's working
 directory. Regular Svgbob rendering continues to work without Node.js/Rough.js.
 
-Svgbob text prefers **Comic True Mono** when fontconfig finds that installed
-family, falling back to **DejaVu Sans Mono** otherwise. The selected font is used
+With `svgbob_sketch=on`, Svgbob text prefers **Comic True Mono** when fontconfig
+finds that installed family, falling back to **DejaVu Sans Mono** if unavailable.
+With sketching off, it always uses **DejaVu Sans Mono**. The selected font is used
 for both standalone nodes and Markdown fences, label bounds, and the image
 cache key. Configure these families with `SVGBOB_FONT` and
 `SVGBOB_FALLBACK_FONT` in [constants.py](graphviz_mindmaps/constants.py).

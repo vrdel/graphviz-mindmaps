@@ -135,7 +135,7 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
     try:
         stamp = Path(executable).stat()
         color_tokens = DiagramColorTokens()
-        family = FindSvgbobFont()
+        family = FindSvgbobFont() if sketch else SVGBOB_FALLBACK_FONT
         payload = json.dumps({'source': source, 'foreground': foreground, 'font': family,
                               'render_version': 6,
                               'sketch': sketch, 'roughness': roughness if sketch else None,

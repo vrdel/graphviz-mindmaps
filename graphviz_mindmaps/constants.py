@@ -77,7 +77,7 @@ font = {
     "balsamiqb": "Balsamiq Sans Bold",
 }
 
-# Preferred and fallback font families for Svgbob diagrams.
+# Preferred sketch font and fallback/default family for Svgbob diagrams.
 SVGBOB_FONT = "Comic True Mono"
 SVGBOB_FALLBACK_FONT = font["mono"]
 

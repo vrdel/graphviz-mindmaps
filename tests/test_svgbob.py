@@ -56,18 +56,24 @@ class SvgbobTests(unittest.TestCase):
                 self.assertEqual('Dejavu Sans Mono', FindSvgbobFont())
 
     @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
-    def test_selected_font_is_used_for_svg_bounds_and_cache_identity(self):
+    def test_selected_font_depends_on_sketch_mode_and_is_used_in_svg_and_cache(self):
         with tempfile.TemporaryDirectory() as directory:
             outputs = []
-            for family in ('Comic True Mono', 'Dejavu Sans Mono'):
-                with patch('graphviz_mindmaps.render.svgbob.FindSvgbobFont', return_value=family):
-                    output = RenderSvgbobImage(SOURCE, directory)
+            for sketch, available, expected in ((False,'Comic True Mono','Dejavu Sans Mono'),
+                                                (True,'Comic True Mono','Comic True Mono'),
+                                                (True,'Dejavu Sans Mono','Dejavu Sans Mono')):
+                with patch('graphviz_mindmaps.render.svgbob.FindSvgbobFont', return_value=available) as resolve, patch(
+                    'graphviz_mindmaps.render.svgbob.ApplySvgbobSketch',
+                ), patch('graphviz_mindmaps.render.svgbob.SketchProfile',return_value={}):
+                    output = RenderSvgbobImage(SOURCE, directory, sketch=sketch)
                     outputs.append(output)
-                    self.assertIn('font-family: ' + family, output.with_suffix('.svg').read_text())
+                    if not sketch:
+                        resolve.assert_not_called()
+                    self.assertIn('font-family: ' + expected, output.with_suffix('.svg').read_text())
                     with patch('graphviz_mindmaps.render.svgbob.subprocess.run') as run:
-                        self.assertEqual(output, RenderSvgbobImage(SOURCE, directory))
+                        self.assertEqual(output, RenderSvgbobImage(SOURCE, directory, sketch=sketch))
                         run.assert_not_called()
-            self.assertNotEqual(outputs[0], outputs[1])
+            self.assertEqual(3,len(set(outputs)))
 
     def test_default_fill_validation(self):
         self.assertIsNone(ParseSvgbobFill(None))
