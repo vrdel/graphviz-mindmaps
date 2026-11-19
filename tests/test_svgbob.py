@@ -8,7 +8,7 @@ from xml.etree import ElementTree
 
 from PIL import Image, ImageColor
 
-from graphviz_mindmaps.render.svgbob import FindSvgbob, ParseSvgbobFill, RenderSvgbobImage
+from graphviz_mindmaps.render.svgbob import FindSvgbob, FindSvgbobFont, ParseSvgbobFill, RenderSvgbobImage
 from graphviz_mindmaps.model.document import MarkdownBody
 from graphviz_mindmaps.render.markdown import RenderMarkdown
 from graphviz_mindmaps.constants import vrbtcolors
@@ -20,6 +20,55 @@ HAS_SVGBOB = bool(FindSvgbob() and shutil.which('rsvg-convert'))
 
 
 class SvgbobTests(unittest.TestCase):
+    def setUp(self):
+        FindSvgbobFont.cache_clear()
+        self.addCleanup(FindSvgbobFont.cache_clear)
+
+    def test_font_selection_uses_configured_constants(self):
+        from types import SimpleNamespace
+        with patch('graphviz_mindmaps.render.svgbob.SVGBOB_FONT', 'Example Mono'), patch(
+            'graphviz_mindmaps.render.svgbob.SVGBOB_FALLBACK_FONT', 'Fallback Mono',
+        ):
+            for matched, expected in (('Example Mono', 'Example Mono'), ('Other Mono', 'Fallback Mono')):
+                FindSvgbobFont.cache_clear()
+                with patch('graphviz_mindmaps.render.svgbob.subprocess.run',
+                           return_value=SimpleNamespace(stdout=matched)) as run:
+                    self.assertEqual(expected, FindSvgbobFont())
+                    self.assertEqual('Example Mono', run.call_args.args[0][-1])
+
+    def test_preferred_font_requires_an_exact_installed_family(self):
+        from types import SimpleNamespace
+        for families, expected in (('Comic True Mono', 'Comic True Mono'),
+                                   ('Other Alias,Comic True Mono', 'Comic True Mono'),
+                                   ('DejaVu Sans Mono', 'Dejavu Sans Mono'),
+                                   ('Comic Sans MS', 'Dejavu Sans Mono')):
+            FindSvgbobFont.cache_clear()
+            with self.subTest(families=families), patch(
+                'graphviz_mindmaps.render.svgbob.subprocess.run',
+                return_value=SimpleNamespace(stdout=families),
+            ) as run:
+                self.assertEqual(expected, FindSvgbobFont())
+                self.assertEqual(expected, FindSvgbobFont())
+                run.assert_called_once()
+        for error in (FileNotFoundError('fontconfig missing'), subprocess.TimeoutExpired('fc-match', 5)):
+            FindSvgbobFont.cache_clear()
+            with patch('graphviz_mindmaps.render.svgbob.subprocess.run', side_effect=error):
+                self.assertEqual('Dejavu Sans Mono', FindSvgbobFont())
+
+    @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
+    def test_selected_font_is_used_for_svg_bounds_and_cache_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            outputs = []
+            for family in ('Comic True Mono', 'Dejavu Sans Mono'):
+                with patch('graphviz_mindmaps.render.svgbob.FindSvgbobFont', return_value=family):
+                    output = RenderSvgbobImage(SOURCE, directory)
+                    outputs.append(output)
+                    self.assertIn('font-family: ' + family, output.with_suffix('.svg').read_text())
+                    with patch('graphviz_mindmaps.render.svgbob.subprocess.run') as run:
+                        self.assertEqual(output, RenderSvgbobImage(SOURCE, directory))
+                        run.assert_not_called()
+            self.assertNotEqual(outputs[0], outputs[1])
+
     def test_default_fill_validation(self):
         self.assertIsNone(ParseSvgbobFill(None))
         for value in ('ccyan', 'cred-10', 'ctrans', 'none', 'transparent', '#f9f', 'red',

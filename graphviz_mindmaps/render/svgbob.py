@@ -12,10 +12,24 @@ from xml.etree import ElementTree
 
 from PIL import Image, ImageColor, ImageFont
 
-from graphviz_mindmaps.constants import font
+from graphviz_mindmaps.constants import SVGBOB_FONT, SVGBOB_FALLBACK_FONT
 from graphviz_mindmaps.render.diagram_colors import DiagramColorTokens, ResolveDiagramColor
 from graphviz_mindmaps.render.svgbob_styles import StyleSvgbobSvg
 from graphviz_mindmaps.render.svgbob_shapes import RecoverSvgbobRectangles, RecoverSvgbobRoundedRectangles
+
+
+@lru_cache(maxsize=1)
+def FindSvgbobFont():
+    """Check the actual matched family: fc-match succeeds even on a fallback."""
+    preferred = SVGBOB_FONT
+    try:
+        families = subprocess.run(['fc-match', '-f', '%{family}', preferred],
+                                  capture_output=True, text=True, check=True, timeout=5).stdout
+        if any(family.strip().casefold() == preferred.casefold() for family in families.split(',')):
+            return preferred
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return SVGBOB_FALLBACK_FONT
 
 
 @lru_cache(maxsize=64)
@@ -118,7 +132,8 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
     try:
         stamp = Path(executable).stat()
         color_tokens = DiagramColorTokens()
-        payload = json.dumps({'source': source, 'foreground': foreground, 'font': font['mono'],
+        family = FindSvgbobFont()
+        payload = json.dumps({'source': source, 'foreground': foreground, 'font': family,
                               'render_version': 5,
                               'fill': fill,
                               'stroke_width': stroke_width,
@@ -136,7 +151,7 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
         pending = directory / (key + '.rendering.png')
         try:
             result = subprocess.run([
-                executable, '--background', 'transparent', '--font-family', font['mono'],
+                executable, '--background', 'transparent', '--font-family', family,
                 '--stroke-color', foreground, '--fill-color', foreground,
                 '--stroke-width', str(stroke_width),
                 '--font-size', str(font_size), '--scale', str(font_size / 14),
@@ -152,7 +167,7 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
                 raise ValueError('Svgbob returned invalid SVG: missing SVG root')
             RecoverSvgbobRectangles(root, all_rectangles=fill is not None)
             RecoverSvgbobRoundedRectangles(root, all_rectangles=fill is not None)
-            ExpandSvgbobTextBounds(root, font['mono'], font_size)
+            ExpandSvgbobTextBounds(root, family, font_size)
             svgfile.write_text(StyleSvgbobSvg(root, color_tokens, default_fill=fill), encoding='utf-8')
             result = subprocess.run([rasterizer, '-o', str(pending), str(svgfile)],
                                     text=True, capture_output=True, timeout=30)

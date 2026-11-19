@@ -903,7 +903,7 @@ The optional installer builds upstream commit
 Node.js is needed for Svgbob. Wheel users can install `svgbob_cli` on PATH, or
 run from a directory containing `.tools/svgbob/bin/svgbob_cli`.
 
-Svgbob preserves source whitespace and uses the `fontmono` family to keep its
+Svgbob preserves source whitespace and uses a monospace font to keep its
 character grid aligned. Text, lines, and solid shapes use the node's foreground
 color (the theme's text color unless overridden with `fg=`). SVG intermediates
 are converted into transparent PNGs and cached within the render session.
@@ -961,6 +961,13 @@ automatically closed.
 	: special = { fill: cred; }
 	: ```
 ```
+
+Svgbob text prefers **Comic True Mono** when fontconfig finds that installed
+family, falling back to **DejaVu Sans Mono** otherwise. The selected font is used
+for both standalone nodes and Markdown fences, label bounds, and the image
+cache key. Configure these families with `SVGBOB_FONT` and
+`SVGBOB_FALLBACK_FONT` in [constants.py](graphviz_mindmaps/constants.py).
+This does not change fonts in other node types.
 
 Use `svgbob_stroke_width=1` for thinner lines or `svgbob_stroke_width=4` for
 thicker lines. The default remains `2`. Values must be finite and nonnegative;

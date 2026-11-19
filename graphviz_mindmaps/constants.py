@@ -77,6 +77,10 @@ font = {
     "balsamiqb": "Balsamiq Sans Bold",
 }
 
+# Preferred and fallback font families for Svgbob diagrams.
+SVGBOB_FONT = "Comic True Mono"
+SVGBOB_FALLBACK_FONT = font["mono"]
+
 fontsize = {"s": "12", "m": "14", "l": "16", "xl": "20", "xxl": "24"}
 
 nodetype = {
