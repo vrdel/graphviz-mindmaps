@@ -68,6 +68,60 @@ clear = {fill: none;}
                 self.assertIn('linearGradient', gradient.with_suffix('.svg').read_text())
             self.assertNotEqual(outputs[0], outputs[1])
 
+    @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
+    def test_connected_rounded_box_gets_default_fill_and_legend_override(self):
+        source = '''                                       +---------+
+                              +------->| worker  |
+       "DATA-SERVICE"         |        | module  |
+ .---------------------.      |        +---------+
+ |"/example/items"     +------+
+ |"/example/sets"      |              +------------+
+ |                     +------------->| processor  |
+ '---------------------'              |  module    |
+                                      +------------+
+                                        Service A
+                                      "worker/client"
+'''
+        svg = '{http://www.w3.org/2000/svg}'
+        with tempfile.TemporaryDirectory() as directory:
+            plain = RenderSvgbobImage(source, directory, stroke_width=1)
+            output = RenderSvgbobImage(source, directory, stroke_width=1, fill='cwhite')
+            before = ElementTree.fromstring(plain.with_suffix('.svg').read_text())
+            after = ElementTree.fromstring(output.with_suffix('.svg').read_text())
+            rect = next(e for e in after.iter(svg + 'rect') if e.get('rx') == '4')
+            self.assertEqual((before.get('width'),before.get('height')), (after.get('width'),after.get('height')))
+            self.assertEqual([e.get('points') for e in before.iter(svg + 'polygon')],
+                             [e.get('points') for e in after.iter(svg + 'polygon')])
+            x,y,w,h = [float(rect.get(k)) for k in ('x','y','width','height')]
+            point = (round(x+8),round(y+h-8))
+            with Image.open(plain) as image:
+                self.assertEqual(0, image.convert('RGBA').getpixel(point)[3])
+            with Image.open(output) as image:
+                self.assertEqual(ImageColor.getcolor(vrbtcolors['cwhite'],'RGBA'), image.convert('RGBA').getpixel(point))
+            # Put an overriding tag in the otherwise blank row of the same box.
+            lines = source.splitlines()
+            lines[6] = lines[6][:3] + '{special}' + lines[6][12:]
+            tagged = '\n'.join(lines) + '\n\n# Legend:\nspecial = { fill: cred; }\n'
+            overridden = RenderSvgbobImage(tagged, directory, stroke_width=1, fill='cwhite')
+            with Image.open(overridden) as image:
+                self.assertEqual(ImageColor.getcolor(vrbtcolors['cred'],'RGBA'), image.convert('RGBA').getpixel(point))
+
+    @unittest.skipUnless(HAS_SVGBOB, 'optional Svgbob CLI and rsvg-convert required')
+    def test_rounded_default_fill_survives_fractionally_scaled_font_coordinates(self):
+        source = " .--------.\n | hello  +---->\n |        |\n '--------'\n"
+        with tempfile.TemporaryDirectory() as directory:
+            for size in (14,18,20,28,36):
+                with self.subTest(font_size=size):
+                    output = RenderSvgbobImage(source, directory, font_size=size, fill='cwhite')
+                    root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
+                    rect = next(e for e in root.iter('{http://www.w3.org/2000/svg}rect')
+                                if float(e.get('rx', '0')) > 0)
+                    self.assertAlmostEqual(4 * size / 14, float(rect.get('rx')), places=4)
+                    x,y,w,h = [float(rect.get(k)) for k in ('x','y','width','height')]
+                    with Image.open(output) as image:
+                        self.assertEqual(ImageColor.getcolor(vrbtcolors['cwhite'],'RGBA'),
+                                         image.convert('RGBA').getpixel((round(x+w/2),round(y+h*.8))))
+
     def test_missing_dependencies(self):
         with tempfile.TemporaryDirectory() as directory:
             with patch('graphviz_mindmaps.render.svgbob.FindSvgbob', return_value=None):

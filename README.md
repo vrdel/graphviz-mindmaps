@@ -943,8 +943,9 @@ transparent default.
 Legend fill rules override this default, including `fill: none` for individual
 transparent shapes. Text, connector strokes, arrowheads, and the outer diagram
 canvas keep their existing colors. The setting is local to the node and does
-not change the node's own background color. Connected rectangular outlines are
-also recovered for filling; open contours are not automatically closed.
+not change the node's own background color. Connected rectangular and rounded rectangular outlines are also recovered for
+filling, preserving corner radii and outgoing connectors. Open contours are not
+automatically closed.
 
 ```text
 # Example

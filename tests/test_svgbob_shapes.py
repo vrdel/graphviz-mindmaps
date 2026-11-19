@@ -1,7 +1,7 @@
 import unittest
 from xml.etree import ElementTree as ET
 
-from graphviz_mindmaps.render.svgbob_shapes import RecoverSvgbobRectangles, SVG
+from graphviz_mindmaps.render.svgbob_shapes import RecoverSvgbobRectangles, RecoverSvgbobRoundedRectangles, SVG
 
 
 class SvgbobShapeTests(unittest.TestCase):
@@ -31,6 +31,45 @@ class SvgbobShapeTests(unittest.TestCase):
         self.assertEqual(2, len(boxes))
         self.assertEqual(['100', '100'], [node.get('width') for node in boxes])
         self.assertEqual([connector], list(root.iter(SVG + 'line')))
+
+    def rounded(self):
+        root = self.root()
+        for path in ('M 14,20 A 4,4 0,0,0 10,24', 'M 106,20 A 4,4 0,0,1 110,24',
+                     'M 10,116 A 4,4 0,0,0 14,120', 'M 110,116 A 4,4 0,0,1 106,120'):
+            ET.SubElement(root, SVG + 'path', d=path, attrib={'class': 'nofill'})
+        for x1, y1, x2, y2 in ((14,20,106,20), (14,120,106,120), (10,24,10,116), (110,24,110,116)):
+            ET.SubElement(root, SVG + 'line', dict(zip(('x1','y1','x2','y2'), map(str,(x1,y1,x2,y2)))))
+        connector = ET.SubElement(root, SVG + 'line', x1='110', y1='60', x2='180', y2='60')
+        return root, connector
+
+    def test_rounded_rectangle_preserves_radius_connectors_and_tags(self):
+        root, connector = self.rounded()
+        arrow = ET.SubElement(root, SVG + 'polygon', points='180,56 188,60 180,64')
+        ET.SubElement(root, SVG + 'text', x='30', y='60').text = 'label'
+        ET.SubElement(root, SVG + 'text', x='40', y='100').text = '{special}'
+        RecoverSvgbobRoundedRectangles(root)
+        rect = root[1]
+        self.assertEqual(('10','20','100','100','4','4'),
+                         tuple(rect.get(k) for k in ('x','y','width','height','rx','ry')))
+        self.assertIn('special', rect.get('class'))
+        self.assertEqual([connector], list(root.iter(SVG + 'line')))
+        self.assertFalse(list(root.iter(SVG + 'path')))
+        self.assertIn(arrow, root)
+        self.assertEqual(['label'], [e.text for e in root.iter(SVG + 'text')])
+
+    def test_rounded_recovery_requires_a_closed_outline_and_is_opt_in_without_tags(self):
+        root, _ = self.rounded()
+        before = ET.tostring(root)
+        RecoverSvgbobRoundedRectangles(root)
+        self.assertEqual(before, ET.tostring(root))
+        # A missing side must not be bridged to produce a filled shape.
+        root.remove(next(e for e in root if e.tag == SVG + 'line'))
+        before = ET.tostring(root)
+        RecoverSvgbobRoundedRectangles(root, all_rectangles=True)
+        self.assertEqual(before, ET.tostring(root))
+        root, _ = self.rounded()
+        RecoverSvgbobRoundedRectangles(root, all_rectangles=True)
+        self.assertEqual('4', root[1].get('rx'))
 
     def test_connected_box_recovers_tag_and_preserves_arrow_and_label(self):
         root = self.root()
