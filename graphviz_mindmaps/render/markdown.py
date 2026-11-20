@@ -17,7 +17,7 @@ from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown, ParseMarkdow
 from graphviz_mindmaps.render.code_image import RenderCodeImage
 from graphviz_mindmaps.render.mermaid import ParseMermaidFontSize, ParseMermaidSketch, RenderMermaidImage, ResolveMermaidBorder
 from graphviz_mindmaps.render.svgbob_sketch import ParseSvgbobSketch
-from graphviz_mindmaps.render.svgbob import ParseSvgbobFill, ParseSvgbobFontSize, ParseSvgbobStrokeWidth, RenderSvgbobImage
+from graphviz_mindmaps.render.svgbob import ParseSvgbobFenceOptions, ParseSvgbobFill, ParseSvgbobFontSize, ParseSvgbobStrokeWidth, RenderSvgbobImage
 
 
 @lru_cache(maxsize=128)
@@ -299,6 +299,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 is_mermaid = kind == 'fence' and block.language.lower() == 'mermaid'
                 is_svgbob = kind == 'fence' and block.language.lower() == 'svgbob'
                 natural_diagram = (is_mermaid or is_svgbob) and (body.diagram or not wrap)
+                alignment = 'LEFT'
                 if is_mermaid:
                     try:
                         path = RenderMermaidImage(block.source, directory,
@@ -308,16 +309,18 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                         raise body.error(str(exc), block.source_line) from exc
                 elif is_svgbob:
                     try:
-                        path = RenderSvgbobImage(block.source, directory, foreground=foreground,
-                                                 stroke_width=svgbob_stroke_width, font_size=svgbob_font_size,
-                                                 fill=svgbob_fill, sketch=svgbob_sketch,
-                                                 roughness=svgbob_roughness)
+                        options = ParseSvgbobFenceOptions(block.fence_options, {
+                            'stroke_width': svgbob_stroke_width, 'font_size': svgbob_font_size,
+                            'fill': svgbob_fill, 'sketch': svgbob_sketch,
+                            'roughness': svgbob_roughness, 'align': svgbob_align,
+                        })
+                        alignment = options.pop('align').upper()
+                        path = RenderSvgbobImage(block.source, directory, foreground=foreground, **options)
                     except ValueError as exc:
                         raise body.error(str(exc), block.source_line) from exc
                 else:
                     path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
                                            code_theme, transparent_background=True)
-                alignment = svgbob_align.upper() if is_svgbob else 'LEFT'
                 content = image(Path(path), available, block.source_line,
                                 constrain=wrap and not body.diagram)
                 if is_svgbob and alignment != 'LEFT':

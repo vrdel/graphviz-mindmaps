@@ -666,6 +666,67 @@ if ready:
                                 self.assertLessEqual(resized.width, 100)
                                 self.assertLessEqual(resized.height, 900)
 
+    def test_svgbob_fence_options_override_node_defaults_without_leaking(self):
+        path = Path(self.temp.name, 'svgbob-options.png')
+        Image.new('RGBA', (120, 60), (20, 30, 40, 255)).save(path)
+        diagram = '+---+\n| A |\n+---+\n```'
+        source = ('```svgbob svgbob_stroke_width=1 svgbob_align=center svgbob_fill=cwhite '
+                  'svgbob_sketch=on svgbob_font_size=18 svgbob_roughness=1.5\n' + diagram +
+                  '\n\n```svgbob svgbob_align=right svgbob_fill="linear-gradient(ccyan, cblue)" '
+                  'svgbob_sketch=off\n' + diagram + '\n\n```svgbob\n' + diagram)
+        attrs = ('md md_wrap=off svgbob_stroke_width=3 svgbob_align=left svgbob_fill=ccyan '
+                 'svgbob_sketch=on svgbob_font_size=16 svgbob_roughness=2')
+        for nested in (source, '> ' + source.replace('\n', '\n> '),
+                       '- item\n\n  ' + source.replace('\n', '\n  '),
+                       '::: info Diagrams\n' + source + '\n:::'):
+            for root in (False, True):
+                lines = (['# Root', '\t: fname=out.jpg ' + attrs] +
+                         ['\t: ' + line for line in nested.splitlines()]
+                         if root else self.outline(nested, attrs))
+                with self.subTest(root=root, source=nested), patch(
+                    'graphviz_mindmaps.render.markdown.RenderSvgbobImage', return_value=path,
+                ) as render:
+                    dot = self.render(lines)
+                    self.assertEqual(3, render.call_count)
+                    first, second, third = [call.kwargs for call in render.call_args_list]
+                    expected = {'foreground': '#000000', 'stroke_width': 3, 'font_size': 16,
+                                'fill': 'ccyan', 'sketch': True, 'roughness': 2}
+                    self.assertEqual(dict(expected, stroke_width=1, font_size=18, fill='cwhite', roughness=1.5), first)
+                    self.assertEqual(dict(expected, fill='linear-gradient(ccyan, cblue)', sketch=False), second)
+                    self.assertEqual(expected, third)
+                    self.assertIn('ALIGN="CENTER"', dot)
+                    self.assertIn('ALIGN="RIGHT"', dot)
+                    self.graphviz(dot)
+        blocks = ParseMarkdown(MarkdownBody(source, '<test>', 'Options', 1))
+        self.assertIn('svgbob_stroke_width=1', blocks[0].fence_options)
+        self.assertEqual('svgbob', blocks[0].language)
+        self.assertEqual('', blocks[-1].fence_options)
+
+    def test_svgbob_fence_option_errors_point_to_fence_opening(self):
+        for option in ('svgbob_stroke_width=-1', 'svgbob_font_size=0',
+                       'svgbob_align=bad', 'svgbob_sketch=yes', 'svgbob_roughness=nan',
+                       'svgbob_fill=bad-color', 'svgbob_fill=', 'svgbob_unknown=1',
+                       'svgbob_sketch', 'svgbob_fill="unterminated'):
+            source = 'Before\n\n```svgbob ' + option + '\n+---+\n```'
+            with self.subTest(option=option), self.assertRaisesRegex(ValueError, r'<input>:7: Markdown node'):
+                self.render(self.outline(source))
+
+    def test_real_svgbob_fences_have_independent_styles_and_share_identical_images(self):
+        from graphviz_mindmaps.render.svgbob import FindSvgbob
+        if not (FindSvgbob() and shutil.which('rsvg-convert') and shutil.which('node')):
+            self.skipTest('Svgbob, librsvg and Node required')
+        diagram = '\n+--------+\n| sample |\n+--------+\n```'
+        source = ('```svgbob svgbob_fill=cwhite svgbob_stroke_width=1' + diagram +
+                  '\n\n```svgbob svgbob_fill=ccyan svgbob_stroke_width=3 svgbob_sketch=on' + diagram +
+                  '\n\n```svgbob svgbob_fill=cwhite svgbob_stroke_width=1' + diagram)
+        dot = self.render(self.outline(source, 'md md_wrap=off'))
+        paths = re.findall(r'<IMG SRC="([^"]+)"', dot)
+        self.assertEqual(3, len(paths))
+        self.assertEqual(paths[0], paths[2])
+        self.assertNotEqual(paths[0], paths[1])
+        self.assertNotEqual(Path(paths[0]).read_bytes(), Path(paths[1]).read_bytes())
+        self.graphviz(dot)
+
     def test_svgbob_alignment_in_root_child_and_nested_fences_is_node_local(self):
         path = Path(self.temp.name, 'aligned-svgbob.png')
         Image.new('RGBA', (80, 40), (20, 30, 40, 255)).save(path)

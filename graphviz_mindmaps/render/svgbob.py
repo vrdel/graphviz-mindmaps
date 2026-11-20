@@ -7,6 +7,7 @@ import os
 import re
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 from xml.etree import ElementTree
 
@@ -117,6 +118,31 @@ def ParseSvgbobFill(value):
     except (ValueError, TypeError) as exc:
         raise ValueError(f'svgbob_fill must be a valid color, mindmap color token, or gradient: {value!r}') from exc
     return value
+
+
+def ParseSvgbobFenceOptions(info, defaults):
+    """Resolve per-diagram overrides without changing the node's defaults."""
+    options = dict(defaults)
+    keys = {'svgbob_stroke_width': 'stroke_width', 'svgbob_font_size': 'font_size',
+            'svgbob_fill': 'fill', 'svgbob_sketch': 'sketch',
+            'svgbob_roughness': 'roughness', 'svgbob_align': 'align'}
+    try:
+        tokens = shlex.split(info)
+    except ValueError as exc:
+        raise ValueError(f'invalid Svgbob fence options: {exc}') from exc
+    for token in tokens:
+        key, separator, value = token.partition('=')
+        if key not in keys or not separator or not value:
+            raise ValueError(f'invalid Svgbob fence option {token!r}; expected a supported svgbob_ attribute=value')
+        options[keys[key]] = value
+    options['stroke_width'] = ParseSvgbobStrokeWidth(options.get('stroke_width'))
+    options['font_size'] = ParseSvgbobFontSize(options.get('font_size'))
+    options['fill'] = ParseSvgbobFill(options.get('fill'))
+    options['sketch'], options['roughness'] = ParseSvgbobSketch(options.get('sketch'), options.get('roughness'))
+    options['align'] = str(options.get('align', 'left')).lower()
+    if options['align'] not in {'left', 'center', 'right'}:
+        raise ValueError('svgbob_align must be left, center, or right')
+    return options
 
 
 def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font_size=14, fill=None, sketch=None, roughness=None):

@@ -1026,6 +1026,33 @@ automatically closed.
 	: ```
 ```
 
+Svgbob fences inside an `md` node can override settings independently. Put
+options after `svgbob` on the opening fence line:
+
+````text
+	: md md_wrap=off svgbob_fill=ccyan
+	:
+	: ```svgbob svgbob_stroke_width=1 svgbob_align=center svgbob_fill=cwhite svgbob_sketch=on svgbob_font_size=18
+	: +-----------+
+	: | diagram A |
+	: +-----------+
+	: ```
+	:
+	: ```svgbob svgbob_fill="linear-gradient(ccyan, cblue)" svgbob_sketch=off
+	: +-----------+
+	: | diagram B |
+	: +-----------+
+	: ```
+````
+
+Supported fence options are `svgbob_stroke_width`, `svgbob_align`, `svgbob_fill`,
+`svgbob_sketch`, `svgbob_roughness`, and `svgbob_font_size`. Omitted options
+inherit the containing node's settings; overrides apply only to that fence.
+A bare `svgbob` fence uses all node defaults. Quote values containing spaces,
+such as gradients. Legend styles still override the default fill. This also
+works in lists, blockquotes, and Markdown containers. Invalid options report
+the opening fence's source location. `md_wrap` stays a node-level setting.
+
 Use `svgbob_sketch=on` for hand-drawn borders and connectors. Adjust their
 irregularity with `svgbob_roughness=0.5` (subtle), `1` (default), or `2` (stronger);
 the accepted range is 0–5. Sketching is off by default. Text, solid/gradient

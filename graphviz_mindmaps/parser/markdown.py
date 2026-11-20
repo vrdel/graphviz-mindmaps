@@ -152,6 +152,7 @@ class Block:
     align: str = 'left'
     callout: str = ''
     bullet_marker: str = ''
+    fence_options: str = ''
 
 
 CONTAINER_COLORS = {
@@ -401,7 +402,9 @@ def ParseMarkdown(body, preserve_newlines=False):
             result.children = [convert(child) for child in node.children]
         elif node.type in {'fence', 'code_block'}:
             result.source = node.content
-            result.language = node.info.split()[0] if node.info.strip() else 'text'
+            info = node.info.split(maxsplit=1)
+            result.language = info[0] if info else 'text'
+            result.fence_options = info[1] if len(info) > 1 else ''
         elif node.type in {'bullet_list', 'ordered_list', 'list_item', 'blockquote',
                            'table', 'thead', 'tbody', 'tr'}:
             result.children = [convert(child) for child in node.children]
