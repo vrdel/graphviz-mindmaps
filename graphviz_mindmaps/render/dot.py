@@ -731,6 +731,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 hr_style=state_obj.hr_style,
                 wordfont=state_obj.wordfont,
                 noheader=noheader,
+                sgtitlebg=state_obj.sgtitlebg,
             )
             if code_image_path:
                 InsertImageRow(parentlist[level]._label, code_image_path)

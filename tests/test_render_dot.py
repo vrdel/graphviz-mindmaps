@@ -463,6 +463,46 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertEqual([child], parent.childs())
         self.assertFalse(child._child_subgraphs)
 
+    def test_subgraph_title_backgrounds_follow_palette_and_stay_local(self):
+        from graphviz_mindmaps.cli import build_runtime
+        from graphviz_mindmaps.model.document import RenderSession
+        from graphviz_mindmaps.parser.attributes import ResolveSubgraphTitleColor
+        from graphviz_mindmaps.render.dot import GenDot
+        from graphviz_mindmaps.theme import ApplyTheme
+        self.addCleanup(ApplyTheme, 'default')
+        for theme in ('default', 'nord'):
+            for color in ('cred', 'cblue-10', '#336699', 'red'):
+                for attrs in (f"sgr'Colored title' sgtitle={color}",
+                              f"sgtitle={color} sgr'Colored title'"):
+                    with self.subTest(theme=theme, attrs=attrs):
+                        runtime = build_runtime(theme)
+                        expected = ResolveSubgraphTitleColor(color)
+                        blocks = ExtractMindmapBlocks([
+                            '# Root', '\t: fname=out.jpg',
+                            '\t# Section', '\t\t: ' + attrs,
+                            '\t\t# Nested', "\t\t\t: sgb'Nested title'",
+                            '\t# Sibling', "\t\t: sgg'Sibling title'",
+                        ], ApplyInlineBacktickBold)
+                        session = RenderSession()
+                        with patch('graphviz_mindmaps.render.dot.WriteDot'):
+                            GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None), session, runtime)
+                        self.assertIn(f'<TD BGCOLOR="{expected}" COLOR="#000000">Colored title</TD>', session.dotbuf)
+                        self.assertEqual(1, session.dotbuf.count(f'BGCOLOR="{expected}"'))
+                        self.assertIn('>Nested title</TD>', session.dotbuf)
+                        self.assertIn('>Sibling title</TD>', session.dotbuf)
+                        self.assertNotIn('<U>', session.dotbuf)
+                        self.assertEqual(2, session.dotbuf.count('BGCOLOR="#E9ED5F"'))
+                        if shutil.which('dot'):
+                            svg = subprocess.run(['dot', '-Tsvg'], input=session.dotbuf,
+                                                 text=True, capture_output=True)
+                            self.assertEqual(0, svg.returncode, svg.stderr)
+                            self.assertRegex(svg.stdout, r'<polygon fill="' + expected + r'"')
+                            from xml.etree import ElementTree as ET
+                            texts = {e.text: e.attrib for e in ET.fromstring(svg.stdout).iter('{http://www.w3.org/2000/svg}text')}
+                            self.assertEqual(texts['Nested title'].get('fill'), texts['Colored title'].get('fill'))
+        with self.assertRaisesRegex(ValueError, 'sgtitle'):
+            ResolveSubgraphTitleColor('bad"color')
+
     def test_sgmargin_attribute_controls_generated_subgraph_margin(self):
         tree = self._tree()
         root = tree.addroot("node1")

@@ -170,6 +170,24 @@ with the `fname=` line:
 Use tabs for indentation in `.otl` files. This continuation syntax applies only
 to the root; ordinary child attributes remain on their existing attribute line.
 
+Set `sgtitle=` on a node to color its DOT subgraph title background. Use a palette
+token (`cred`, `cblue-10`), an explicit `#RRGGBB` color, or a Graphviz color name.
+Palette tokens follow the active theme and support the usual shade offsets.
+
+```text
+# Notes
+	: fname=mindmap.jpg
+	# Section
+		: sgr'Section title' sgtitle=cblue-10
+		# Item
+```
+
+The existing `sgr'Section title'` syntax supplies the title and subgraph
+background; `sgtitle` changes only the background behind the title. Title text
+color, subgraph fills, and borders remain unchanged, as do nested and sibling
+titles. Without `sgtitle`, the title background remains yellow (`#E9ED5F`).
+Subgraph titles are rendered without underlining.
+
 Root titles can also span consecutive `#` lines at the same indentation.
 Use the usual word and line selectors on the root attribute lines:
 
