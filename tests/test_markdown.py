@@ -904,6 +904,34 @@ if ready:
                     self.assertEqual(face, render.call_args.kwargs['face'])
                     self.assertEqual(22, render.call_args.kwargs['size'])
 
+    def test_mermaid_sketch_options_reach_root_child_and_nested_fences(self):
+        path = Path(self.temp.name, 'sketch.png')
+        Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)
+        for mode in ('md', 'mermaid'):
+            source = '> ```mermaid\n> flowchart LR\n> A-->B\n> ```' if mode == 'md' else 'flowchart LR\nA-->B'
+            for root in (False, True):
+                def lines(option):
+                    attrs = mode + ' ' + option
+                    return (['# Root', '\t: fname=out.jpg ' + attrs] +
+                            ['\t: ' + line for line in source.splitlines()]
+                            if root else self.outline(source, attrs))
+                with self.subTest(mode=mode, root=root), patch(
+                    'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                ) as render:
+                    dot = self.render(lines('mermaid_sketch=on mermaid_roughness=1.5'))
+                    self.assertTrue(render.call_args.kwargs['sketch'])
+                    self.assertEqual(1.5, render.call_args.kwargs['roughness'])
+                    self.graphviz(dot)
+                    self.render(lines('mermaid_sketch=off'))
+                    self.assertNotIn('sketch', render.call_args.kwargs)
+                    siblings = lines('mermaid_sketch=on') + [
+                        '\t# sibling', '\t\t: mermaid', '\t\t: flowchart LR', '\t\t: A-->B']
+                    self.render(siblings)
+                    self.assertNotIn('sketch', render.call_args.kwargs)
+                    for option in ('mermaid_sketch=yes', 'mermaid_roughness=nan', 'mermaid_roughness=6'):
+                        with self.assertRaisesRegex(ValueError, r'<input>:\d+: .*mermaid_'):
+                            self.render(lines(option))
+
     def test_mermaid_font_size_override_validation_and_node_scope(self):
         path = Path(self.temp.name, 'diagram.png')
         Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)

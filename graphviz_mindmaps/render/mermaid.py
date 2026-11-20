@@ -75,18 +75,35 @@ def ParseMermaidFontSize(value):
     return size
 
 
-def RenderMermaidImage(source, tmpdir, width=420, colors=None, face=None, size=None):
+def ParseMermaidSketch(value=None, roughness=None):
+    from graphviz_mindmaps.render.svgbob_sketch import ParseSvgbobSketch
+    try:
+        return ParseSvgbobSketch(value, roughness)
+    except ValueError as exc:
+        raise ValueError(str(exc).replace('svgbob_', 'mermaid_')) from None
+
+
+def RenderMermaidImage(source, tmpdir, width=420, colors=None, face=None, size=None, sketch=None, roughness=None):
     """Use width=None for a natural-size diagram without a layout width limit."""
     size = ParseMermaidFontSize(size)
+    sketch, roughness = ParseMermaidSketch(sketch, roughness)
+    from graphviz_mindmaps.render.mermaid_sketch import ApplyMermaidSketch
+    from graphviz_mindmaps.render.svgbob_sketch import SketchProfile
     node = shutil.which('node')
     rasterizer = shutil.which('rsvg-convert')
     if not node:
         raise ValueError('Pele rendering requires Node.js 20 or newer on PATH')
     if not rasterizer:
         raise ValueError('Pele rendering requires rsvg-convert on PATH (librsvg2-bin)')
+    profile = SketchProfile() if sketch else None
+    if profile is not None:
+        profile['mermaid_helper'] = hashlib.sha256(
+            Path(__file__).with_name('mermaid_sketch.py').read_bytes()).hexdigest()
     color_tokens = _diagram_color_tokens()
     payload = json.dumps({'source': source, 'width': width, 'colors': colors or {},
                           'color_tokens': color_tokens,
+                          'sketch': sketch, 'roughness': roughness if sketch else None,
+                          'sketch_profile': profile,
                           'face': face, 'size': float(size) if size is not None else None},
                          ensure_ascii=False, sort_keys=True)
     key = hashlib.sha256(payload.encode()).hexdigest()[:20]
@@ -103,7 +120,12 @@ def RenderMermaidImage(source, tmpdir, width=420, colors=None, face=None, size=N
         if result.returncode:
             raise ValueError('Pele rendering failed: ' + (result.stderr.strip() or
                              f'node exited {result.returncode}'))
-        svgfile.write_text(_static_svg(result.stdout, colors, color_tokens), encoding='utf-8')
+        svg = _static_svg(result.stdout, colors, color_tokens)
+        if sketch:
+            root = ElementTree.fromstring(svg)
+            ApplyMermaidSketch(root, roughness)
+            svg = ElementTree.tostring(root, encoding='unicode')
+        svgfile.write_text(svg, encoding='utf-8')
         result = subprocess.run([rasterizer, '-o', str(pending), str(svgfile)],
                                 capture_output=True, text=True, timeout=30)
         if result.returncode:

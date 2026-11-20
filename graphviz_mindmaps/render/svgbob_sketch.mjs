@@ -12,7 +12,7 @@ try {
   const { shapes, roughness, strokeWidth } = JSON.parse(readFileSync(0, 'utf8'));
   const generator = rough.generator();
   const results = shapes.map((shape, index) => {
-    const options = { seed: 17 + index, roughness, strokeWidth, preserveVertices: true, fill: 'none' };
+    const options = { seed: 17 + index, roughness, strokeWidth: shape.strokeWidth ?? strokeWidth, preserveVertices: true, fill: 'none' };
     const drawable = shape.kind === 'ellipse'
       ? generator.ellipse(...shape.coordinates, options)
       : generator.path(shape.path, options);
