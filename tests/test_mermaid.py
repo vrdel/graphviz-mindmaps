@@ -9,11 +9,11 @@ from xml.etree import ElementTree
 
 from PIL import Image
 
-from graphviz_mindmaps.constants import font, vrbtcolors
+from graphviz_mindmaps.constants import font, fontcolor, vrbtcolors
 from graphviz_mindmaps.parser.attributes import ResolveVerbatimFillColorToken
 from graphviz_mindmaps.model.document import MarkdownBody
 from graphviz_mindmaps.render.markdown import RenderMarkdown
-from graphviz_mindmaps.render.mermaid import RenderMermaidImage, _static_svg
+from graphviz_mindmaps.render.mermaid import RenderMermaidImage, _static_svg, ResolveMermaidBorder
 from graphviz_mindmaps.theme import ApplyTheme, PeleThemeColors, THEME_PALETTES
 
 
@@ -23,6 +23,49 @@ HAS_PELE = (shutil.which('node') and shutil.which('rsvg-convert')
 
 
 class MermaidTests(unittest.TestCase):
+    def test_border_palette_resolution(self):
+        self.assertEqual('#000000', ResolveMermaidBorder())
+        self.assertEqual('#123456', ResolveMermaidBorder(foreground='#123456'))
+        self.assertIsNone(ResolveMermaidBorder('theme'))
+        self.assertEqual('#123456', ResolveMermaidBorder('foreground', '#123456'))
+        self.assertEqual('#abcdef', ResolveMermaidBorder('#abcdef'))
+        self.assertEqual(vrbtcolors['ccyan'], ResolveMermaidBorder('ccyan'))
+        self.assertRegex(ResolveMermaidBorder('cblue-10'), r'^#[0-9a-f]{6}$')
+        self.assertEqual(ResolveMermaidBorder('corang10'), ResolveMermaidBorder('corange10'))
+
+    @unittest.skipUnless(HAS_PELE, 'Pele, Node and librsvg required')
+    def test_border_override_preserves_explicit_strokes_and_other_paints(self):
+        source = 'flowchart LR\nA[Input] --> B[Output]\nstyle B stroke:#aabbcc,fill:#ddeeff'
+        body = MarkdownBody(source, '<test>', 'Diagram', 1, mermaid=True)
+        palette = PeleThemeColors('nord')
+        original = dict(palette)
+        with tempfile.TemporaryDirectory() as directory:
+            RenderMarkdown(body, [directory], foreground='#123456', diagram_colors=palette,
+                           mermaid_border='theme')
+            plain_path = next(Path(directory, 'mermaid').glob('*.svg'))
+            plain = ElementTree.parse(plain_path).getroot()
+            for sketch in (False, True):
+                with self.subTest(sketch=sketch):
+                    before = set(Path(directory, 'mermaid').glob('*.svg'))
+                    RenderMarkdown(body, [directory], foreground='#123456', diagram_colors=palette,
+                                   mermaid_border='foreground', mermaid_sketch=sketch)
+                    path, = set(Path(directory, 'mermaid').glob('*.svg')) - before
+                    root = ElementTree.parse(path).getroot()
+                    ns = '{http://www.w3.org/2000/svg}'
+                    nodes = {e.get('data-id'): e for e in root.iter(ns+'g') if e.get('data-id') in {'A', 'B'}}
+                    self.assertEqual('#123456', nodes['A'][0].get('stroke'))
+                    explicit_style = nodes['B'][0].get('style', '')
+                    self.assertIn('stroke:none' if sketch else 'stroke:#aabbcc', explicit_style)
+                    self.assertIn('fill:#ddeeff', explicit_style)
+                    if sketch:
+                        self.assertTrue(any(e.get('stroke') == '#123456' for e in nodes['A'].iter(ns+'path')))
+                        self.assertTrue(any(e.get('stroke') == '#aabbcc' for e in nodes['B'].iter(ns+'path')))
+                    self.assertEqual([ElementTree.tostring(e) for e in plain.iter(ns+'text')],
+                                     [ElementTree.tostring(e) for e in root.iter(ns+'text')])
+                    edges = lambda svg: next(e for e in svg.iter(ns+'g') if e.get('class') == 'pele-edges')
+                    self.assertEqual(edges(plain).get('stroke'), edges(root).get('stroke'))
+            self.assertEqual(original, palette)
+
     def test_theme_color_maps_cover_all_palettes_without_mutating_active_theme(self):
         self.addCleanup(ApplyTheme, 'default')
         from graphviz_mindmaps.constants import fontcolor
@@ -192,7 +235,7 @@ class MermaidTests(unittest.TestCase):
                             '<test>', 'Natural diagram', 1)
         with tempfile.TemporaryDirectory() as directory:
             natural = RenderMermaidImage(source + '\n', directory, width=None,
-                                         face=font['comic'], size=18)
+                                         face=font['comic'], size=18, colors={'--pele-border': fontcolor['def']})
             label = RenderMarkdown(body, [directory], width=100, wrap='off')
             self.assertEqual([str(natural)], re.findall(r'<IMG SRC="([^"]+)"', label))
             with Image.open(natural) as image:
@@ -208,7 +251,7 @@ class MermaidTests(unittest.TestCase):
                                ('Dejavu Serif', 26)):
                 with self.subTest(face=face, size=size):
                     output = RenderMermaidImage('flowchart LR\nA[Node label]\n', directory,
-                                                width=None, face=face, size=size)
+                                                width=None, face=face, size=size, colors={'--pele-border': fontcolor['def']})
                     outputs.append(output)
                     root = ElementTree.fromstring(output.with_suffix('.svg').read_text())
                     self.assertIn('font-family:' + face, root.get('style'))
@@ -218,7 +261,7 @@ class MermaidTests(unittest.TestCase):
             self.assertEqual(3, len(set(outputs)))
             label = RenderMarkdown(body, [directory], face='Dejavu Serif', size=26,
                                    wrap=False, mermaid_font='off')
-            default = RenderMermaidImage('flowchart LR\nA[Node label]\n', directory, width=None, size=26)
+            default = RenderMermaidImage('flowchart LR\nA[Node label]\n', directory, width=None, size=26, colors={'--pele-border': fontcolor['def']})
             self.assertIn(str(default), label)
             self.assertNotIn(default, outputs)
             style = ElementTree.fromstring(default.with_suffix('.svg').read_text()).get('style')
@@ -227,7 +270,7 @@ class MermaidTests(unittest.TestCase):
             with patch('graphviz_mindmaps.render.mermaid.subprocess.run') as run:
                 self.assertEqual(outputs[-1], RenderMermaidImage(
                     'flowchart LR\nA[Node label]\n', directory, width=None,
-                    face='Dejavu Serif', size=26))
+                    face='Dejavu Serif', size=26, colors={'--pele-border': fontcolor['def']}))
                 run.assert_not_called()
 
     @unittest.skipUnless(HAS_PELE, 'optional Pele npm package, Node and rsvg-convert required')

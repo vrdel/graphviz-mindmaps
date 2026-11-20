@@ -481,6 +481,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             list_indent=ResolveMarkdownOption('md_list_indent', root_options),
             line_spacing=ResolveMarkdownOption('md_line_spacing', root_options),
             wrap=ParseInlineAttrLine('md_wrap', root_options),
+            mermaid_border=ParseInlineAttrLine('mermaid_border', root_options),
             mermaid_font=ParseInlineAttrLine('mermaid_font', root_options),
             mermaid_font_size=ParseInlineAttrLine('mermaid_font_size', root_options),
             mermaid_sketch=ParseInlineAttrLine('mermaid_sketch', root_options),
@@ -540,6 +541,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             svgbob_fill = ParseInlineAttrLine('svgbob_fill', nextline)
             svgbob_sketch = ParseInlineAttrLine('svgbob_sketch', nextline)
             svgbob_roughness = ParseInlineAttrLine('svgbob_roughness', nextline)
+            mermaid_border = ParseInlineAttrLine('mermaid_border', nextline)
             mermaid_font = ParseInlineAttrLine('mermaid_font', nextline)
             mermaid_font_size = ParseInlineAttrLine('mermaid_font_size', nextline)
             mermaid_sketch = ParseInlineAttrLine('mermaid_sketch', nextline)
@@ -750,6 +752,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     list_indent=markdown_list_indent,
                     line_spacing=markdown_line_spacing,
                     wrap=markdown_wrap,
+                    mermaid_border=mermaid_border,
                     mermaid_font=mermaid_font,
                     mermaid_font_size=mermaid_font_size,
                     mermaid_sketch=mermaid_sketch,

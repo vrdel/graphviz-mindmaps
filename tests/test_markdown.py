@@ -879,13 +879,13 @@ if ready:
                     'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
                 ) as render:
                     self.render(lines, 'github-light')
-                    self.assertEqual(PeleThemeColors('github-light'), render.call_args.kwargs['colors'])
+                    self.assertEqual(dict(PeleThemeColors('github-light'), **{'--pele-border': PeleThemeColors('github-light')['--pele-fg']}), render.call_args.kwargs['colors'])
                     overridden = list(lines)
                     overridden[1] += ' theme=nord'
                     self.render(overridden, 'github-light')
-                    self.assertEqual(PeleThemeColors('nord'), render.call_args.kwargs['colors'])
+                    self.assertEqual(dict(PeleThemeColors('nord'), **{'--pele-border': PeleThemeColors('nord')['--pele-fg']}), render.call_args.kwargs['colors'])
                     self.render(lines, 'github-light')
-                    self.assertEqual(PeleThemeColors('github-light'), render.call_args.kwargs['colors'])
+                    self.assertEqual(dict(PeleThemeColors('github-light'), **{'--pele-border': PeleThemeColors('github-light')['--pele-fg']}), render.call_args.kwargs['colors'])
 
     def test_mermaid_inherits_containing_node_font_and_size(self):
         path = Path(self.temp.name, 'diagram.png')
@@ -903,6 +903,39 @@ if ready:
                     self.render(self.outline(source, mode + ' ' + token + ' f22'))
                     self.assertEqual(face, render.call_args.kwargs['face'])
                     self.assertEqual(22, render.call_args.kwargs['size'])
+
+    def test_mermaid_border_options_reach_root_child_and_nested_fences(self):
+        path = Path(self.temp.name, 'border.png')
+        Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)
+        for mode in ('md', 'mermaid'):
+            source = '> ```mermaid\n> flowchart LR\n> A-->B\n> ```' if mode == 'md' else 'flowchart LR\nA-->B'
+            for root in (False, True):
+                def lines(option):
+                    attrs = mode + ' ' + option
+                    return (['# Root', '\t: fname=out.jpg root_fg=#123456 ' + attrs] +
+                            ['\t: ' + line for line in source.splitlines()]
+                            if root else self.outline(source, attrs + ' fg=#123456'))
+                with self.subTest(mode=mode, root=root), patch(
+                    'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                ) as render:
+                    self.render(lines(''), theme='nord')
+                    defaults = dict(render.call_args.kwargs['colors'])
+                    self.assertEqual('#123456', defaults['--pele-border'])
+                    self.render(lines('mermaid_border=foreground'), theme='nord')
+                    self.assertEqual(dict(defaults, **{'--pele-border': '#123456'}), render.call_args.kwargs['colors'])
+                    self.render(lines('mermaid_border=#abcdef mermaid_sketch=on'), theme='nord')
+                    self.assertEqual('#abcdef', render.call_args.kwargs['colors']['--pele-border'])
+                    self.assertTrue(render.call_args.kwargs['sketch'])
+                    self.render(lines('mermaid_border=theme'), theme='nord')
+                    self.assertEqual(PeleThemeColors('nord'), render.call_args.kwargs['colors'])
+                    siblings = lines('mermaid_border=#abcdef') + [
+                        '\t# sibling', '\t\t: mermaid', '\t\t: flowchart LR', '\t\t: A-->B']
+                    self.render(siblings, theme='nord')
+                    self.assertEqual(PeleThemeColors('nord')['--pele-fg'],
+                                     render.call_args.kwargs['colors']['--pele-border'])
+                    for option in ('nope', 'cunknown', '#xyz', '#123456;stroke:red'):
+                        with self.assertRaisesRegex(ValueError, r'<input>:\d+: .*mermaid_border'):
+                            self.render(lines('mermaid_border=' + option))
 
     def test_mermaid_sketch_options_reach_root_child_and_nested_fences(self):
         path = Path(self.temp.name, 'sketch.png')

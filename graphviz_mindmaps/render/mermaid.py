@@ -75,6 +75,19 @@ def ParseMermaidFontSize(value):
     return size
 
 
+def ResolveMermaidBorder(value=None, foreground='#000000'):
+    if value == 'theme':
+        return None
+    if value is None or value == 'foreground':
+        return foreground
+    value = str(value)
+    resolved = ResolveDiagramColor(value, _diagram_color_tokens())
+    if ((re.fullmatch(r'c[a-z]+(?:-?\d+)?', value) and resolved != value)
+            or re.fullmatch(r'#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?', value)):
+        return resolved
+    raise ValueError('mermaid_border must be theme, foreground, a palette color, or #RRGGBB[AA]')
+
+
 def ParseMermaidSketch(value=None, roughness=None):
     from graphviz_mindmaps.render.svgbob_sketch import ParseSvgbobSketch
     try:

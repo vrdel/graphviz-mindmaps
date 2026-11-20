@@ -15,7 +15,7 @@ from PIL import Image, ImageFont
 from graphviz_mindmaps.constants import font, fontcolor
 from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown, ParseMarkdownTitleColors
 from graphviz_mindmaps.render.code_image import RenderCodeImage
-from graphviz_mindmaps.render.mermaid import ParseMermaidFontSize, ParseMermaidSketch, RenderMermaidImage
+from graphviz_mindmaps.render.mermaid import ParseMermaidFontSize, ParseMermaidSketch, RenderMermaidImage, ResolveMermaidBorder
 from graphviz_mindmaps.render.svgbob_sketch import ParseSvgbobSketch
 from graphviz_mindmaps.render.svgbob import ParseSvgbobFill, ParseSvgbobFontSize, ParseSvgbobStrokeWidth, RenderSvgbobImage
 
@@ -63,7 +63,7 @@ def AppendMarkdownLabel(label, body_label):
     return head + '<TR><TD ALIGN="LEFT" CELLPADDING="2">' + body_label + '</TD></TR></TABLE>' + closing
 
 
-def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None, title_colors=None, svgbob_stroke_width=None, svgbob_font_size=None, mermaid_font_size=None, svgbob_align=None, svgbob_fill=None, svgbob_sketch=None, svgbob_roughness=None, mermaid_sketch=None, mermaid_roughness=None):
+def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None, title_colors=None, svgbob_stroke_width=None, svgbob_font_size=None, mermaid_font_size=None, svgbob_align=None, svgbob_fill=None, svgbob_sketch=None, svgbob_roughness=None, mermaid_sketch=None, mermaid_roughness=None, mermaid_border=None):
     # Standalone diagrams grow to their natural dimensions, independent of mdw.
     if body.diagram:
         width = 420
@@ -106,6 +106,9 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     foreground = foreground or fontcolor['def']
     size = max(1, float(size))
     try:
+        border_color = ResolveMermaidBorder(mermaid_border, foreground)
+        if border_color is not None:
+            diagram_colors = dict(diagram_colors or {}, **{'--pele-border': border_color})
         heading_colors = ParseMarkdownTitleColors(title_colors)
         svgbob_sketch, svgbob_roughness = ParseSvgbobSketch(svgbob_sketch, svgbob_roughness)
         svgbob_fill = ParseSvgbobFill(svgbob_fill)

@@ -805,6 +805,27 @@ Mermaid fences, including nested fences and root nodes. Pele recalculates the
 layout for the chosen text size. Use `md_wrap=off` to retain that size in
 Markdown fences; fitting a diagram to `mdw` can reduce its displayed text size.
 
+Mermaid shape borders use the containing node's text color by default
+(`mermaid_border=foreground`), matching Svgbob's default line coloring.
+Use `mermaid_border=theme` to select the active theme's separate border color.
+You can also specify a palette color with a shade offset, such as
+`mermaid_border=cblue-10`, or a literal `mermaid_border=#000000`.
+
+```text
+	# Stronger diagram borders
+		: md md_wrap=off mermaid_border=foreground
+		: ```mermaid
+		: flowchart LR
+		:   A[Build] --> B[Deploy]
+		: ```
+```
+
+This option works on standalone `mermaid` nodes and Mermaid fences in `md`
+nodes, including root nodes, nested fences, and sketch rendering. It changes
+the default shape border color; connector and text colors retain their existing
+settings. Explicit Mermaid `stroke:` styles override it. Each node's setting
+is independent of its siblings and descendants.
+
 Use `mermaid_sketch=on` for hand-drawn borders and connectors in Pele diagrams.
 This applies to standalone `mermaid` nodes and Mermaid fences inside `md` nodes,
 including root nodes and nested fences. Sketching is off by default; use
