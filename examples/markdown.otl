@@ -217,6 +217,20 @@
 		:
 		: The default `mermaid_font=on` passes this node's font and text size to Pele.
 		: With `md_wrap=off`, the diagram keeps its natural dimensions.
+	# Sketchy Mermaid workflow
+		: md noheader md_wrap=off mermaid_sketch=on mermaid_roughness=1
+		: ### Sketchy Mermaid
+		:
+		: ```mermaid
+		: flowchart LR
+		:   A[Build] --> B{Ready?}
+		:   B --> C(Deploy)
+		:   style A fill:ccyan,stroke:cblue,stroke-width:2px
+		: ```
+		:
+		: `mermaid_sketch=on` preserves fonts, colors, and arrowheads.
+		: `mermaid_roughness=1` controls the outline irregularity.
+		:
 	# Mermaid with Pele fonts and width fitting
 		: md mdw=320 md_wrap=on mermaid_font=off
 		: ```mermaid

@@ -787,6 +787,31 @@ Mermaid fences, including nested fences and root nodes. Pele recalculates the
 layout for the chosen text size. Use `md_wrap=off` to retain that size in
 Markdown fences; fitting a diagram to `mdw` can reduce its displayed text size.
 
+Use `mermaid_sketch=on` for hand-drawn borders and connectors in Pele diagrams.
+This applies to standalone `mermaid` nodes and Mermaid fences inside `md` nodes,
+including root nodes and nested fences. Sketching is off by default; use
+`mermaid_sketch=off` to disable it. `mermaid_roughness` accepts finite values
+from `0` to `5`, with `1` as the default; try `0.5` for subtler strokes or `2`
+for stronger irregularity.
+
+```text
+	# Sketchy workflow
+		: mermaid mermaid_sketch=on mermaid_roughness=1
+		: flowchart LR
+		:   A[Build] --> B{Ready?}
+		:   B --> C(Deploy)
+		:   style A fill:ccyan,stroke:cblue
+```
+
+Sketching uses the optional Rough.js dependency (`npm ci`), after Pele lays out
+the diagram. Text, fonts, fills, theme colors, and arrowheads are preserved.
+Existing Mermaid font controls still apply. The canvas expands if needed to
+avoid clipping sketch strokes; this does not scale the diagram. Markdown width
+fitting still applies with `md_wrap=on`; use `md_wrap=off` for natural size.
+Sketch settings participate in the image cache and strokes use a fixed seed.
+This is an SVG effect in our Pele integration; it does not depend on Pele
+supporting Mermaid's `config.look: handDrawn` setting.
+
 Repeated identical diagrams at the same width, font, size, and palette reuse their rendered image
 within the render session. Both standalone Mermaid nodes and fenced diagrams
 automatically follow the active mindmap theme (`--theme` or root `theme=`): text,
