@@ -826,6 +826,34 @@ the default shape border color; connector and text colors retain their existing
 settings. Explicit Mermaid `stroke:` styles override it. Each node's setting
 is independent of its siblings and descendants.
 
+Mermaid fences inside an `md` node can also override settings per diagram.
+Put options after `mermaid` on the opening fence:
+
+````text
+	: md md_wrap=off mermaid_font_size=18
+	:
+	: ```mermaid mermaid_sketch=on mermaid_roughness=1.5 mermaid_border=foreground
+	: flowchart LR
+	:   A[Build] --> B[Deploy]
+	: ```
+	:
+	: ```mermaid mermaid_sketch=off mermaid_font=off mermaid_font_size=24 mermaid_border=theme
+	: flowchart LR
+	:   A[Review] --> B[Publish]
+	: ```
+````
+
+Supported fence options are `mermaid_font`, `mermaid_font_size`,
+`mermaid_border`, `mermaid_sketch`, and `mermaid_roughness`. Omitted options
+inherit the containing node's settings. Overrides affect only that fence,
+including fences nested in lists, blockquotes, or containers. A bare `mermaid`
+fence uses the node defaults. `mermaid_border=theme` restores theme borders even
+if the node sets another color; explicit diagram `stroke:` styles still win.
+`mermaid_font=on` restores the node's font family when the node sets
+`mermaid_font=off`. Invalid options report the opening fence's source location.
+`md_wrap` remains a node-level setting, and Mermaid frontmatter stays in the
+fence body as usual.
+
 Use `mermaid_sketch=on` for hand-drawn borders and connectors in Pele diagrams.
 This applies to standalone `mermaid` nodes and Mermaid fences inside `md` nodes,
 including root nodes and nested fences. Sketching is off by default; use

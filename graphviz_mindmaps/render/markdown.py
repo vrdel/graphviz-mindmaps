@@ -15,7 +15,10 @@ from PIL import Image, ImageFont
 from graphviz_mindmaps.constants import font, fontcolor
 from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown, ParseMarkdownTitleColors
 from graphviz_mindmaps.render.code_image import RenderCodeImage
-from graphviz_mindmaps.render.mermaid import ParseMermaidFontSize, ParseMermaidSketch, RenderMermaidImage, ResolveMermaidBorder
+from graphviz_mindmaps.render.mermaid import (
+    ParseMermaidFenceOptions, ParseMermaidFont, ParseMermaidFontSize,
+    ParseMermaidSketch, RenderMermaidImage, ResolveMermaidBorder,
+)
 from graphviz_mindmaps.render.svgbob_sketch import ParseSvgbobSketch
 from graphviz_mindmaps.render.svgbob import ParseSvgbobFenceOptions, ParseSvgbobFill, ParseSvgbobFontSize, ParseSvgbobStrokeWidth, RenderSvgbobImage
 
@@ -76,12 +79,6 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     svgbob_align = 'left' if svgbob_align is None else str(svgbob_align).lower()
     if svgbob_align not in {'left', 'center', 'right'}:
         raise body.error('svgbob_align must be left, center, or right')
-    if mermaid_font is None:
-        mermaid_font = True
-    elif isinstance(mermaid_font, str) and mermaid_font.lower() in {'on', 'off'}:
-        mermaid_font = mermaid_font.lower() == 'on'
-    elif not isinstance(mermaid_font, bool):
-        raise body.error('mermaid_font must be on or off')
     try:
         width = float(width)
     except (TypeError, ValueError):
@@ -106,9 +103,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     foreground = foreground or fontcolor['def']
     size = max(1, float(size))
     try:
-        border_color = ResolveMermaidBorder(mermaid_border, foreground)
-        if border_color is not None:
-            diagram_colors = dict(diagram_colors or {}, **{'--pele-border': border_color})
+        ResolveMermaidBorder(mermaid_border, foreground)
+        mermaid_font = ParseMermaidFont(mermaid_font)
         heading_colors = ParseMarkdownTitleColors(title_colors)
         svgbob_sketch, svgbob_roughness = ParseSvgbobSketch(svgbob_sketch, svgbob_roughness)
         svgbob_fill = ParseSvgbobFill(svgbob_fill)
@@ -118,11 +114,10 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
         mermaid_sketch, mermaid_roughness = ParseMermaidSketch(mermaid_sketch, mermaid_roughness)
     except ValueError as exc:
         raise body.error(str(exc)) from exc
-    diagram_font = {'size': size if mermaid_font_size is None else mermaid_font_size}
-    if mermaid_sketch:
-        diagram_font.update(sketch=True, roughness=mermaid_roughness)
-    if mermaid_font:
-        diagram_font['face'] = face
+    mermaid_defaults = {
+        'font': mermaid_font, 'font_size': size if mermaid_font_size is None else mermaid_font_size,
+        'border': mermaid_border, 'sketch': mermaid_sketch, 'roughness': mermaid_roughness,
+    }
     blocks = ([Block('fence', source=body.source, language=body.diagram)]
               if body.diagram else ParseMarkdown(body, preserve_newlines=not wrap))
 
@@ -302,9 +297,11 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 alignment = 'LEFT'
                 if is_mermaid:
                     try:
+                        options = ParseMermaidFenceOptions(
+                            block.fence_options, mermaid_defaults, face, foreground, diagram_colors)
                         path = RenderMermaidImage(block.source, directory,
                                                   None if natural_diagram else max(1, available),
-                                                  colors=diagram_colors, **diagram_font)
+                                                  **options)
                     except ValueError as exc:
                         raise body.error(str(exc), block.source_line) from exc
                 elif is_svgbob:

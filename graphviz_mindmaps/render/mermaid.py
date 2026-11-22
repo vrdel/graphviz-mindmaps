@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 import re
 import shutil
+import shlex
 import subprocess
 from xml.etree import ElementTree
 
@@ -94,6 +95,45 @@ def ParseMermaidSketch(value=None, roughness=None):
         return ParseSvgbobSketch(value, roughness)
     except ValueError as exc:
         raise ValueError(str(exc).replace('svgbob_', 'mermaid_')) from None
+
+
+def ParseMermaidFont(value=None):
+    if value is None:
+        return True
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str) and value.lower() in {'on', 'off'}:
+        return value.lower() == 'on'
+    raise ValueError('mermaid_font must be on or off')
+
+
+def ParseMermaidFenceOptions(info, defaults, face, foreground, colors=None):
+    """Build renderer arguments from node defaults and fence-local overrides."""
+    options = dict(defaults)
+    keys = {'mermaid_font', 'mermaid_font_size', 'mermaid_border',
+            'mermaid_sketch', 'mermaid_roughness'}
+    try:
+        tokens = shlex.split(info)
+    except ValueError as exc:
+        raise ValueError(f'invalid Mermaid fence options: {exc}') from exc
+    for token in tokens:
+        key, separator, value = token.partition('=')
+        if key not in keys or not separator or not value:
+            raise ValueError(f'invalid Mermaid fence option {token!r}; expected a supported mermaid_ attribute=value')
+        options[key.removeprefix('mermaid_')] = value
+    inherit_font = ParseMermaidFont(options.get('font'))
+    size = ParseMermaidFontSize(options.get('font_size'))
+    sketch, roughness = ParseMermaidSketch(options.get('sketch'), options.get('roughness'))
+    border = ResolveMermaidBorder(options.get('border'), foreground)
+    # Always start with the unmodified theme so a fence can restore theme borders.
+    if border is not None:
+        colors = dict(colors or {}, **{'--pele-border': border})
+    result = {'size': size, 'colors': colors}
+    if inherit_font:
+        result['face'] = face
+    if sketch:
+        result.update(sketch=True, roughness=roughness)
+    return result
 
 
 def RenderMermaidImage(source, tmpdir, width=420, colors=None, face=None, size=None, sketch=None, roughness=None):

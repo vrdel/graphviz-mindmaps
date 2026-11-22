@@ -965,6 +965,79 @@ if ready:
                     self.assertEqual(face, render.call_args.kwargs['face'])
                     self.assertEqual(22, render.call_args.kwargs['size'])
 
+    def test_mermaid_fence_options_override_defaults_without_leaking(self):
+        path = Path(self.temp.name, 'mermaid-options.png')
+        Image.new('RGBA', (120, 60), (20, 30, 40, 255)).save(path)
+        diagram = '\nflowchart LR\nA[Input] --> B[Output]\n```'
+        source = ('```mermaid mermaid_font=on mermaid_font_size=24 mermaid_border=foreground '
+                  'mermaid_sketch=off mermaid_roughness=1.5' + diagram +
+                  '\n\n```mermaid mermaid_font=off mermaid_font_size=12 mermaid_border=theme' + diagram +
+                  '\n\n```mermaid' + diagram)
+        attrs = ('md md_wrap=off fontmono mermaid_font=off mermaid_font_size=16 '
+                 'mermaid_border=cblue-10 mermaid_sketch=on mermaid_roughness=2')
+        for nested in (source, '> ' + source.replace('\n', '\n> '),
+                       '- item\n\n  ' + source.replace('\n', '\n  '),
+                       '::: info Diagrams\n' + source + '\n:::'):
+            for root in (False, True):
+                lines = (['# Root', '\t: fname=out.jpg root_fg=#123456 ' + attrs] +
+                         ['\t: ' + line for line in nested.splitlines()]
+                         if root else self.outline(nested, attrs + ' fg=#123456'))
+                with self.subTest(root=root, source=nested), patch(
+                    'graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path,
+                ) as render:
+                    dot = self.render(lines, theme='nord')
+                    self.assertEqual(3, render.call_count)
+                    first, second, third = [call.kwargs for call in render.call_args_list]
+                    from graphviz_mindmaps.render.mermaid import ResolveMermaidBorder
+                    palette = PeleThemeColors('nord')
+                    self.assertEqual(24, first['size'])
+                    self.assertIn('face', first)
+                    if not root:
+                        self.assertEqual('Dejavu Sans Mono', first['face'])
+                    self.assertNotIn('sketch', first)
+                    self.assertEqual(dict(palette, **{'--pele-border': '#123456'}), first['colors'])
+                    self.assertEqual({'size': 12, 'colors': palette, 'sketch': True, 'roughness': 2}, second)
+                    self.assertEqual({'size': 16, 'colors': dict(palette, **{'--pele-border': ResolveMermaidBorder('cblue-10')}),
+                                      'sketch': True, 'roughness': 2}, third)
+                    self.graphviz(dot)
+        # A fence can disable font inheritance even when the node enables it.
+        with patch('graphviz_mindmaps.render.markdown.RenderMermaidImage', return_value=path) as render:
+            self.render(self.outline('```mermaid mermaid_font=off' + diagram +
+                                     '\n\n```mermaid' + diagram, 'md fontmono'))
+            self.assertNotIn('face', render.call_args_list[0].kwargs)
+            self.assertEqual('Dejavu Sans Mono', render.call_args_list[1].kwargs['face'])
+
+    def test_mermaid_fence_option_errors_point_to_opening(self):
+        for option in ('mermaid_font=yes', 'mermaid_font_size=0', 'mermaid_font_size=nan',
+                       'mermaid_border=invalid', 'mermaid_sketch=yes', 'mermaid_roughness=6',
+                       'mermaid_font=', 'mermaid_unknown=1', 'mermaid_sketch', 'mermaid_border="unterminated'):
+            source = 'Before\n\n```mermaid ' + option + '\nflowchart LR\nA-->B\n```'
+            with self.subTest(option=option), self.assertRaisesRegex(ValueError, r'<input>:7: Markdown node'):
+                self.render(self.outline(source))
+
+    def test_real_mermaid_fences_render_separately_and_reuse_identical_options(self):
+        from tests.test_mermaid import HAS_PELE
+        if not HAS_PELE:
+            self.skipTest('Pele, librsvg and Node required')
+        from xml.etree import ElementTree as ET
+        diagram = '\nflowchart LR\nA[Input] --> B[Output]\nstyle B stroke:#aabbcc\n```'
+        source = ('```mermaid mermaid_font_size=18 mermaid_border=theme' + diagram +
+                  '\n\n```mermaid mermaid_font_size=24 mermaid_font=off mermaid_border=#123456 mermaid_sketch=on' + diagram +
+                  '\n\n```mermaid mermaid_font_size=18 mermaid_border=theme' + diagram)
+        dot = self.render(self.outline(source, 'md md_wrap=off mermaid_border=#abcdef'), theme='nord')
+        paths = re.findall(r'<IMG SRC="([^"]+)"', dot)
+        self.assertEqual(3, len(paths))
+        self.assertEqual(paths[0], paths[2])
+        self.assertNotEqual(paths[0], paths[1])
+        roots = [ET.parse(Path(path).with_suffix('.svg')).getroot() for path in paths[:2]]
+        ns = '{http://www.w3.org/2000/svg}'
+        shapes = [next(e for e in root.iter(ns+'g') if e.get('data-id') == 'A')[0] for root in roots]
+        self.assertEqual(PeleThemeColors('nord')['--pele-border'], shapes[0].get('stroke'))
+        self.assertEqual('#123456', shapes[1].get('stroke'))
+        self.assertIn('font:24px sans-serif', roots[1].get('style'))
+        self.assertTrue(any(e.get('stroke') == '#aabbcc' for e in roots[1].iter(ns+'path')))
+        self.graphviz(dot)
+
     def test_mermaid_border_options_reach_root_child_and_nested_fences(self):
         path = Path(self.temp.name, 'border.png')
         Image.new('RGBA', (160, 80), (220, 240, 240, 255)).save(path)
