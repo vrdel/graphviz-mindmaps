@@ -20,7 +20,7 @@ from graphviz_mindmaps.render.mermaid import (
     ParseMermaidSketch, RenderMermaidImage, ResolveMermaidBorder,
 )
 from graphviz_mindmaps.render.svgbob_sketch import ParseSvgbobSketch
-from graphviz_mindmaps.render.svgbob import ParseSvgbobFenceOptions, ParseSvgbobFill, ParseSvgbobFontSize, ParseSvgbobStrokeWidth, RenderSvgbobImage
+from graphviz_mindmaps.render.svgbob import ParseSvgbobBackground, ParseSvgbobFenceOptions, ParseSvgbobFill, ParseSvgbobFontSize, ParseSvgbobStrokeWidth, RenderSvgbobImage
 
 
 @lru_cache(maxsize=128)
@@ -66,7 +66,7 @@ def AppendMarkdownLabel(label, body_label):
     return head + '<TR><TD ALIGN="LEFT" CELLPADDING="2">' + body_label + '</TD></TR></TABLE>' + closing
 
 
-def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None, title_colors=None, svgbob_stroke_width=None, svgbob_font_size=None, mermaid_font_size=None, svgbob_align=None, svgbob_fill=None, svgbob_sketch=None, svgbob_roughness=None, mermaid_sketch=None, mermaid_roughness=None, mermaid_border=None):
+def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18, code_theme='default', list_spacing=None, list_indent=None, line_spacing=None, wrap=None, diagram_colors=None, mermaid_font=None, title_colors=None, svgbob_stroke_width=None, svgbob_font_size=None, mermaid_font_size=None, svgbob_align=None, svgbob_fill=None, svgbob_sketch=None, svgbob_roughness=None, mermaid_sketch=None, mermaid_roughness=None, mermaid_border=None, svgbob_background=None):
     # Standalone diagrams grow to their natural dimensions, independent of mdw.
     if body.diagram:
         width = 420
@@ -108,6 +108,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
         heading_colors = ParseMarkdownTitleColors(title_colors)
         svgbob_sketch, svgbob_roughness = ParseSvgbobSketch(svgbob_sketch, svgbob_roughness)
         svgbob_fill = ParseSvgbobFill(svgbob_fill)
+        svgbob_background = ParseSvgbobBackground(svgbob_background)
         svgbob_stroke_width = ParseSvgbobStrokeWidth(svgbob_stroke_width)
         svgbob_font_size = size if svgbob_font_size is None else ParseSvgbobFontSize(svgbob_font_size)
         mermaid_font_size = ParseMermaidFontSize(mermaid_font_size)
@@ -306,11 +307,14 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                         raise body.error(str(exc), block.source_line) from exc
                 elif is_svgbob:
                     try:
-                        options = ParseSvgbobFenceOptions(block.fence_options, {
+                        defaults = {
                             'stroke_width': svgbob_stroke_width, 'font_size': svgbob_font_size,
                             'fill': svgbob_fill, 'sketch': svgbob_sketch,
                             'roughness': svgbob_roughness, 'align': svgbob_align,
-                        })
+                        }
+                        if svgbob_background is not None:
+                            defaults['background'] = svgbob_background
+                        options = ParseSvgbobFenceOptions(block.fence_options, defaults)
                         alignment = options.pop('align').upper()
                         path = RenderSvgbobImage(block.source, directory, foreground=foreground, **options)
                     except ValueError as exc:

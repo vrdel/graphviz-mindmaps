@@ -666,6 +666,50 @@ if ready:
                                 self.assertLessEqual(resized.width, 100)
                                 self.assertLessEqual(resized.height, 900)
 
+    def test_svgbob_background_is_node_local_and_fence_overridable(self):
+        path = Path(self.temp.name, 'svgbob-background.png')
+        Image.new('RGBA', (120, 60), (20, 30, 40, 255)).save(path)
+        diagram = '\n+---+\n| A |\n+---+\n```'
+        source = ('```svgbob' + diagram + '\n\n```svgbob svgbob_background=ccyan' + diagram +
+                  '\n\n```svgbob svgbob_background=ctrans' + diagram + '\n\n```svgbob' + diagram)
+        for nested in (source, source.replace('svgbob_background', 'svgbob_bg'), '> ' + source.replace('\n', '\n> '),
+                       '::: info Diagrams\n' + source + '\n:::'):
+            for root in (False, True):
+                attrs = 'md cred md_wrap=off svgbob_background=cblue svgbob_fill=cwhite'
+                if root:
+                    attrs = attrs.replace('svgbob_background', 'svgbob_bg')
+                lines = (['# Root', '\t: fname=out.jpg ' + attrs] +
+                         ['\t: ' + line for line in nested.splitlines()]
+                         if root else self.outline(nested, attrs))
+                with self.subTest(root=root, source=nested), patch(
+                    'graphviz_mindmaps.render.markdown.RenderSvgbobImage', return_value=path,
+                ) as render:
+                    dot = self.render(lines)
+                    self.assertEqual(['cblue', 'ccyan', 'ctrans', 'cblue'],
+                                     [call.kwargs['background'] for call in render.call_args_list])
+                    self.assertTrue(all(call.kwargs['fill'] == 'cwhite' for call in render.call_args_list))
+                    self.graphviz(dot)
+        for mode in ('md', 'svgbob'):
+            source = '```svgbob' + diagram if mode == 'md' else '+---+\n| A |\n+---+'
+            for root in (False, True):
+                attrs = mode + ' svgbob_background=#123456'
+                if root:
+                    attrs = attrs.replace('svgbob_background', 'svgbob_bg')
+                lines = (['# Root', '\t: fname=out.jpg ' + attrs] +
+                         ['\t: ' + line for line in source.splitlines()]
+                         if root else self.outline(source, attrs))
+                with self.subTest(mode=mode, root=root), patch(
+                    'graphviz_mindmaps.render.markdown.RenderSvgbobImage', return_value=path,
+                ) as render:
+                    self.render(lines)
+                    self.assertEqual('#123456', render.call_args.kwargs['background'])
+                    self.render(self.outline(source, mode))
+                    self.assertNotIn('background', render.call_args.kwargs)
+        with self.assertRaisesRegex(ValueError, r'<input>:4: .*svgbob_background'):
+            self.render(self.outline('', 'md svgbob_background=bad-color'))
+        with self.assertRaisesRegex(ValueError, r'<input>:5: .*svgbob_background'):
+            self.render(self.outline('```svgbob svgbob_background=bad-color' + diagram))
+
     def test_svgbob_fence_options_override_node_defaults_without_leaking(self):
         path = Path(self.temp.name, 'svgbob-options.png')
         Image.new('RGBA', (120, 60), (20, 30, 40, 255)).save(path)

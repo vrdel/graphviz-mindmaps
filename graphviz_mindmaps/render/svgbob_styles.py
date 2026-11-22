@@ -30,7 +30,7 @@ def _arguments(value):
     return parts
 
 
-def StyleSvgbobSvg(root, color_tokens, default_fill=None):
+def StyleSvgbobSvg(root, color_tokens, default_fill=None, background=None):
     """Resolve diagram paints and give closed shapes an overridable default fill."""
     gradients = {}
     ids = {element.get('id') for element in root.iter()}
@@ -145,6 +145,16 @@ def StyleSvgbobSvg(root, color_tokens, default_fill=None):
                 element.set('class', ' '.join(c for c in classes if c != 'nofill'))
                 if 'fill' not in element.attrib:
                     element.set('fill', default_fill)
+
+    if background is not None:
+        backdrop = next((element for element in root.iter(SVG+'rect')
+                         if 'backdrop' in element.get('class', '').split()), None)
+        if backdrop is None:
+            backdrop = ET.Element(SVG+'rect', {'class': 'backdrop', 'x': '0', 'y': '0',
+                                  'width': root.get('width'), 'height': root.get('height')})
+            root.insert(0, backdrop)
+        # Override Svgbob's backdrop CSS without recoloring shapes or arrowheads.
+        backdrop.set('style', f'fill:{background};stroke:none')
 
     # Snapshot the elements before adding gradient definitions during traversal.
     for element in list(root.iter()):

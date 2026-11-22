@@ -120,12 +120,20 @@ def ParseSvgbobFill(value):
     return value
 
 
+def ParseSvgbobBackground(value):
+    try:
+        return ParseSvgbobFill(value)
+    except ValueError as exc:
+        raise ValueError(str(exc).replace('svgbob_fill', 'svgbob_background')) from None
+
+
 def ParseSvgbobFenceOptions(info, defaults):
     """Resolve per-diagram overrides without changing the node's defaults."""
     options = dict(defaults)
     keys = {'svgbob_stroke_width': 'stroke_width', 'svgbob_font_size': 'font_size',
             'svgbob_fill': 'fill', 'svgbob_sketch': 'sketch',
-            'svgbob_roughness': 'roughness', 'svgbob_align': 'align'}
+            'svgbob_roughness': 'roughness', 'svgbob_align': 'align',
+            'svgbob_background': 'background', 'svgbob_bg': 'background'}
     try:
         tokens = shlex.split(info)
     except ValueError as exc:
@@ -138,6 +146,8 @@ def ParseSvgbobFenceOptions(info, defaults):
     options['stroke_width'] = ParseSvgbobStrokeWidth(options.get('stroke_width'))
     options['font_size'] = ParseSvgbobFontSize(options.get('font_size'))
     options['fill'] = ParseSvgbobFill(options.get('fill'))
+    if 'background' in options:
+        options['background'] = ParseSvgbobBackground(options['background'])
     options['sketch'], options['roughness'] = ParseSvgbobSketch(options.get('sketch'), options.get('roughness'))
     options['align'] = str(options.get('align', 'left')).lower()
     if options['align'] not in {'left', 'center', 'right'}:
@@ -145,10 +155,11 @@ def ParseSvgbobFenceOptions(info, defaults):
     return options
 
 
-def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font_size=14, fill=None, sketch=None, roughness=None):
+def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font_size=14, fill=None, sketch=None, roughness=None, background=None):
     stroke_width = ParseSvgbobStrokeWidth(stroke_width)
     font_size = ParseSvgbobFontSize(font_size)
     fill = ParseSvgbobFill(fill)
+    background = ParseSvgbobBackground(background)
     sketch, roughness = ParseSvgbobSketch(sketch, roughness)
     sketch_profile = SketchProfile() if sketch else None
     executable = FindSvgbob()
@@ -163,10 +174,10 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
         color_tokens = DiagramColorTokens()
         family = FindSvgbobFont() if sketch else SVGBOB_FALLBACK_FONT
         payload = json.dumps({'source': source, 'foreground': foreground, 'font': family,
-                              'render_version': 6,
+                              'render_version': 7,
                               'sketch': sketch, 'roughness': roughness if sketch else None,
                               'sketch_profile': sketch_profile,
-                              'fill': fill,
+                              'fill': fill, 'background': background,
                               'stroke_width': stroke_width,
                               'font_size': font_size,
                               'color_tokens': color_tokens,
@@ -199,10 +210,16 @@ def RenderSvgbobImage(source, tmpdir, foreground='#000000', stroke_width=2, font
             RecoverSvgbobRectangles(root, all_rectangles=fill is not None)
             RecoverSvgbobRoundedRectangles(root, all_rectangles=fill is not None)
             ExpandSvgbobTextBounds(root, family, font_size)
-            styled = StyleSvgbobSvg(root, color_tokens, default_fill=fill)
+            styled = StyleSvgbobSvg(root, color_tokens, default_fill=fill, background=background)
             if sketch:
                 root = ElementTree.fromstring(styled)
                 ApplySvgbobSketch(root, roughness, stroke_width)
+                if background is not None:
+                    # Sketch strokes can extend the viewport beyond the original canvas.
+                    x, y, width, height = root.get('viewBox').split()
+                    for rect in root.iter('{http://www.w3.org/2000/svg}rect'):
+                        if 'backdrop' in rect.get('class', '').split():
+                            rect.attrib.update(x=x, y=y, width=width, height=height)
                 styled = ElementTree.tostring(root, encoding='unicode')
             svgfile.write_text(styled, encoding='utf-8')
             result = subprocess.run([rasterizer, '-o', str(pending), str(svgfile)],

@@ -365,7 +365,7 @@ def ResolveRootCodeTheme(lines):
 
 def ResolveMarkdownOption(name, line):
     aliases = {'md_width': 'mdw', 'md_list_spacing': 'mdls', 'md_list_indent': 'mdli',
-               'md_line_spacing': 'mdlns'}
+               'md_line_spacing': 'mdlns', 'svgbob_background': 'svgbob_bg'}
     value = ParseInlineAttrLine(name, line)
     return value if value is not None else ParseInlineAttrLine(aliases[name], line)
 
@@ -492,6 +492,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             svgbob_font_size=ParseInlineAttrLine('svgbob_font_size', root_options),
             svgbob_align=ParseInlineAttrLine('svgbob_align', root_options),
             svgbob_fill=ParseInlineAttrLine('svgbob_fill', root_options),
+            svgbob_background=ResolveMarkdownOption('svgbob_background', root_options),
             svgbob_sketch=ParseInlineAttrLine('svgbob_sketch', root_options),
             svgbob_roughness=ParseInlineAttrLine('svgbob_roughness', root_options),
         ))
@@ -539,6 +540,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
             svgbob_font_size = ParseInlineAttrLine('svgbob_font_size', nextline)
             svgbob_align = ParseInlineAttrLine('svgbob_align', nextline)
             svgbob_fill = ParseInlineAttrLine('svgbob_fill', nextline)
+            svgbob_background = ResolveMarkdownOption('svgbob_background', nextline)
             svgbob_sketch = ParseInlineAttrLine('svgbob_sketch', nextline)
             svgbob_roughness = ParseInlineAttrLine('svgbob_roughness', nextline)
             mermaid_border = ParseInlineAttrLine('mermaid_border', nextline)
@@ -763,6 +765,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                     svgbob_font_size=svgbob_font_size,
                     svgbob_align=svgbob_align,
                     svgbob_fill=svgbob_fill,
+                    svgbob_background=svgbob_background,
                     svgbob_sketch=svgbob_sketch,
                     svgbob_roughness=svgbob_roughness,
                 )

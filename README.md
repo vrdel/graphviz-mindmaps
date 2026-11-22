@@ -1054,6 +1054,35 @@ automatically closed.
 	: ```
 ```
 
+Use `svgbob_background=cblue` (alias `svgbob_bg=cblue`) to color the entire Svgbob diagram canvas,
+independently of the containing node's background. The canvas is transparent
+by default. Palette colors and shade offsets, literal colors, and gradients
+are supported; use `svgbob_background=ctrans` to restore transparency.
+
+````text
+# Diagram notes
+	: md cred md_wrap=off svgbob_background=cblue svgbob_fill=cwhite
+	:
+	: This text stays on the red Markdown node background.
+	:
+	: ```svgbob
+	: +------------+    +------------+
+	: | default    |--->| tagged     |
+	: |            |    |        {s} |
+	: +------------+    +------------+
+	:
+	: # Legend:
+	: s = { fill: cgreen; }
+	: ```
+````
+
+Here the diagram canvas is blue, ordinary boxes are white, and the tagged box
+is green. `svgbob_background` works on standalone Svgbob nodes and as a
+per-fence override inside Markdown nodes, including with sketch rendering.
+It changes only the diagram canvas; `svgbob_fill` and legend styles still
+control individual shapes. Quote gradient values containing spaces, for example
+`svgbob_background="linear-gradient(to right, cblue, ccyan)"`.
+
 Svgbob fences inside an `md` node can override settings independently. Put
 options after `svgbob` on the opening fence line:
 
@@ -1074,7 +1103,8 @@ options after `svgbob` on the opening fence line:
 ````
 
 Supported fence options are `svgbob_stroke_width`, `svgbob_align`, `svgbob_fill`,
-`svgbob_sketch`, `svgbob_roughness`, and `svgbob_font_size`. Omitted options
+`svgbob_sketch`, `svgbob_roughness`, `svgbob_font_size`, and
+`svgbob_background` (or `svgbob_bg`). Omitted options
 inherit the containing node's settings; overrides apply only to that fence.
 A bare `svgbob` fence uses all node defaults. Quote values containing spaces,
 such as gradients. Legend styles still override the default fill. This also
