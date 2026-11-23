@@ -194,6 +194,25 @@
 		: deactivate
 		:
 		: With md_wrap=off, source newlines survive and the longest line controls width.
+	# MathJax equations
+		: md noheader md_wrap=off cwhite
+		: ## Inline and display math
+		:
+		: Energy $E=mc^2$ and a fraction $\frac{a+b}{c}$ stay inline with text.
+		:
+		: $$
+		: \sum_{k=1}^{n} k = \frac{n(n+1)}{2}
+		: $$
+		:
+		: $$
+		: \begin{bmatrix} a & b \\ c & d \end{bmatrix}
+		: $$
+		:
+		: | Quantity | Formula |
+		: | --- | --- |
+		: | Area | $\pi r^2$ |
+		:
+		: Code `$x$` and escaped dollars \$ remain literal.
 	# Mermaid with theme color tokens
 		: md noheader mdw=500 md_wrap=off ctrans fontsans
 		: ## Deployment workflow

@@ -48,6 +48,9 @@ Used in some workflows:
   from this repository to install the pinned Pele version. For a Python wheel
   installation, run `npm install pele@1.13.0` in the directory from which you
   invoke `gvmm`.
+- Node.js 20+, `@mathjax/src`, and `rsvg-convert` for equations in Markdown
+  nodes. `npm ci` installs the pinned MathJax version; wheel users can run
+  `npm install @mathjax/src@4.1.3` in the directory where they invoke `gvmm`.
 - Svgbob and `rsvg-convert` for ASCII diagrams. With Cargo and Rust installed,
   run `python3 tools/install_svgbob.py` to build the pinned upstream revision
   into `.tools/svgbob`. The renderer finds that local installation automatically;
@@ -748,6 +751,43 @@ attribute such as `ccyan` or `bg="#123456"` is supplied. Root nodes also default
 to transparent, with `ccyan` or `root_bg=` available to set a background. Root nodes
 can also use `mermaid`, with their heading and output title hidden. `mermaid`,
 `md`, `code`, `block`/`verbatim`, and `draw` are mutually exclusive body modes.
+
+Markdown nodes support TeX math with **MathJax**: `$...$` for inline equations
+and `$$...$$` for display equations. A display equation can occupy one line
+or span multiple colon-prefixed lines:
+
+```text
+# Equations
+	: md noheader md_wrap=off
+	:
+	: Energy $E=mc^2$ and a fraction $\frac{a}{b}$ appear alongside text.
+	:
+	: $$
+	: \sum_{k=1}^{n} k = \frac{n(n+1)}{2}
+	: $$
+```
+
+Use single backslashes for TeX commands in `.otl` files, as in `\frac` above.
+Inline math also works in headings, lists, table cells, blockquotes, highlights,
+and Markdown containers. Equations inherit the text size and color at their
+location; MathJax supplies its own mathematical font. Common TeX/AMS notation,
+fractions, roots, sums, matrices, aligned equations, and local `\newcommand`
+definitions are supported. Macros are scoped to each equation.
+
+Keep inline delimiters adjacent to their contents: `$x$`, rather than `$ x $`.
+Escape literal dollar signs as `\$`; ordinary currency such as `$5 and $10`
+stays text. Inline code and code fences retain literal math syntax, and the
+existing `$` list callout marker continues to work. The `rawmarkers` option
+preserves emoticons and arrows but still permits equations.
+
+Math is rendered locally through Node and MathJax into self-contained SVG,
+then transparent PNGs for Graphviz. It needs no browser or TeX installation.
+Repeated identical equations at the same size, color, and inline/display mode
+reuse their image within a render session. Ordinary Markdown does not invoke
+MathJax. Invalid equations and missing rendering tools report the outline
+location. With wrapping enabled, inline equations stay intact while surrounding
+text wraps, and oversized display equations fit the Markdown width. With
+`md_wrap=off`, equations retain their natural size and can expand the node.
 
 Mermaid fences in Markdown nodes render as diagrams using
 [Obsidian's Pele](https://github.com/obsidianmd/pele):
