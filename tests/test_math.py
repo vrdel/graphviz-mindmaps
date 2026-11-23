@@ -40,6 +40,20 @@ class MathParsingTests(unittest.TestCase):
         self.assertTrue(blocks[1].children[0].callout)
         self.assertEqual('existing callout', blocks[1].children[0].children[0].runs[0].text)
 
+    def test_currency_suffixes_remain_literal_beside_real_equations(self):
+        for currency in ('12.5 k$,\nthen 14 k$', '12 USD$, then 14 USD$', '12$, then 14$'):
+            with self.subTest(currency=currency):
+                source = 'Prices: ' + currency + '. Formula ($x^2$), **$y$**, and $2+2=4$.'
+                runs = ParseMarkdown(body(source))[0].runs
+                self.assertEqual(['x^2', 'y', '2+2=4'], [run.text for run in runs if run.math])
+                self.assertIn(currency.replace('\n', ' '), ''.join(run.text for run in runs if not run.math))
+        with patch('graphviz_mindmaps.render.markdown.RenderMathImage',
+                   side_effect=AssertionError('currency must not invoke MathJax')) as render:
+            for wrap in (True, False):
+                label = RenderMarkdown(body('Prices: 12.5 k$,\nthen 14 k$ after fees.'), [], wrap=wrap)
+                self.assertIn('k$', label)
+            render.assert_not_called()
+
     def test_math_inside_emphasis_highlights_and_links_retains_context(self):
         runs = ParseMarkdown(body(r'**$x$** ==$y$== [$z$](https://example.org)'))[0].runs
         maths = [r for r in runs if r.math]

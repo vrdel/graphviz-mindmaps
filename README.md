@@ -776,9 +776,11 @@ definitions are supported. Macros are scoped to each equation.
 
 Keep inline delimiters adjacent to their contents: `$x$`, rather than `$ x $`.
 Escape literal dollar signs as `\$`; ordinary currency such as `$5 and $10`
-stays text. Inline code and code fences retain literal math syntax, and the
-existing `$` list callout marker continues to work. The `rawmarkers` option
-preserves emoticons and arrows but still permits equations.
+stays text, as do currency suffixes such as `12 k$`. An opening `$` must not
+follow a letter, digit, or underscore directly. Inline code and code fences
+retain literal math syntax, and the existing `$` list callout marker continues
+to work. The `rawmarkers` option preserves emoticons and arrows but still
+permits equations.
 
 Math is rendered locally through Node and MathJax into self-contained SVG,
 then transparent PNGs for Graphviz. It needs no browser or TeX installation.

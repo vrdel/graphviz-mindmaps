@@ -347,9 +347,12 @@ def ParseMarkdown(body, preserve_newlines=False):
                allow_digits=False, double_inline=False)
     math_rule = math_inline_dollar(allow_space=False, allow_digits=False)
 
-    def math_without_code(state, silent):
+    def math_with_boundaries(state, silent):
         # An unmatched currency dollar must not consume a later code span's $.
         if state.src[state.pos] == '$':
+            # Suffix currency such as k$ and USD$ is prose, not an opener.
+            if state.pos and (state.src[state.pos - 1].isalnum() or state.src[state.pos - 1] == '_'):
+                return False
             end = state.pos + 1
             while True:
                 end = state.src.find('$', end)
@@ -362,7 +365,7 @@ def ParseMarkdown(body, preserve_newlines=False):
                 end += 1
         return math_rule(state, silent)
 
-    parser.inline.ruler.at('math_inline', math_without_code)
+    parser.inline.ruler.at('math_inline', math_with_boundaries)
     parser.inline.ruler.before('autolink', 'autolink_span', _autolink_span)
     parser.block.ruler.before('fence', 'container', _container,
                               {'alt': ['paragraph', 'reference', 'blockquote', 'list']})
