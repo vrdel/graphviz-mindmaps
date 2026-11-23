@@ -15,6 +15,7 @@ from PIL import Image, ImageFont
 from graphviz_mindmaps.constants import font, fontcolor
 from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown, ParseMarkdownTitleColors
 from graphviz_mindmaps.render.code_image import RenderCodeImage
+from graphviz_mindmaps.render.math import MATH_PIXELS_PER_POINT, RenderMathImage
 from graphviz_mindmaps.render.mermaid import (
     ParseMermaidFenceOptions, ParseMermaidFont, ParseMermaidFontSize,
     ParseMermaidSketch, RenderMermaidImage, ResolveMermaidBorder,
@@ -143,6 +144,21 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
         # Preserve styling across adjacent runs within the same word. Split only
         # at ordinary spaces; a nonbreaking space and inline code stay intact.
         groups = []
+        math_images = {}
+
+        def math_image(run):
+            key = (run.text, points, ink, run.highlight, run.link)
+            if key not in math_images:
+                color = ('#174ea6' if run.link else '#202020') if run.highlight else (
+                    fontcolor['b'] if run.link else ink or foreground)
+                try:
+                    path = RenderMathImage(run.text, temporary(), size=points, color=color)
+                    with Image.open(path) as equation:
+                        math_images[key] = (f'<IMG SRC="{escape(str(path), quote=True)}"/>', equation.width / MATH_PIXELS_PER_POINT)
+                except (OSError, ValueError) as exc:
+                    raise body.error(str(exc), run.source_line) from exc
+            return math_images[key]
+
         word = []
         pending_space = False
         for run in runs:
@@ -155,9 +171,9 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 continue
             if run.image:
                 raise body.error('images must occupy their own paragraph')
-            pieces = [run.text] if run.code else re.findall(r'[ \t\r\n]+|[^ \t\r\n]+', run.text)
+            pieces = [run.text] if run.code or run.math else re.findall(r'[ \t\r\n]+|[^ \t\r\n]+', run.text)
             for piece in pieces:
-                if not run.code and piece.isspace():
+                if not run.code and not run.math and piece.isspace():
                     if word:
                         groups.append(('word', word))
                         word = []
@@ -179,7 +195,8 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
             elif kind == 'space':
                 space = bool(row)
             else:
-                length = sum(_measure(r.text, font['mono'] if r.code else face, points,
+                length = sum(math_image(r)[1] if r.math else
+                             _measure(r.text, font['mono'] if r.code else face, points,
                                       r.bold or bold, r.italic) for r in parts)
                 gap = _measure(' ', face, points) if space else 0
                 # A little slack accounts for differences in Graphviz/Pillow metrics.
@@ -190,7 +207,7 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     gap = 0
                 if space:
                     row.append(('&#160;', row[-1][1] and parts[0].highlight))
-                row.extend((run_html(r, r.text, points, bold, ink), r.highlight) for r in parts)
+                row.extend((math_image(r)[0] if r.math else run_html(r, r.text, points, bold, ink), r.highlight) for r in parts)
                 used += gap + length
                 space = False
         if row or not rows:
@@ -201,6 +218,27 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                       if line_spacing else '')
             return (f'<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" ALIGN="{align}">'
                     + spacer.join(lines) + '</TABLE>')
+
+        if math_images:
+            # Graphviz permits IMG only inside its own TD. Keep equations atomic
+            # during wrapping and place text and math in adjacent cells.
+            equations = {value for value, _ in math_images.values()}
+            lines = []
+            for row in rows:
+                cells = []
+                for value, marked in row or [('&#160;', False)]:
+                    is_math = value in equations
+                    if cells and not is_math and not cells[-1][2] and cells[-1][1] == marked:
+                        cells[-1][0] += value
+                    else:
+                        cells.append([value, marked, is_math])
+                content = ''.join('<TD ALIGN="LEFT" VALIGN="MIDDLE" CELLPADDING="0"'
+                                  + (' BGCOLOR="#fff2a8"' if marked else '') + '>' + value + '</TD>'
+                                  for value, marked, _ in cells)
+                lines.append(f'<TR><TD ALIGN="{align}" CELLPADDING="0"><TABLE BORDER="0" '
+                             f'CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" ALIGN="{align}">'
+                             '<TR>' + content + '</TR></TABLE></TD></TR>')
+            return line_table(lines)
 
         if any(marked for row in rows for _, marked in row):
             # Graphviz FONT has no background attribute. Group adjacent marked
@@ -236,14 +274,14 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
     def textrow(value):
         return '<TR><TD ALIGN="LEFT">' + value + '</TD></TR>'
 
-    def image(path, available, line, constrain=True):
+    def image(path, available, line, constrain=True, pixel_scale=1):
         try:
             with Image.open(path) as img:
                 img.load()
-                if constrain and (img.width > available or img.height > 900):
-                    img.thumbnail((max(1, int(available)), 900))
+                if constrain and (img.width > available * pixel_scale or img.height > 900 * pixel_scale):
+                    img.thumbnail((max(1, int(available * pixel_scale)), int(900 * pixel_scale)))
                     # Copy into the session: never resize an author's source image.
-                    key = hashlib.sha256((str(path) + str(available)).encode()).hexdigest()[:16]
+                    key = hashlib.sha256((str(path) + str(available) + (str(pixel_scale) if pixel_scale != 1 else '')).encode()).hexdigest()[:16]
                     target = temporary() / ('md-image-' + key + '.png')
                     img.save(target)
                     path = target
@@ -282,6 +320,14 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 else:
                     ratio = (1.65, 1.4, 1.2, 1.1, 1.0, 1.0)[block.level - 1] if kind == 'heading' else 1
                     rows.append(textrow(wrapped(block.runs, available, round(size * ratio), kind == 'heading', ink=ink)))
+            elif kind == 'math_block':
+                try:
+                    path = RenderMathImage(block.source, temporary(), size=size,
+                                           color=foreground, display=True)
+                except ValueError as exc:
+                    raise body.error(str(exc), block.source_line) from exc
+                content = image(path, available, block.source_line, constrain=wrap, pixel_scale=MATH_PIXELS_PER_POINT)
+                rows.append('<TR><TD ALIGN="LEFT" CELLPADDING="3">' + content + '</TD></TR>')
             elif kind == 'hr':
                 # A separate tiny table guarantees legal HR placement even at EOF.
                 # Empty cells avoid inheriting a full text line's height from

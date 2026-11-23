@@ -137,6 +137,8 @@ class Run:
     hardbreak: bool = False
     image: str = ''
     highlight: bool = False
+    math: bool = False
+    source_line: int = 0
 
 
 @dataclass
@@ -331,6 +333,8 @@ def ParseMarkdown(body, preserve_newlines=False):
     """CommonMark plus tables, strikethrough and ==marks==, without HTML."""
     from markdown_it import MarkdownIt
     from markdown_it.tree import SyntaxTreeNode
+    from mdit_py_plugins.dollarmath import dollarmath_plugin
+    from mdit_py_plugins.dollarmath.index import math_inline_dollar, is_escaped
 
     parser = MarkdownIt('commonmark', {'html': False, 'linkify': False,
                                       'typographer': False, 'breaks': False})
@@ -339,6 +343,26 @@ def ParseMarkdown(body, preserve_newlines=False):
     validate_link = parser.validateLink
     parser.validateLink = lambda url: url.lower().startswith('file://') or validate_link(url)
     parser.enable(['strikethrough', 'table'])
+    parser.use(dollarmath_plugin, allow_labels=False, allow_space=False,
+               allow_digits=False, double_inline=False)
+    math_rule = math_inline_dollar(allow_space=False, allow_digits=False)
+
+    def math_without_code(state, silent):
+        # An unmatched currency dollar must not consume a later code span's $.
+        if state.src[state.pos] == '$':
+            end = state.pos + 1
+            while True:
+                end = state.src.find('$', end)
+                if end < 0:
+                    break
+                if not is_escaped(state, end):
+                    if '`' in state.src[state.pos + 1:end]:
+                        return False
+                    break
+                end += 1
+        return math_rule(state, silent)
+
+    parser.inline.ruler.at('math_inline', math_without_code)
     parser.inline.ruler.before('autolink', 'autolink_span', _autolink_span)
     parser.block.ruler.before('fence', 'container', _container,
                               {'alt': ['paragraph', 'reference', 'blockquote', 'list']})
@@ -360,20 +384,22 @@ def ParseMarkdown(body, preserve_newlines=False):
         parser.inline.ruler.before('text', 'emoticon', emoticon)
     tree = SyntaxTreeNode(parser.parse(body.source, env={}))
 
-    def inline(nodes, style=Run('')):
+    def inline(nodes, style=Run(''), source_line=0):
         result = []
         for node in nodes:
             kind = node.type
             if kind == 'text':
                 text = node.content if body.rawmarkers else ReplaceEmoticons(node.content)
                 result.append(replace(style, text=text))
+            elif kind == 'math_inline':
+                result.append(replace(style, text=node.content, math=True, source_line=source_line))
             elif kind == 'code_inline':
                 result.append(replace(style, text=node.content, code=True))
             elif kind in {'strong', 'em', 's', 'link', 'mark'}:
                 changes = {'strong': {'bold': True}, 'em': {'italic': True},
                            'mark': {'highlight': True},
                            's': {'strike': True}, 'link': {'link': node.attrs.get('href', '')}}[kind]
-                result.extend(inline(node.children, replace(style, **changes)))
+                result.extend(inline(node.children, replace(style, **changes), source_line))
             elif kind == 'softbreak':
                 result.append(replace(style, text='' if preserve_newlines else ' ',
                                       hardbreak=preserve_newlines))
@@ -390,11 +416,13 @@ def ParseMarkdown(body, preserve_newlines=False):
         line = node.map[0] if node.map else 0
         result = Block(node.type, source_line=line)
         if node.type in {'paragraph', 'heading', 'th', 'td'}:
-            result.runs = inline([child for item in node.children for child in item.children])
+            result.runs = inline([child for item in node.children for child in item.children], source_line=line)
             if node.type == 'heading':
                 result.level = int(node.tag[1:])
             if node.type in {'th', 'td'}:
                 result.align = node.attrs.get('style', 'text-align:left').split(':')[-1]
+        elif node.type == 'math_block':
+            result.source = node.content
         elif node.type == 'container':
             title_tree = SyntaxTreeNode(parser.parseInline(node.meta['title']))
             result.runs = inline(title_tree.children[0].children)
