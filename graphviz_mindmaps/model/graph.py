@@ -286,8 +286,14 @@ class Tree:
                     continue
                 target_idx = scoped_indexes[li - 1]
 
-                deco = "<TD><FONT COLOR=\"%s\"><I><FONT FACE=\"FontAwesome\" POINT-SIZE=\"18\">%s</FONT>&nbsp;" % (self._tree.fontcolor["b"], self._tree.fontawesome_symb["calendar"])
-                self._label[target_idx] = self._label[target_idx].replace("<TD>", deco, 1)
+                deco = "<FONT COLOR=\"%s\"><I><FONT FACE=\"FontAwesome\" POINT-SIZE=\"18\">%s</FONT>&nbsp;" % (self._tree.fontcolor["b"], self._tree.fontawesome_symb["calendar"])
+                # Multiple attached images add COLSPAN to heading cells. Keep
+                # those attributes and insert the decoration inside the cell.
+                decorated, count = re.subn(r'<TD\b[^>]*>', lambda match: match.group(0) + deco,
+                                           self._label[target_idx], count=1)
+                if not count:
+                    continue
+                self._label[target_idx] = decorated
                 if "</TD>" in self._label[target_idx]:
                     self._label[target_idx] = self._label[target_idx].replace("</TD>", "</I></FONT></TD>", 1)
                 else:

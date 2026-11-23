@@ -571,6 +571,40 @@ class RenderDotNodeAttributeTests(unittest.TestCase):
         self.assertEqual(0, depth)
         self.assertIn("subgraph clustercolored102", rendered)
 
+    def test_date_selector_on_multiline_heading_with_multiple_transformed_images(self):
+        from PIL import Image
+        from pathlib import Path
+        from graphviz_mindmaps.cli import build_runtime
+        from graphviz_mindmaps.model.document import RenderSession
+        from graphviz_mindmaps.render.dot import GenDot
+        from graphviz_mindmaps.theme import ApplyTheme
+        self.addCleanup(ApplyTheme, 'default')
+        with tempfile.TemporaryDirectory() as directory:
+            paths = [Path(directory, name) for name in ('first.png', 'second.png')]
+            for path in paths:
+                Image.new('RGB', (30, 20), 'white').save(path)
+            for count in (1, 2):
+                for selector in ('l3date', 'El1date', 'hl3date', 'hEl1date'):
+                    with self.subTest(images=count, selector=selector):
+                        attrs = 'edgo ' + selector + ' ' + ' '.join('img_neg_sk=' + str(path) for path in paths[:count])
+                        blocks = ExtractMindmapBlocks([
+                            '# Root', '\t: fname=out.jpg',
+                            '\t# First note', '\t# Second note', '\t# Mon 01-01-2024',
+                            '\t\t: ' + attrs,
+                        ], ApplyInlineBacktickBold)
+                        session = RenderSession(tmpdir=[directory])
+                        with patch('graphviz_mindmaps.render.dot.WriteDot'):
+                            GenDot(blocks[0], SimpleNamespace(dotname='out.dot', jpgname=None),
+                                   session, build_runtime('default'))
+                        self.assertEqual(1, session.dotbuf.count(fontawesome.symb['calendar']))
+                        self.assertRegex(session.dotbuf, r'&nbsp;Mon(?:&nbsp;| )01-01-2024')
+                        if count == 2:
+                            self.assertIn('<TD COLSPAN="2"><FONT COLOR=', session.dotbuf)
+                        if shutil.which('dot'):
+                            svg = subprocess.run(['dot', '-Tsvg'], input=session.dotbuf,
+                                                 text=True, capture_output=True, timeout=30)
+                            self.assertEqual(0, svg.returncode, svg.stderr)
+
     def test_attached_image_row_is_ignored_by_line_selectors(self):
         tree = self._tree()
         node = tree.Node(
