@@ -1,11 +1,12 @@
 {
   "name": "graphviz-mindmaps-diagrams",
   "private": true,
-  "description": "Optional Pele and Rough.js diagram renderers",
+  "description": "Optional Pele, Rough.js, and MathJax renderers",
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
+    "@mathjax/src": "4.1.3",
     "pele": "1.13.0",
     "roughjs": "4.6.6"
   }
