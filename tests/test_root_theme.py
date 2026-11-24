@@ -15,6 +15,28 @@ from graphviz_mindmaps.theme import ApplyTheme, THEME_PALETTES
 
 
 class RootThemeTests(unittest.TestCase):
+    def test_root_png_compression_is_validated_and_passed_without_leaking(self):
+        def render(root_attrs='', child_attrs='node'):
+            blocks = ExtractMindmapBlocks([
+                '# Root', *('\t: fname=out.png ' + root_attrs).splitlines(),
+                '\t# Child', '\t\t: ' + child_attrs,
+            ], ApplyInlineBacktickBold)
+            session = RenderSession()
+            with patch('graphviz_mindmaps.render.dot.WriteImg', return_value={
+                'dotbuf': '', 'tmpdir': [], 'notitle': False, 'gvroot': '',
+            }) as writer:
+                GenDot(blocks[0], SimpleNamespace(dotname=None, jpgname=None), session, build_runtime('default'))
+                return writer.call_args.kwargs['png_compression']
+        self.assertEqual(1, render())
+        for level in (0, 1, 6, 9):
+            self.assertEqual(level, render('png_compression=' + str(level)))
+            self.assertEqual(level, render('\n\t: png_compression=' + str(level)))
+        self.assertEqual(1, render(child_attrs='node png_compression=9'))
+        self.assertEqual(1, render())
+        for value in ('-1', '10', '1.5', 'fast', '""'):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'png_compression'):
+                render('png_compression=' + value)
+
     def test_full_and_short_color_names_render_identically(self):
         for theme in ('default', *THEME_PALETTES):
             runtime = build_runtime(theme)

@@ -114,6 +114,22 @@ gvmm -f mindmap.otl --theme nord
 gvmm -f mindmap.otl --theme gruvbox
 ```
 
+For PNG output, set `png_compression=0..9` on the root attribute line:
+
+```text
+# Notes
+	: fname=mindmap.png png_compression=1
+	# Example
+		: node
+```
+
+The default is `1` (fast compression). Use `0` for no compression, `6` for
+Pillow's usual compression level, or `9` to favor smaller files over encoding
+speed. All levels preserve the same pixels, dimensions, and transparency.
+This setting applies to that mindmap's final PNG only; it can also appear on a
+root continuation attribute line. Child nodes do not override it, and JPEG
+output keeps its normal encoder settings.
+
 After Graphviz renders, cropping, optional title framing, and optional scaling
 run in memory in their existing order, followed by one final image save.
 Intermediate crop/title/scale files are no longer re-encoded. Graphviz's own

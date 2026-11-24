@@ -22,7 +22,7 @@ from graphviz_mindmaps.constants import (
     nodetype,
     vrbtcolors,
 )
-from graphviz_mindmaps.execute.image import WriteDot, WriteImg
+from graphviz_mindmaps.execute.image import DEFAULT_PNG_COMPRESSION, ParsePngCompression, WriteDot, WriteImg
 from graphviz_mindmaps.model.document import RenderRuntime, RenderSession
 from graphviz_mindmaps.model.graph import (
     AppendNodeEdge,
@@ -183,6 +183,17 @@ def ResolveRootSgmargin(lines):
         if sgm:
             return sgm
     return "8"
+
+
+def ResolveRootPngCompression(lines):
+    value = DEFAULT_PNG_COMPRESSION
+    for line in lines[1:]:
+        if re.search(r"(\t#) (.*)", line):
+            break
+        setting = ParseInlineAttrLine('png_compression', line)
+        if setting is not None:
+            value = ParsePngCompression(setting)
+    return value
 
 
 def ResolveRootHrStyle(lines):
@@ -377,6 +388,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     lines = [root_heading, *lines[1:]]
     root_theme = ResolveRootTheme(lines)
     root_code_theme = ResolveRootCodeTheme(lines)
+    png_compression = ResolveRootPngCompression(lines)
     theme_bgcolor = ApplyTheme(root_theme or runtime.theme_name)
     diagram_colors = PeleThemeColors(root_theme or runtime.theme_name)
     default_bgcolor = theme_bgcolor if root_theme else runtime.default_bgcolor
@@ -790,7 +802,8 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     if argholder.dotname:
         WriteDot(dotbuf, argholder.dotname)
     else:
-        result = WriteImg(dotbuf, argholder, session.gvroot, title, notitle, tmpdir)
+        result = WriteImg(dotbuf, argholder, session.gvroot, title, notitle, tmpdir,
+                          png_compression=png_compression)
         dotbuf = result["dotbuf"]
         tmpdir = result["tmpdir"]
         notitle = result["notitle"]
