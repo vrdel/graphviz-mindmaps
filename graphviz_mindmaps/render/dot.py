@@ -39,6 +39,7 @@ from graphviz_mindmaps.model.styles import (
 )
 from graphviz_mindmaps.parser.attributes import (
     ApplyNodeAttributeTokens,
+    ParseEdgeWeight,
     RenderTransformedImage,
     ResolveBaseNodeTypeToken,
     ResolveColorNodeTypeToken,
@@ -233,14 +234,15 @@ def ResolveRootEdgeDefaults(lines):
         "global_ec": "color",
         "global_edge_style": "style",
         "global_es": "style",
+        "global_edge_weight": "weight",
     }
     for line in lines[1:]:
         if re.search(r"(\t#) (.*)", line):
             break
         for key, dotkey in keymap.items():
             value = ParseInlineAttrLine(key, line)
-            if value:
-                defaults[dotkey] = value
+            if value or (dotkey == 'weight' and value is not None):
+                defaults[dotkey] = ParseEdgeWeight(value, key) if dotkey == 'weight' else value
     return defaults
 
 
@@ -702,7 +704,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
                 )
 
             edgeattrs = state_obj.edgeattrs()
-            AppendNodeEdge(edge, tabs, fromnode, tonode, ntype, edgeattrs, edgetype)
+            AppendNodeEdge(edge, tabs, fromnode, tonode, ntype, edgeattrs, edgetype, weight=state_obj.edgeweight)
 
             parentlist[level] = tree.addchild_rev(
                 tonode,

@@ -271,6 +271,27 @@ Set a default style for untyped leaf nodes from the root attribute line:
 
 If `leaf=` is omitted, untyped leaf nodes keep the default underline style. Explicit node attributes still win, so `: todo`, `: quest`, `: cgreen`, and similar typed nodes are unchanged.
 
+Control the layout weight of a node's incoming DOT edge with `edge_weight=5`
+(short alias `edgw=5`). Set `global_edge_weight` on the root to choose the
+map-wide default; an individual edge setting overrides it:
+
+```text
+# Notes
+	: fname=mindmap.jpg global_edge_weight=1
+	# Main branch
+		: node edgw=10
+	# Flexible branch
+		: cblue edge_weight=0
+```
+
+Weights must be nonnegative integers, including `0`. Without these attributes,
+Graphviz keeps its default weight of `1`. Higher weights encourage shorter,
+straighter edges in the DOT layout; exact positioning depends on the graph's
+other constraints. Weight controls layout influence, while `edgt3` controls
+line thickness. A weight setting preserves the edge's existing color, style,
+and arrow settings and applies only to that node's incoming edge, not its
+children's edges. See [Graphviz's weight documentation](https://graphviz.org/docs/attrs/weight/).
+
 Horizontal rules created by `---` have 4 points of extra space above and below
 by default. Set `hr_spacing` on a root attribute line to change this for all nodes:
 

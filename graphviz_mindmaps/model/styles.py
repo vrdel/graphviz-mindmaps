@@ -23,6 +23,7 @@ class NodePrepState:
     edgend: list = field(default_factory=list)
     edgethick: list = field(default_factory=list)
     edglabel: list = field(default_factory=list)
+    edgeweight: str | None = None
     symbcolor: list = field(default_factory=list)
     symbsize: list = field(default_factory=list)
     symblist: list = field(default_factory=list)

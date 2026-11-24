@@ -22,8 +22,11 @@ def ResolveEdgeType(ntype, edgetype):
     return None
 
 
-def AppendNodeEdge(edge, tabs, fromnode, tonode, ntype, edgeattrs, edgetype):
+def AppendNodeEdge(edge, tabs, fromnode, tonode, ntype, edgeattrs, edgetype, weight=None):
     resolved_edgetype = ResolveEdgeType(ntype, edgetype)
+    if weight is not None:
+        # Weight alone must preserve the edge style implied by the node type.
+        edgeattrs = (edgeattrs or resolved_edgetype or '') + f' weight="{weight}"'
     if resolved_edgetype and not edgeattrs:
         edge.append("%s%s:e -> %s:w[%s];\n" % (tabs, fromnode, tonode, resolved_edgetype))
     elif edgeattrs:

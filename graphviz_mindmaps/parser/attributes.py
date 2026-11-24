@@ -121,6 +121,13 @@ def ResolveVerbatimFillColorToken(token, vrbtcolors):
     return newfill
 
 
+def ParseEdgeWeight(value, name='edge_weight'):
+    value = str(value).strip()
+    if not re.fullmatch(r'[0-9]+', value):
+        raise ValueError(f'{name} must be a nonnegative integer')
+    return str(int(value))
+
+
 def ResolveSubgraphTitleColor(value):
     # Share the palette and shade rules used by diagram colors, including aliases.
     from graphviz_mindmaps.render.diagram_colors import DiagramColorTokens, ResolveDiagramColor
@@ -532,7 +539,7 @@ def ApplyNodeAttributeTokens(
             state.fontname = fontnames[token]
             continue
         keyval_match = re.match(r"([^=]+)=(.*)", token)
-        if keyval_match and keyval_match.group(1) in {"bg", "bgcolor", "fg", "fgcolor", "bc", "bw", "bs", "subgraph", "sgmargin", "sgm", "sgtitle", "hr_style"}:
+        if keyval_match and keyval_match.group(1) in {"bg", "bgcolor", "fg", "fgcolor", "bc", "bw", "bs", "subgraph", "sgmargin", "sgm", "sgtitle", "hr_style", "edge_weight", "edgw"}:
             key = keyval_match.group(1)
             value = keyval_match.group(2).strip().strip("\"'")
             if key in {"bg", "bgcolor"}:
@@ -541,6 +548,8 @@ def ApplyNodeAttributeTokens(
                 state.fgcolor = value
             elif key == "sgtitle":
                 state.sgtitlebg = ResolveSubgraphTitleColor(value)
+            elif key in {"edge_weight", "edgw"}:
+                state.edgeweight = ParseEdgeWeight(value, key)
             elif key == "bc":
                 state.bordercolor = value
             elif key == "bw":
@@ -627,6 +636,8 @@ def ApplyNodeAttributeTokens(
             state.fgcolor = tokval[1].strip().strip("\"'")
         elif tokval[0] == "sgtitle":
             state.sgtitlebg = ResolveSubgraphTitleColor(tokval[1].strip().strip("\"'"))
+        elif tokval[0] in {"edge_weight", "edgw"}:
+            state.edgeweight = ParseEdgeWeight(tokval[1].strip().strip("\"'"), tokval[0])
         elif tokval[0] == "bc":
             state.bordercolor = tokval[1].strip().strip("\"'")
         elif tokval[0] == "bw":

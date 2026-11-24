@@ -71,6 +71,16 @@
 				:
 	# edge ends
 		:
+		# layout weight (not line thickness)
+			: node
+			# edgw=0 - low layout influence
+				: node edgw=0
+			# edgw=1 - Graphviz default
+				: node edgw=1
+			# edgw=10 - stronger layout influence
+				: node edgw=10
+				# full name: edge_weight=10
+					: node edge_weight=10
 		# edgra
 			: edgra
 			# edgrt9da
