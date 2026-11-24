@@ -17,6 +17,10 @@ entries:
   # - image_gray_sketch: mindmap-01.jpg
   # - image_negate_gray_sketch: mindmap-01.jpg
   # - image_negate_gray_contrast_sketch: mindmap-01.jpg|50
+  # Individual column items can have filters and their own scale:
+  # - column:
+  #     - image_negate_sketch: mindmap-01.jpg|70
+  #     - image: mindmap-01.jpg|50
   - column: [mindmap-01.jpg, mindmap-01.jpg]
   - submontage:
       title: joint submontage

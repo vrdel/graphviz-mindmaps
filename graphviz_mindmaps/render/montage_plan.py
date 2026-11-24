@@ -139,9 +139,13 @@ class MontagePlan:
 
     def item(self, item, background):
         if isinstance(item, str):
-            return self.source(item)
+            path, scale = ParseImageTransformSpec(item)
+            source = self.source(path)
+            if scale is not None:
+                return self.operation('transform', [source], options={}, scale=scale)
+            return source
         if isinstance(item, list):
-            return self.compose('group', [self.source(str(name)) for name in item], background, '1x')
+            return self.compose('group', [self.item(child, background) for child in item], background, '1x')
         if isinstance(item, dict):
             transform = next((key for key in self.transforms if key in item), None)
             if transform:

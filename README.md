@@ -1406,6 +1406,27 @@ entries:
         - join: [detail-01.jpg, detail-02.jpg]
 ```
 
+Column entries (`column` and its alias `join`) accept plain filenames, scaled
+images, and filtered image mappings. Each item is processed before the images
+are stacked vertically:
+
+```yaml
+entries:
+  - column:
+      - image_negate_sketch: photo-01.png|70
+      - image: photo-02.png|50
+      - photo-03.png
+  - column: [photo-04.png|80, photo-05.png]
+```
+
+The same transform names work inside columns as at the top level, including
+`image_negate`, `image_sketch`, and `image_negate_gray_contrast_sketch`.
+A `|percent` suffix also works on plain image entries, inside or outside a
+column. Scaling preserves aspect ratio and leaves the original image intact.
+Transforms and resized images participate in montage caching: changing one
+item rebuilds its column and the operations above it while reusing independent
+columns. `copy-mm` and `move-mm` include the original source files.
+
 Add a title bar to an image:
 
 ```bash

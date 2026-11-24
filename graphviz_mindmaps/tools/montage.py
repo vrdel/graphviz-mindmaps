@@ -239,7 +239,7 @@ def normalize_item(item: Any) -> Any:
         return item
 
     if isinstance(item, list):
-        return [str(elem) for elem in item]
+        return [normalize_item(elem) for elem in item]
 
     if not isinstance(item, dict):
         raise ValueError(f"unsupported item type: {item!r}")
@@ -251,7 +251,7 @@ def normalize_item(item: Any) -> Any:
             return {transform_key: str(item[transform_key])}
     join_key = "join" if "join" in item else "column" if "column" in item else None
     if join_key:
-        return [str(elem) for elem in ensure_list(item[join_key], join_key)]
+        return [normalize_item(elem) for elem in ensure_list(item[join_key], join_key)]
     if "submontage" in item:
         if not isinstance(item["submontage"], dict):
             raise ValueError("submontage item must contain a mapping")

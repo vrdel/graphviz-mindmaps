@@ -157,6 +157,33 @@ class MontageCacheTests(unittest.TestCase):
         self.assertEqual({'group': 1, 'row': 1, 'export': 1}, stats['operations'])
         self.assertEqual(1, stats['memo_hits'])
 
+    def test_filtered_and_scaled_column_items_cache_and_invalidate_independently(self):
+        spec = normalize_spec({'entries': [
+            {'column': [{'image_negate': 'A.png|50'}, {'image': 'B.png|50'}]},
+            {'join': [{'image_gray_sketch': 'C.png|50'}, 'D.png|50']},
+        ]})
+        stats = self.build(spec)
+        self.assertEqual({'transform': 4, 'group': 2, 'row': 1, 'export': 1}, stats['operations'])
+        with Image.open('result.png') as image:
+            self.assertEqual((40, 30), image.size)
+            self.assertEqual((0, 255, 255), image.convert('RGB').getpixel((0, 0)))
+            self.assertEqual((0, 0, 255), image.convert('RGB').getpixel((0, 20)))
+        self.assertEqual(0, self.build(spec)['rendered'])
+        Image.new('RGB', (40, 30), 'purple').save('C.png')
+        changed = self.build(spec)
+        self.assertEqual({'transform': 1, 'group': 1, 'row': 1, 'export': 1}, changed['operations'])
+        expected = self.pixels()
+        self.build(spec, cache='off')
+        self.assertEqual(expected, self.pixels())
+        with Image.open('A.png') as image:
+            self.assertEqual((40, 30), image.size)
+
+    def test_identical_filtered_columns_share_operations_without_persistent_cache(self):
+        column = {'column': [{'image_negate_sketch': 'A.png|50'}, {'image': 'B.png|50'}]}
+        stats = self.build(normalize_spec({'entries': [column, column]}), cache='off')
+        self.assertEqual({'transform': 2, 'group': 1, 'row': 1, 'export': 1}, stats['operations'])
+        self.assertEqual(1, stats['memo_hits'])
+
     def test_cache_directory_failure_falls_back_and_zero_budget_is_valid(self):
         self.cache_dir.write_text('not a directory')
         with patch('sys.stderr', new_callable=io.StringIO) as errors:

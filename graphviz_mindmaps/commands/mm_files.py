@@ -98,7 +98,8 @@ def collect_justfile(path: Path, files: dict[Path, Path]) -> None:
 def collect_montage_images(spec: object) -> list[str]:
     images: list[str] = []
     if isinstance(spec, str):
-        images.append(spec)
+        image, _ = ParseImageTransformSpec(spec)
+        images.append(image)
         return images
     if isinstance(spec, list):
         for item in spec:

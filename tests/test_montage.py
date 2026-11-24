@@ -9,7 +9,32 @@ from unittest.mock import patch
 
 from PIL import Image
 
-from graphviz_mindmaps.tools.montage import MontageRenderer, main, normalize_spec
+from graphviz_mindmaps.tools.montage import MontageRenderer, main, normalize_spec, parse_yaml_like
+
+
+class MontageColumnParsingTests(unittest.TestCase):
+    def test_yaml_column_preserves_filtered_mappings_and_scaled_filenames(self):
+        source = """entries:
+  - column:
+      - image_negate_sketch: first.png|70
+      - image: second.png|50
+      - third.png
+  - join: [fourth.png|80, fifth.png]
+"""
+        spec = normalize_spec(parse_yaml_like(source))
+        self.assertEqual([[{'image_negate_sketch': 'first.png|70'}, 'second.png|50', 'third.png'],
+                          ['fourth.png|80', 'fifth.png']], spec['rows'][0])
+        from graphviz_mindmaps.commands.mm_files import collect_montage_images
+        self.assertEqual(['first.png', 'second.png', 'third.png', 'fourth.png', 'fifth.png'],
+                         collect_montage_images(spec))
+        # Direct row lists use the same recursive normalization.
+        self.assertEqual([[{'image_negate_sketch': 'first.png|70'}, 'second.png|50']],
+                         normalize_spec({'rows': [[[{'image_negate_sketch': 'first.png|70'},
+                                                   {'image': 'second.png|50'}]]]})['rows'][0])
+
+    def test_unsupported_column_mapping_reports_error_instead_of_becoming_filename(self):
+        with self.assertRaisesRegex(ValueError, 'unsupported item mapping'):
+            normalize_spec({'entries': [{'column': [{'unknown': 'first.png'}]}]})
 
 
 @unittest.skipUnless(shutil.which('gm'), 'GraphicsMagick required')
