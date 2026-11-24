@@ -601,8 +601,7 @@ def ApplyNodeAttributeTokens(
         image_match = re.match(r"^(%s)[=:](.+)$" % IMAGE_TRANSFORM_KEY_PATTERN, token)
         if image_match:
             image_key, image_spec = image_match.groups()
-            image_path = gen_img_path(image_spec.strip())
-            if IsImageTransformKey(image_key):
+            if IsImageTransformKey(image_key) or '|' in image_spec:
                 image_path = RenderTransformedImage(
                     image_spec.strip(),
                     image_key,
@@ -610,6 +609,8 @@ def ApplyNodeAttributeTokens(
                     tmpdir,
                     tempfile_module,
                 )
+            else:
+                image_path = gen_img_path(image_spec.strip())
             if state.embedded_image_count == 0:
                 image_cell = "</TD></TR><TR><TD"
             else:

@@ -405,7 +405,7 @@ def GenDot(lines, argholder, session: RenderSession, runtime: RenderRuntime):
     tmpdir = session.tmpdir
 
     def ResolveImagePath(image, image_key="img"):
-        if IsImageTransformKey(image_key):
+        if IsImageTransformKey(image_key) or '|' in image:
             return RenderTransformedImage(
                 image,
                 image_key,

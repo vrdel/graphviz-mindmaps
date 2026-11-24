@@ -1,4 +1,5 @@
 from pathlib import Path
+import math
 import re
 
 from PIL import Image, ImageColor, ImageFilter, ImageOps
@@ -60,6 +61,8 @@ def ParseImageTransformSpec(spec: str) -> tuple[str, float | None]:
         scale_percent = float(scale)
     except ValueError as exc:
         raise ValueError(f"invalid image scale percentage: {scale!r}") from exc
+    if not math.isfinite(scale_percent):
+        raise ValueError("image scale percentage must be finite")
     if scale_percent <= 0:
         raise ValueError("image scale percentage must be greater than zero")
     return image, scale_percent
