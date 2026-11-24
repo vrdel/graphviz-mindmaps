@@ -29,39 +29,22 @@ def Montage(argholder):
 
     subprocess.call(exe, shell = True)
 
-def render_title(source, output, title, size='s', background=DEFAULT_BACKGROUND):
-    """Add the existing frame/title without full-size RGB and border copies.
-
-    PNGs are lossless working artifacts. Use fast compression rather than the
-    default level 6; JPEG and other output encoders retain their defaults.
-    """
+def title_canvas(image, title, size='s', background=DEFAULT_BACKGROUND):
+    """Return a framed/title canvas for an open image; the caller owns it."""
     point_size = {'xs': 35, 's': 80, 'm': 148, 'b': 232}[size]
     splice = point_size + {'xs': 30, 's': 50, 'm': 70, 'b': 100}[size]
     image_x = SIDE_MARGIN
     image_y = splice - BOTTOM_OVERLAP
-
-    with Image.open(source) as image:
-        width, height = image.size
-        canvas = Image.new('RGB', (width + SIDE_MARGIN * 2, height + splice), background)
-        try:
-            draw = ImageDraw.Draw(canvas)
-            # Draw just the border directly on the destination. ImageOps.expand
-            # would allocate a second full-size copy of the decoded source.
-            draw.rectangle((image_x - FRAME_BORDER, image_y - FRAME_BORDER,
-                            image_x + width + FRAME_BORDER - 1,
-                            image_y + height + FRAME_BORDER - 1),
-                           outline=FRAME_FILL, width=FRAME_BORDER)
-            # Paste converts non-RGB modes as needed, without retaining a separate
-            # RGB source copy. No mask: preserve the original alpha-flattening
-            # behavior of image.convert('RGB').
-            canvas.paste(image, (image_x, image_y))
-        except BaseException:
-            canvas.close()
-            raise
-
-    # The source is now closed, before text rendering and output compression.
+    width, height = image.size
+    canvas = Image.new('RGB', (width + SIDE_MARGIN * 2, height + splice), background)
     try:
         draw = ImageDraw.Draw(canvas)
+        draw.rectangle((image_x - FRAME_BORDER, image_y - FRAME_BORDER,
+                        image_x + width + FRAME_BORDER - 1,
+                        image_y + height + FRAME_BORDER - 1),
+                       outline=FRAME_FILL, width=FRAME_BORDER)
+        # No mask: retain the historical RGB conversion/alpha-flattening behavior.
+        canvas.paste(image, (image_x, image_y))
         title_rect = (TOP_MARGIN, TOP_MARGIN, canvas.width - TOP_MARGIN - 1, image_y)
         draw.rectangle(title_rect, fill=TITLE_FILL)
         font = ImageFont.truetype(TITLE_FONT, point_size)
@@ -71,6 +54,17 @@ def render_title(source, output, title, size='s', background=DEFAULT_BACKGROUND)
         text_x = title_rect[0] + max(0, ((title_rect[2] - title_rect[0]) - text_width) // 2) - text_bbox[0]
         text_y = title_rect[1] + max(0, ((title_rect[3] - title_rect[1]) - text_height) // 2) - text_bbox[1]
         draw.text((text_x, text_y), title, font=font, fill='white')
+        return canvas
+    except BaseException:
+        canvas.close()
+        raise
+
+
+def render_title(source, output, title, size='s', background=DEFAULT_BACKGROUND):
+    """Add the existing frame/title with one decode and one final save."""
+    with Image.open(source) as image:
+        canvas = title_canvas(image, title, size, background)
+    try:
         options = {'compress_level': 1} if Path(output).suffix.lower() == '.png' else {}
         canvas.save(output, **options)
     finally:
