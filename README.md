@@ -114,6 +114,12 @@ gvmm -f mindmap.otl --theme nord
 gvmm -f mindmap.otl --theme gruvbox
 ```
 
+After Graphviz renders, cropping, optional title framing, and optional scaling
+run in memory in their existing order, followed by one final image save.
+Intermediate crop/title/scale files are no longer re-encoded. Graphviz's own
+initial raster output and layout algorithm are unchanged. The completed output
+replaces the destination only after encoding succeeds.
+
 Supported themes are `default`, `nord`, `papercolor`, `papercolor-dark`, `monokai`,
 `gruvbox`, `solarized`, `solarized-light`, `catppuccin-latte`, `rose-pine-dawn`,
 `github-light`, `one-light`, `gruvbox-light`, `dracula`, `catppuccin-mocha`,

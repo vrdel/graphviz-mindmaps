@@ -1,13 +1,14 @@
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 
 from PIL import Image
 
+from graphviz_mindmaps.tools.montage_title import title_canvas
+
 Image.MAX_IMAGE_PIXELS = None
-MONTAGE_TITLE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tools", "montage_title.py")
+DEFAULT_PNG_COMPRESSION = 1
 CAIRO_BITMAP_LIMIT_ERROR = "too large for cairo-renderer bitmaps"
 
 
@@ -129,33 +130,68 @@ def RenderDotImage(dotbuf, output_path, tmpdir):
     raise RuntimeError(_format_command_error(["dot", "-T%s" % output_format, "-o", output_path], result))
 
 
-def WriteImg(dotbuf, argholder, gvroot, title, notitle, tmpdir):
+def ParsePngCompression(value):
+    value = str(value).strip()
+    if not value.isascii() or not value.isdecimal() or not 0 <= int(value) <= 9:
+        raise ValueError('png_compression must be an integer from 0 to 9')
+    return int(value)
+
+
+def PostProcessImage(source, output, title, notitle=False, scale=None,
+                     png_compression=DEFAULT_PNG_COMPRESSION):
+    """Crop, title, and scale in memory, then atomically encode only once."""
+    png_compression = ParsePngCompression(png_compression)
+    with Image.open(source) as image:
+        left = min(2, image.width // 2)
+        top = min(2, image.height // 2)
+        right = max(left + 1, image.width - left)
+        bottom = max(top + 1, image.height - top)
+        result = image.crop((left, top, right, bottom))
+    pending = None
+    try:
+        if not notitle:
+            framed = title_canvas(result, title, size='s')
+            result.close()
+            result = framed
+        if scale:
+            percent = int(scale)
+            width = max(1, round(result.width * percent / 100))
+            height = max(1, round(result.height * percent / 100))
+            resized = result.resize((width, height), Image.Resampling.LANCZOS)
+            result.close()
+            result = resized
+        suffix = os.path.splitext(output)[1].lower()
+        if suffix in {'.jpg', '.jpeg'} and result.mode not in {'RGB', 'L', 'CMYK'}:
+            converted = result.convert('RGB')
+            result.close()
+            result = converted
+        descriptor, pending = tempfile.mkstemp(prefix='.gvmm-output-', suffix=suffix,
+                                                dir=os.path.dirname(os.path.abspath(output)))
+        os.close(descriptor)
+        options = {'compress_level': png_compression} if suffix == '.png' else {}
+        result.save(pending, **options)
+        os.replace(pending, output)
+    finally:
+        result.close()
+        if pending is not None and os.path.exists(pending):
+            os.unlink(pending)
+
+
+def WriteImg(dotbuf, argholder, gvroot, title, notitle, tmpdir,
+             png_compression=DEFAULT_PNG_COMPRESSION):
+    png_compression = ParsePngCompression(png_compression)
     gvroot, argholder.jpgname = ResolveOutputRoot(gvroot, argholder.jpgname)
-
-    RenderDotImage(dotbuf, gvroot + argholder.jpgname, tmpdir)
-
-    ShaveImage(gvroot + argholder.jpgname, shave_x=2, shave_y=2)
-
-    if not notitle:
-        subprocess.call(
-            [sys.executable, MONTAGE_TITLE_PATH, "-s", "s", "-t", title, gvroot + argholder.jpgname]
-        )
-
-    if argholder.scale:
-        ScaleImg(argholder, gvroot)
+    output = gvroot + argholder.jpgname
+    temp_root = tempfile.mkdtemp(prefix='gvmm-render-')
+    tmpdir.append(temp_root)
+    raw = os.path.join(temp_root, 'graph.' + _output_format_for_path(output))
+    try:
+        RenderDotImage(dotbuf, raw, tmpdir)
+        PostProcessImage(raw, output, title, notitle, argholder.scale, png_compression)
+    finally:
+        tmpdir = CleanupTmpdir(tmpdir)
 
     if argholder.preview:
-        subprocess.Popen(["galaview.sh", gvroot + argholder.jpgname])
-
-    tmpdir = CleanupTmpdir(tmpdir)
-
-    next_dotbuf = ""
-    next_notitle = False
+        subprocess.Popen(['galaview.sh', output])
     argholder.jpgname = None
-
-    return {
-        "gvroot": gvroot,
-        "dotbuf": next_dotbuf,
-        "tmpdir": tmpdir,
-        "notitle": next_notitle,
-    }
+    return {'gvroot': gvroot, 'dotbuf': '', 'tmpdir': tmpdir, 'notitle': False}
