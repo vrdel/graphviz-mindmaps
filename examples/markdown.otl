@@ -138,6 +138,20 @@
 		: ![Outline rendering pipeline](assets/markdown-image.png)
 		:
 		: The path is relative to this `.otl` file. The image fits the available width.
+	# Image attachments with filters
+		: md noheader md_wrap=off csand
+		: ## Images attached from body lines
+		:
+		: Original image at 70 percent:
+		: img=assets/markdown-image.png|70
+		:
+		: Negated sketch at 50 percent:
+		: img_neg_sk=assets/markdown-image.png|50
+		:
+		: Color overlay at 50 percent:
+		: img_sk_cblue20=assets/markdown-image.png|50
+		:
+		: Text resumes after the attached images.
 	# Fenced and indented code
 		: md mdw=440
 		: ## Python with syntax highlighting

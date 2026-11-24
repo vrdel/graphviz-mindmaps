@@ -7,6 +7,7 @@ import re
 from graphviz_mindmaps.model.document import MarkdownBody
 from graphviz_mindmaps.constants import CALLOUT_COLORS
 from graphviz_mindmaps.parser.emoticons import MatchEmoticon, ReplaceEmoticons
+from graphviz_mindmaps.render.image_transform import IMAGE_TRANSFORM_KEY_PATTERN
 
 HEADING = re.compile(r"^(\t*)#(?:[ \t]+|$)(.*)$")
 PAYLOAD = re.compile(r'<GVMM_MARKDOWN data="([A-Za-z0-9+/=]+)"/>$')
@@ -162,6 +163,23 @@ CONTAINER_COLORS = {
     'tip': '#B8E3B4', 'success': '#B8E3B4',
     'warning': '#F1E6A8', 'danger': '#F2B8B8', 'error': '#F2B8B8',
 }
+
+
+def _image_attachment(state, start_line, end_line, silent):
+    """Recognize a standalone img directive, leaving code and prose opaque."""
+    if state.is_code_block(start_line):
+        return False
+    line = state.src[state.bMarks[start_line] + state.tShift[start_line]:state.eMarks[start_line]]
+    match = re.fullmatch(r'(' + IMAGE_TRANSFORM_KEY_PATTERN + r')\s*[=:]\s*(.+?)\s*', line)
+    if not match:
+        return False
+    if silent:
+        return True
+    token = state.push('image_attachment', '', 0)
+    token.map = [start_line, start_line + 1]
+    token.info, token.content = match.groups()
+    state.line = start_line + 1
+    return True
 
 
 def _container(state, start_line, end_line, silent):
@@ -367,6 +385,8 @@ def ParseMarkdown(body, preserve_newlines=False):
 
     parser.inline.ruler.at('math_inline', math_with_boundaries)
     parser.inline.ruler.before('autolink', 'autolink_span', _autolink_span)
+    parser.block.ruler.before('fence', 'image_attachment', _image_attachment,
+                              {'alt': ['paragraph', 'reference', 'blockquote', 'list']})
     parser.block.ruler.before('fence', 'container', _container,
                               {'alt': ['paragraph', 'reference', 'blockquote', 'list']})
     parser.inline.ruler.before('emphasis', 'highlight', _highlight_tokenize)
@@ -424,6 +444,9 @@ def ParseMarkdown(body, preserve_newlines=False):
                 result.level = int(node.tag[1:])
             if node.type in {'th', 'td'}:
                 result.align = node.attrs.get('style', 'text-align:left').split(':')[-1]
+        elif node.type == 'image_attachment':
+            result.source = node.content
+            result.language = node.info
         elif node.type == 'math_block':
             result.source = node.content
         elif node.type == 'container':

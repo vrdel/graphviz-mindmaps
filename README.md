@@ -731,6 +731,33 @@ is not treated as a link.
 
 For embedded images, use a filesystem path such as `![image](images/map.png)`.
 
+Markdown bodies also accept standalone `img...` attachment lines with the same
+filters and percentage scaling as ordinary image attachments:
+
+```text
+# Image notes
+	: md noheader md_wrap=off csand
+	:
+	: Text before the image.
+	:
+	: img=photo.png|70
+	:
+	: img_neg_sk="photo with spaces.png"|50
+	:
+	: Text after the images.
+```
+
+Write these directives in the body after the `md` attribute line. Each image
+occupies its own row at that position. Both `=` and `:` separators work, as do
+all existing filters and color overlays, such as `img_neg_sk_cblue20=photo.png|50`.
+Paths are local filesystem paths, relative to the `.otl` file; quote paths that
+contain spaces. Originals stay untouched and transformed/scaled copies are
+kept in the render session's temporary directory. With `md_wrap=off`, the image
+keeps its requested size; with wrapping enabled, it additionally fits `mdw`.
+Attachments work in root and child Markdown bodies, lists, blockquotes, and
+containers. Directives inside inline code, fenced code, or indented code remain
+literal, and invalid paths or scales report the attachment's outline line.
+
 Markdown list items written with `-` render with a Unicode minus (`−`);
 `*` and `+` render with a bullet (`•`). Task items retain the list marker alongside
 their checkbox, for example `• ☑ done` or `− ☐ pending`.

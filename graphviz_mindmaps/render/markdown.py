@@ -6,6 +6,7 @@ import hashlib
 import math
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import tempfile
 from urllib.parse import unquote, urlparse
@@ -13,6 +14,8 @@ from urllib.parse import unquote, urlparse
 from PIL import Image, ImageFont
 
 from graphviz_mindmaps.constants import font, fontcolor
+from graphviz_mindmaps.parser.attributes import RenderTransformedImage
+from graphviz_mindmaps.render.image_transform import ParseImageTransformSpec
 from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown, ParseMarkdownTitleColors
 from graphviz_mindmaps.render.code_image import RenderCodeImage
 from graphviz_mindmaps.render.math import MATH_PIXELS_PER_POINT, RenderMathImage
@@ -320,6 +323,33 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                 else:
                     ratio = (1.65, 1.4, 1.2, 1.1, 1.0, 1.0)[block.level - 1] if kind == 'heading' else 1
                     rows.append(textrow(wrapped(block.runs, available, round(size * ratio), kind == 'heading', ink=ink)))
+            elif kind == 'image_attachment':
+                try:
+                    parts = shlex.split(block.source)
+                    if len(parts) != 1:
+                        raise ValueError('image attachments need one local path; quote paths containing spaces')
+                    spec = parts[0]
+                    source, scale = ParseImageTransformSpec(spec)
+
+                    def local_attachment(filename):
+                        url = urlparse(filename)
+                        if url.scheme or url.netloc:
+                            raise ValueError('only local image attachments are supported')
+                        path = Path(filename).expanduser()
+                        if not path.is_absolute():
+                            base = Path(body.filename).resolve().parent if not body.filename.startswith('<') else Path.cwd()
+                            path = base / path
+                        return str(path)
+
+                    if block.language != 'img' or scale is not None:
+                        path = RenderTransformedImage(spec, block.language, local_attachment,
+                                                      tmpdirs, tempfile)
+                    else:
+                        path = local_attachment(source)
+                except (OSError, ValueError) as exc:
+                    raise body.error(str(exc), block.source_line) from exc
+                content = image(Path(path), available, block.source_line, constrain=wrap)
+                rows.append('<TR><TD ALIGN="LEFT" CELLPADDING="0">' + content + '</TD></TR>')
             elif kind == 'math_block':
                 try:
                     path = RenderMathImage(block.source, temporary(), size=size,
