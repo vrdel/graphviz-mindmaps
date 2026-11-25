@@ -342,7 +342,7 @@ def ResolveRootNodeAttributes(lines, attrs):
                                ("root_bc", "color")):
             value = ParseInlineAttrLine(key, line)
             if value:
-                if key == 'root_bg':
+                if key in {'root_bg', 'root_bc'}:
                     value = ResolveNodeColorValue(value, nodetype)
                 pattern = r'\b%s=(?:"([^"]*)"|([^\s]+))' % attribute
                 existing = re.search(pattern, attrs)

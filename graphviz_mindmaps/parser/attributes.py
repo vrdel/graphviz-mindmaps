@@ -11,6 +11,7 @@ from graphviz_mindmaps.constants import (
     fontcolor,
     fontstyle,
     linecolors,
+    nodetype,
     subgraphcolors,
     vrbtcolors,
 )
@@ -562,7 +563,7 @@ def ApplyNodeAttributeTokens(
             elif key in {"edge_weight", "edgw"}:
                 state.edgeweight = ParseEdgeWeight(value, key)
             elif key == "bc":
-                state.bordercolor = value
+                state.bordercolor = ResolveNodeColorValue(value, nodetype)
             elif key == "bw":
                 state.borderwidth = value
             elif key == "bs":
@@ -651,7 +652,7 @@ def ApplyNodeAttributeTokens(
         elif tokval[0] in {"edge_weight", "edgw"}:
             state.edgeweight = ParseEdgeWeight(tokval[1].strip().strip("\"'"), tokval[0])
         elif tokval[0] == "bc":
-            state.bordercolor = tokval[1].strip().strip("\"'")
+            state.bordercolor = ResolveNodeColorValue(tokval[1].strip().strip("\"'"), nodetype)
         elif tokval[0] == "bw":
             state.borderwidth = tokval[1].strip().strip("\"'")
         elif tokval[0] == "bs":

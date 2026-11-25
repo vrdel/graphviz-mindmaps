@@ -256,6 +256,12 @@ These affect only the root node and override its border settings. The border
 style preserves the root fill; `root_bw=0` hides the border. Omitted attributes
 keep the existing defaults.
 
+Both `root_bc` and the regular node border attribute `bc` accept the same theme
+color tokens as `root_bg`, including aliases, shade offsets, and `ctrans`.
+For example, use `root_bc=cmint10` on the root and `bc=cyello-20` on a child.
+These use the active theme's regular node fill colors. Named Graphviz colors
+and hex colors remain supported.
+
 Add Font Awesome icons above the root title with `root_symb`:
 
 ```text
