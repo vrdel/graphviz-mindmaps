@@ -43,6 +43,7 @@ from graphviz_mindmaps.parser.attributes import (
     RenderTransformedImage,
     ResolveBaseNodeTypeToken,
     ResolveColorNodeTypeToken,
+    ResolveNodeColorValue,
     NormalizeColorToken,
     ResolveSymbolNames,
     ResolveVerbatimFillColorToken,
@@ -341,6 +342,8 @@ def ResolveRootNodeAttributes(lines, attrs):
                                ("root_bc", "color")):
             value = ParseInlineAttrLine(key, line)
             if value:
+                if key == 'root_bg':
+                    value = ResolveNodeColorValue(value, nodetype)
                 pattern = r'\b%s=(?:"([^"]*)"|([^\s]+))' % attribute
                 existing = re.search(pattern, attrs)
                 if attribute == "style" and existing:

@@ -95,6 +95,17 @@ def ResolveColorNodeTypeToken(token, nodetype):
     return token
 
 
+def ResolveNodeColorValue(value, node_types):
+    """Resolve palette colors to regular-node fills; preserve literal colors."""
+    if re.fullmatch(r'c[a-z]+(?:-?\d+)?', value):
+        color_type = ResolveColorNodeTypeToken(value, node_types)
+        if color_type:
+            fill = re.search(r'fillcolor="([^"]+)"', node_types[color_type])
+            if fill:
+                return fill.group(1)
+    return value
+
+
 def ResolveVerbatimFillColorToken(token, vrbtcolors):
     token = NormalizeColorToken(token)
     if token in vrbtcolors:

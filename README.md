@@ -237,8 +237,12 @@ Use `root_bg` for the root node's fill and `root_fg` for its text color:
 ```
 
 These override the theme for the root node only. Named Graphviz colors and hex
-colors are supported. The canvas background is controlled separately by `bg`
-or `bgcolor`; omitted root colors retain their theme defaults.
+colors are supported. `root_bg` also accepts regular node color tokens such as
+`root_bg=cgreen`, `root_bg=cmint10`, and `root_bg=cyello-20`, including color
+aliases and `ctrans`. Tokens use the active theme's regular node fill colors;
+shade offsets are applied exactly as on regular nodes. The canvas background
+is controlled separately by `bg` or `bgcolor`; omitted root colors retain their
+theme defaults.
 
 Use `root_bw` for the root border width, `root_bs` for its style (such as
 `solid`, `dashed`, or `dotted`), and `root_bc` for its color:

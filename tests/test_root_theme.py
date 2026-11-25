@@ -302,6 +302,33 @@ class RootThemeTests(unittest.TestCase):
         root = lambda session: next(line for line in session.dotbuf.splitlines() if 'node1[' in line)
         self.assertEqual(root(plain), root(child))
 
+    def test_root_background_color_tokens_match_regular_nodes_and_follow_theme(self):
+        for theme in ('default', 'nord', 'github-light', 'gruvbox'):
+            runtime = build_runtime(theme)
+            plain = self.render(runtime)
+            for token in ('cgreen', 'cmint10', 'cyello-20', 'cyellow-20', 'ctrans',
+                          'cgreen999', 'cmint-999'):
+                with self.subTest(theme=theme, token=token):
+                    changed = self.render(runtime, root_attrs='root_bg=' + token, child_attrs=token)
+                    root = next(line for line in changed.dotbuf.splitlines() if 'node1[' in line)
+                    child = next(line for line in changed.dotbuf.splitlines() if 'node101[' in line)
+                    fill = re.search(r'fillcolor="([^"]+)"', child).group(1)
+                    self.assertIn('fillcolor="' + fill + '"', root)
+                    self.assertEqual(plain.bgcolor, changed.bgcolor)
+                    # Explicit root overrides are local to this mindmap.
+                    self.assertEqual(plain.dotbuf, self.render(runtime).dotbuf)
+                    if shutil.which('dot'):
+                        result = subprocess.run(['dot', '-Tsvg'], input=changed.dotbuf,
+                                                text=True, capture_output=True, timeout=30)
+                        self.assertEqual(0, result.returncode, result.stderr)
+                        self.assertNotIn('not a known color', result.stderr)
+        runtime = build_runtime('default')
+        overridden = self.render(runtime, 'theme=nord root_bg=cmint10', child_attrs='cmint10')
+        root = next(line for line in overridden.dotbuf.splitlines() if 'node1[' in line)
+        child = next(line for line in overridden.dotbuf.splitlines() if 'node101[' in line)
+        self.assertEqual(re.search(r'fillcolor="([^"]+)"', root).group(1),
+                         re.search(r'fillcolor="([^"]+)"', child).group(1))
+
     def test_root_colors_override_theme_without_changing_children_or_canvas(self):
         for theme in ('default', 'nord'):
             with self.subTest(theme=theme):
