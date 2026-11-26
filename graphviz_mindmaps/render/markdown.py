@@ -17,7 +17,7 @@ from graphviz_mindmaps.constants import font, fontcolor
 from graphviz_mindmaps.parser.attributes import RenderTransformedImage
 from graphviz_mindmaps.render.image_transform import ParseImageTransformSpec
 from graphviz_mindmaps.parser.markdown import Block, ParseMarkdown, ParseMarkdownTitleColors
-from graphviz_mindmaps.render.code_image import RenderCodeImage
+from graphviz_mindmaps.render.code_image import ExtractCodeHighlights, RenderCodeImage
 from graphviz_mindmaps.render.math import MATH_PIXELS_PER_POINT, RenderMathImage
 from graphviz_mindmaps.render.mermaid import (
     ParseMermaidFenceOptions, ParseMermaidFont, ParseMermaidFontSize,
@@ -396,8 +396,12 @@ def RenderMarkdown(body, tmpdirs, width=420, face=None, foreground=None, size=18
                     except ValueError as exc:
                         raise body.error(str(exc), block.source_line) from exc
                 else:
+                    try:
+                        highlights, _ = ExtractCodeHighlights(block.fence_options)
+                    except ValueError as exc:
+                        raise body.error(str(exc), block.source_line) from exc
                     path = RenderCodeImage(block.source.expandtabs(4), block.language, tmpdirs,
-                                           code_theme, transparent_background=True)
+                                           code_theme, highlights, transparent_background=True)
                 content = image(Path(path), available, block.source_line,
                                 constrain=wrap and not body.diagram)
                 if is_svgbob and alignment != 'LEFT':

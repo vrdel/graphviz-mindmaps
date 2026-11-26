@@ -611,6 +611,30 @@ if ready:
                 self.assertIn('<IMG SRC=', dot)
                 self.graphviz(dot)
 
+    def test_code_fence_line_highlights_match_code_nodes_and_stay_fence_local(self):
+        from graphviz_mindmaps.render.code_image import RenderCodeImage
+        code = '\n[example]\nenabled = true\n\nretries = 3\noutput = /tmp/example.json\n'
+        for selector, highlights in (('l5', [(5, '')]),
+                                     ('l[1,3-5]g El1b l3r',
+                                      [(1, 'g'), (3, 'g'), (4, 'g'), (5, 'g'), (-1, 'b'), (3, 'r')])):
+            source = '```ini ' + selector + '\n' + code + '```\n\n```ini\n' + code + '```'
+            for root in (False, True):
+                lines = (['# Example', '\t: fname=out.jpg md noheader md_wrap=off'] +
+                         ['\t: ' + line for line in source.split('\n')]
+                         if root else self.outline(source, 'md noheader md_wrap=off'))
+                with self.subTest(selector=selector, root=root):
+                    dot = self.render(lines)
+                    highlighted, plain = map(Path, re.findall(r'<IMG SRC="([^"]+)"', dot))
+                    expected = RenderCodeImage(code, 'ini', [self.temp.name],
+                                               highlight_lines=highlights, transparent_background=True)
+                    self.assertEqual(Path(expected).read_bytes(), highlighted.read_bytes())
+                    self.assertNotEqual(highlighted.read_bytes(), plain.read_bytes())
+                    self.graphviz(dot)
+
+    def test_invalid_code_fence_line_selector_reports_markdown_source(self):
+        with self.assertRaisesRegex(ValueError, r'Markdown node.*invalid code line selector: l0'):
+            self.render(self.outline('```ini l0\n[example]\n```'))
+
     def test_svgbob_standalone_nodes_preserve_source_hide_headers_and_grow_naturally(self):
         source = '+---------+     +----------+\n| outline |---->| renderer |\n+---------+     +----------+'
         path = Path(self.temp.name, 'svgbob.png')

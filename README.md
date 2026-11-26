@@ -706,6 +706,26 @@ not clickable links in JPG output. Code is syntax-highlighted through Pygments
 and embedded as an image; unknown languages fall back to plain text. The root
 `code_theme=` selects the code style.
 
+Add line selectors after a code fence's language, just as on regular code nodes:
+
+````text
+# Configuration
+    : md noheader md_wrap=off
+    :
+    : ```ini l5
+    : [example]
+    : enabled = true
+    : retries = 3
+    : timeout = 30
+    : output = /tmp/example.json
+    : ```
+````
+
+Selectors apply only to that fence. Ranges (`l[2-5]`), lists (`l[1,3-5]`),
+end-relative selectors (`El1`), and color suffixes (`l5r`, `l2g`, `El1b`)
+follow the regular code-node rules above, including last-selector precedence.
+Line numbers start at the first nonblank code line; internal blank lines count.
+
 Markdown prose converts `->`, `<-`, `=>`, and `<=` to →, ←, ⇒, and ⇐,
 including headings, lists, tables, emphasis, and callout titles. Inline code,
 code/diagram fences, and Markdown links keep their literal syntax. Use
