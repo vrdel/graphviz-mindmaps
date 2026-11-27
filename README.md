@@ -97,10 +97,19 @@ create-mm -m
 create-mm -m -p mindmap.otl -g montage.yml -w Notes.wiki -f justfile
 create-mm -m -l 80
 create-mm -m -o final-mindmap.jpg
+create-mm -m --auto -o example.jpg
 ```
 
-`create-mm -s` creates a single mindmap starter with `mindmap-01.otl`; pass `-f justfile` to create a build file too. `create-mm -m` creates a montage project with `montage.yml`, `justfile`, `Template.wiki`, and `mindmap-01.otl`.
+`create-mm -s` creates a single mindmap starter with `mindmap-01.otl`; pass `-f justfile` to create a build file too. `create-mm -m` creates a montage project with `montage.yml`, `justfile`, and `mindmap-01.otl`. Pass `-w Notes.wiki` to create a wiki file and include its Vimwiki HTML export step in the generated build file. Without `-w`, no wiki file is created or referenced.
 Use `-o` with `-m` to change the generated justfile's final montage image name.
+
+For montage projects, `-a` / `--auto` derives filenames from `-o`.
+`create-mm -m -a -o example.jpg` is equivalent to
+`create-mm -m -o example.jpg -p example-1.otl -g example.yml -j example.just`.
+Only the outline filename gets the `-1` suffix. Explicit `-p`, `-g`, `-j`, and
+`-l` values control scaling. Without `-l`, its value remains 0, which keeps the
+template's scale unchanged. `-j` names the justfile; `-f` remains an alias.
+Auto mode requires `-m` and `-o`; wiki creation still requires `-w`.
 
 Render one or more outline files with `gvmm`:
 
